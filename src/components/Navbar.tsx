@@ -1,7 +1,14 @@
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 
-const navLinks = ["Home", "Live Matches", "Coin Flip", "History", "Rules"];
+const navLinks = [
+  { label: "Home", href: "/" },
+  { label: "Live Matches", href: "/matches" },
+  { label: "Coin Flip", href: "#" },
+  { label: "History", href: "#" },
+  { label: "Rules", href: "#" },
+];
 
 const Navbar = () => {
   return (

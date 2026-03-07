@@ -1,7 +1,14 @@
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link, useLocation } from "react-router-dom";
 
-const navLinks = ["Home", "Live Matches", "Coin Flip", "History", "Rules"];
+const navLinks = [
+  { label: "Home", href: "/" },
+  { label: "Live Matches", href: "/matches" },
+  { label: "Coin Flip", href: "#" },
+  { label: "History", href: "#" },
+  { label: "Rules", href: "#" },
+];
 
 const Navbar = () => {
   return (
@@ -16,12 +23,13 @@ const Navbar = () => {
           </div>
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
-              <button
-                key={link}
+              <Link
+                key={link.label}
+                to={link.href}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
-                {link}
-              </button>
+                {link.label}
+              </Link>
             ))}
           </div>
         </div>

@@ -26,8 +26,8 @@ const HeroSection = () => {
             <Button size="lg" className="gap-2 text-base font-semibold">
               <Play className="h-4 w-4" /> Start Playing
             </Button>
-            <Button size="lg" variant="outline" className="text-base font-semibold">
-              View Matches
+            <Button size="lg" variant="outline" className="text-base font-semibold" asChild>
+              <Link to="/matches">View Matches</Link>
             </Button>
           </div>
         </motion.div>

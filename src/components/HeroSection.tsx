@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Play } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const HeroSection = () => {
   return (
@@ -25,8 +26,8 @@ const HeroSection = () => {
             <Button size="lg" className="gap-2 text-base font-semibold">
               <Play className="h-4 w-4" /> Start Playing
             </Button>
-            <Button size="lg" variant="outline" className="text-base font-semibold">
-              View Matches
+            <Button size="lg" variant="outline" className="text-base font-semibold" asChild>
+              <Link to="/matches">View Matches</Link>
             </Button>
           </div>
         </motion.div>

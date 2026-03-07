@@ -23,12 +23,13 @@ const Navbar = () => {
           </div>
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
-              <button
-                key={link}
+              <Link
+                key={link.label}
+                to={link.href}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
               >
-                {link}
-              </button>
+                {link.label}
+              </Link>
             ))}
           </div>
         </div>

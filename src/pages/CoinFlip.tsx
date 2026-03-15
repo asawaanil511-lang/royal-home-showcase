@@ -46,7 +46,7 @@ const CoinFlip = () => {
     const newBalance = profile.wallet_balance - betAmount + payout;
 
     await Promise.all([
-      supabase.from("coin_flips").insert({
+      (supabase as any).from("coin_flips").insert({
         user_id: user.id,
         bet_amount: betAmount,
         chosen_side: chosenSide,

@@ -19,8 +19,8 @@ const Leaderboard = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase
-        .from("leaderboard" as any)
+      const { data } = await (supabase as any)
+        .from("leaderboard")
         .select("*")
         .order("total_profit", { ascending: false })
         .limit(50);

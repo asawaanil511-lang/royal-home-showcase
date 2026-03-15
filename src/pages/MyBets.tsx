@@ -26,7 +26,7 @@ const MyBets = () => {
   useEffect(() => {
     if (!user) return;
     const fetchBets = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("bets")
         .select("*")
         .eq("user_id", user.id)

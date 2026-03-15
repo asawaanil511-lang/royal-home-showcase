@@ -18,7 +18,7 @@ const Matches = () => {
 
   useEffect(() => {
     const fetchMatches = async () => {
-      const { data } = await supabase.from("matches").select("*").order("match_date", { ascending: false });
+      const { data } = await (supabase as any).from("matches").select("*").order("match_date", { ascending: false });
       if (data && data.length > 0) {
         const mapped: Match[] = data.map((m: any) => ({
           id: m.id,

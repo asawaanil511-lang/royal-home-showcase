@@ -22,7 +22,7 @@ const Results = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("matches")
         .select("*")
         .eq("status", "closed")

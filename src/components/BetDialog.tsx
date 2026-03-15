@@ -62,7 +62,7 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
     }).eq("user_id", user.id);
 
     // Insert bet
-    await supabase.from("bets").insert({
+    await (supabase as any).from("bets").insert({
       user_id: user.id,
       match_id: match.id,
       team_picked: selectedTeam,

@@ -124,7 +124,7 @@ const Admin = () => {
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("matches").delete().eq("id", id);
+    await (supabase as any).from("matches").delete().eq("id", id);
     toast({ title: "Match deleted" });
     fetchMatches();
   };

@@ -85,7 +85,7 @@ const Admin = () => {
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    await supabase.from("matches").update({ status }).eq("id", id);
+    await (supabase as any).from("matches").update({ status }).eq("id", id);
     toast({ title: `Match set to ${status}` });
     fetchMatches();
   };

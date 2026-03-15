@@ -92,14 +92,14 @@ const Admin = () => {
 
   const handleSetWinner = async (id: string, winner: string) => {
     // Set winner and close match
-    await supabase.from("matches").update({ winner, status: "closed" }).eq("id", id);
+    await (supabase as any).from("matches").update({ winner, status: "closed" }).eq("id", id);
 
     // Settle bets
-    const { data: bets } = await supabase.from("bets").select("*").eq("match_id", id).eq("result", "pending");
+    const { data: bets } = await (supabase as any).from("bets").select("*").eq("match_id", id).eq("result", "pending");
     if (bets) {
-      for (const bet of bets) {
+      for (const bet of bets as any[]) {
         const won = bet.team_picked === winner;
-        await supabase.from("bets").update({
+        await (supabase as any).from("bets").update({
           result: won ? "won" : "lost",
           settled_at: new Date().toISOString(),
         }).eq("id", bet.id);

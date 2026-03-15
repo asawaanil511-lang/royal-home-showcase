@@ -69,7 +69,7 @@ const Admin = () => {
       return;
     }
     setSaving(true);
-    await supabase.from("matches").insert({
+    await (supabase as any).from("matches").insert({
       team_a_name: teamA,
       team_b_name: teamB,
       odds_a: Number(oddsA),

@@ -9,6 +9,7 @@ const games = [
     badge: "Popular" as const,
     gradient: "gradient-game-blue" as const,
     icon: "🪙",
+    href: "/coinflip",
   },
   {
     title: "Match Betting",
@@ -16,6 +17,7 @@ const games = [
     badge: "Live" as const,
     gradient: "gradient-game-orange" as const,
     icon: "🏆",
+    href: "/matches",
   },
   {
     title: "Lucky Wheel",
@@ -23,6 +25,7 @@ const games = [
     badge: "Coming Soon" as const,
     gradient: "gradient-game-pink" as const,
     icon: "🎡",
+    href: "#",
   },
   {
     title: "Jackpot",
@@ -30,12 +33,13 @@ const games = [
     badge: "Coming Soon" as const,
     gradient: "gradient-game-green" as const,
     icon: "💎",
+    href: "#",
   },
 ];
 
 const GameZone = () => {
   return (
-    <section className="py-20">
+    <section className="py-20 bg-card/30">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -43,12 +47,12 @@ const GameZone = () => {
           viewport={{ once: true }}
           className="mb-12 text-center"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-secondary px-4 py-1.5 text-sm font-medium text-muted-foreground">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
             <Gamepad2 className="h-4 w-4" />
             Game Zone
           </div>
           <h2 className="mb-3 text-4xl font-extrabold text-foreground">
-            Get Ready for <span className="text-accent">Big Wins!</span>
+            Get Ready for <span className="text-neon">Big Wins!</span>
           </h2>
           <p className="mx-auto max-w-lg text-muted-foreground">
             Check out all our games! From upcoming releases to player favorites, there's always something fun waiting for you.

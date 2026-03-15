@@ -1,16 +1,16 @@
 import { motion } from "framer-motion";
-import { Users, IndianRupee, Trophy, TrendingUp } from "lucide-react";
+import { Users, Coins, Trophy, TrendingUp } from "lucide-react";
 
 const stats = [
   { label: "Total Winners", value: "10K+", icon: Users },
-  { label: "Total Paid Out", value: "₹50L+", icon: IndianRupee },
+  { label: "Total Paid Out", value: "₹50L+", icon: Coins },
   { label: "Biggest Win", value: "₹1.5L", icon: Trophy },
   { label: "Win Rate", value: "47%", icon: TrendingUp },
 ];
 
 const StatsSection = () => {
   return (
-    <section className="py-20">
+    <section className="py-20 bg-card/30">
       <div className="container mx-auto px-4">
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((stat, i) => (
@@ -20,7 +20,7 @@ const StatsSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="flex flex-col items-center rounded-2xl border bg-card p-8 text-center shadow-card"
+              className="flex flex-col items-center rounded-2xl border border-border/50 bg-card p-8 text-center shadow-card transition-all hover:glow-border"
             >
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
                 <stat.icon className="h-6 w-6 text-primary" />

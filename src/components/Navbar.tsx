@@ -1,27 +1,28 @@
 import { useState } from "react";
-import { Bell, Menu, X, Wallet, LogOut } from "lucide-react";
+import { Menu, X, Wallet, LogOut, User, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { label: "Home", href: "/" },
-  { label: "Live Matches", href: "/matches" },
-  { label: "Coin Flip", href: "#" },
-  { label: "History", href: "#" },
-  { label: "Rules", href: "#" },
+  { label: "Matches", href: "/matches" },
+  { label: "Coin Flip", href: "/coinflip" },
+  { label: "Leaderboard", href: "/leaderboard" },
+  { label: "Results", href: "/results" },
 ];
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { user, profile, signOut } = useAuth();
+  const location = useLocation();
 
   return (
-    <nav className="sticky top-0 z-50 border-b bg-background/80 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-xl">
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary font-bold text-primary-foreground text-sm">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-neon-primary font-bold text-primary-foreground text-sm shadow-neon">
               R
             </div>
             <span className="text-xl font-bold tracking-tight text-foreground">ROYAL11</span>
@@ -31,7 +32,11 @@ const Navbar = () => {
               <Link
                 key={link.label}
                 to={link.href}
-                className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  location.pathname === link.href
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
               >
                 {link.label}
               </Link>
@@ -41,15 +46,28 @@ const Navbar = () => {
         <div className="flex items-center gap-3">
           {user ? (
             <>
-              <div className="hidden items-center gap-1.5 rounded-full border bg-secondary px-3 py-1.5 sm:flex">
+              <Link
+                to="/wallet"
+                className="hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 sm:flex transition-colors hover:bg-primary/20"
+              >
                 <Wallet className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-foreground">
+                <span className="text-sm font-semibold text-primary">
                   ₹{(profile?.wallet_balance ?? 0).toLocaleString()}
                 </span>
-              </div>
-              <span className="hidden text-sm font-medium text-muted-foreground md:block">
-                {profile?.display_name || profile?.username || "Player"}
-              </span>
+              </Link>
+              <Link
+                to="/my-bets"
+                className="hidden text-sm font-medium text-muted-foreground hover:text-foreground transition-colors md:block"
+              >
+                My Bets
+              </Link>
+              <Link
+                to="/wallet"
+                className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                title="Profile"
+              >
+                <User className="h-5 w-5" />
+              </Link>
               <button
                 onClick={signOut}
                 className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
@@ -60,13 +78,10 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <button className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
-                <Bell className="h-5 w-5" />
-              </button>
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex" asChild>
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex border-primary/30 text-primary hover:bg-primary/10" asChild>
                 <Link to="/login">Login</Link>
               </Button>
-              <Button size="sm" className="hidden sm:inline-flex" asChild>
+              <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon" asChild>
                 <Link to="/register">Register</Link>
               </Button>
             </>
@@ -81,36 +96,49 @@ const Navbar = () => {
       </div>
 
       {mobileOpen && (
-        <div className="border-t bg-background px-4 py-4 md:hidden">
+        <div className="border-t border-border/50 bg-background px-4 py-4 md:hidden">
           <div className="flex flex-col gap-1">
             {navLinks.map((link) => (
               <Link
                 key={link.label}
                 to={link.href}
                 onClick={() => setMobileOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                className={`rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
+                  location.pathname === link.href
+                    ? "text-primary bg-primary/10"
+                    : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                }`}
               >
                 {link.label}
               </Link>
             ))}
+            {user && (
+              <Link
+                to="/my-bets"
+                onClick={() => setMobileOpen(false)}
+                className="rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-secondary hover:text-foreground"
+              >
+                My Bets
+              </Link>
+            )}
           </div>
           {user ? (
             <div className="mt-3 flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <Link to="/wallet" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
                 <Wallet className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold">₹{(profile?.wallet_balance ?? 0).toLocaleString()}</span>
-              </div>
-              <Button variant="outline" size="sm" onClick={signOut}>
+                <span className="text-sm font-semibold text-primary">₹{(profile?.wallet_balance ?? 0).toLocaleString()}</span>
+              </Link>
+              <Button variant="outline" size="sm" onClick={signOut} className="border-destructive/30 text-destructive">
                 Logout
               </Button>
             </div>
           ) : (
             <div className="mt-3 flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1" asChild>
-                <Link to="/login">Login</Link>
+              <Button variant="outline" size="sm" className="flex-1 border-primary/30 text-primary" asChild>
+                <Link to="/login" onClick={() => setMobileOpen(false)}>Login</Link>
               </Button>
-              <Button size="sm" className="flex-1" asChild>
-                <Link to="/register">Register</Link>
+              <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold" asChild>
+                <Link to="/register" onClick={() => setMobileOpen(false)}>Register</Link>
               </Button>
             </div>
           )}

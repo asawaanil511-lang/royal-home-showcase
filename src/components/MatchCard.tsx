@@ -17,9 +17,9 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
   const isClosed = match.status === "closed";
 
   return (
-    <div className="overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow hover:shadow-card-hover">
+    <div className="overflow-hidden rounded-2xl border border-border/50 bg-card shadow-card transition-all hover:shadow-card-hover hover:glow-border">
       {/* Header */}
-      <div className="flex items-center justify-between bg-primary px-4 py-2.5">
+      <div className="flex items-center justify-between gradient-neon-primary px-4 py-2.5">
         <span className="text-sm font-semibold text-primary-foreground">Cricket Match</span>
         <Info className="h-4 w-4 text-primary-foreground/70" />
       </div>
@@ -30,7 +30,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
           <img
             src={match.teamA.logo}
             alt={match.teamA.name}
-            className="h-20 w-20 rounded-full border-2 border-border bg-secondary object-contain p-1"
+            className="h-20 w-20 rounded-full border-2 border-primary/20 bg-secondary object-contain p-1"
           />
           <span className="text-center text-sm font-semibold text-card-foreground leading-tight">
             {match.teamA.name}
@@ -41,7 +41,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
           <img
             src={match.teamB.logo}
             alt={match.teamB.name}
-            className="h-20 w-20 rounded-full border-2 border-border bg-secondary object-contain p-1"
+            className="h-20 w-20 rounded-full border-2 border-primary/20 bg-secondary object-contain p-1"
           />
           <span className="text-center text-sm font-semibold text-card-foreground leading-tight">
             {match.teamB.name}
@@ -61,7 +61,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
         <span
           className={`text-sm font-medium ${
             match.status === "live"
-              ? "text-success"
+              ? "text-primary"
               : match.status === "closed"
               ? "text-destructive"
               : "text-accent"
@@ -74,7 +74,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
       {/* Action */}
       <div className="px-4 pb-4">
         <Button
-          className="w-full font-semibold"
+          className="w-full font-semibold gradient-neon-primary text-primary-foreground shadow-neon hover:opacity-90"
           disabled={isClosed}
           onClick={() => onBet(match)}
         >

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,60 +6,67 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 220 20% 10%;
+    --background: 230 25% 7%;
+    --foreground: 210 40% 95%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card: 230 20% 11%;
+    --card-foreground: 210 40% 95%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
+    --popover: 230 20% 11%;
+    --popover-foreground: 210 40% 95%;
 
-    --primary: 222 80% 55%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 160 100% 45%;
+    --primary-foreground: 230 25% 7%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 20% 10%;
+    --secondary: 230 18% 16%;
+    --secondary-foreground: 210 30% 80%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 230 18% 16%;
+    --muted-foreground: 220 15% 55%;
 
-    --accent: 25 95% 55%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 100% 55%;
+    --accent-foreground: 230 25% 7%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 80% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 14% 91%;
-    --input: 220 14% 91%;
-    --ring: 222 80% 55%;
+    --border: 230 15% 20%;
+    --input: 230 15% 20%;
+    --ring: 160 100% 45%;
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --gradient-game-blue: linear-gradient(135deg, hsl(222 80% 55%), hsl(210 90% 60%));
-    --gradient-game-orange: linear-gradient(135deg, hsl(25 95% 55%), hsl(35 95% 60%));
-    --gradient-game-pink: linear-gradient(135deg, hsl(300 60% 65%), hsl(330 80% 65%));
-    --gradient-game-green: linear-gradient(135deg, hsl(150 60% 45%), hsl(170 70% 50%));
+    /* Neon glow tokens */
+    --neon-green: 160 100% 45%;
+    --neon-cyan: 185 100% 50%;
+    --neon-purple: 270 80% 60%;
+    --neon-pink: 330 90% 60%;
+    --neon-gold: 45 100% 55%;
 
-    --success: 150 60% 45%;
-    --success-foreground: 0 0% 100%;
+    --gradient-neon-primary: linear-gradient(135deg, hsl(160 100% 45%), hsl(185 100% 50%));
+    --gradient-neon-accent: linear-gradient(135deg, hsl(45 100% 55%), hsl(30 100% 55%));
+    --gradient-neon-purple: linear-gradient(135deg, hsl(270 80% 60%), hsl(330 90% 60%));
+    --gradient-dark-card: linear-gradient(135deg, hsl(230 20% 11%), hsl(230 20% 14%));
 
-    --badge-popular: 222 80% 55%;
-    --badge-live: 0 84% 60%;
-    --badge-coming: 260 60% 55%;
+    --success: 160 100% 45%;
+    --success-foreground: 230 25% 7%;
 
-    --shadow-card: 0 4px 24px -4px hsl(220 20% 10% / 0.08);
-    --shadow-card-hover: 0 8px 32px -4px hsl(220 20% 10% / 0.14);
+    --badge-popular: 160 100% 45%;
+    --badge-live: 0 80% 55%;
+    --badge-coming: 270 80% 60%;
 
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --shadow-card: 0 4px 24px -4px hsl(0 0% 0% / 0.4);
+    --shadow-card-hover: 0 8px 32px -4px hsl(160 100% 45% / 0.15);
+    --shadow-neon: 0 0 20px hsl(160 100% 45% / 0.3);
+
+    --sidebar-background: 230 20% 9%;
+    --sidebar-foreground: 210 30% 80%;
+    --sidebar-primary: 160 100% 45%;
+    --sidebar-primary-foreground: 230 25% 7%;
+    --sidebar-accent: 230 18% 16%;
+    --sidebar-accent-foreground: 210 40% 95%;
+    --sidebar-border: 230 15% 20%;
+    --sidebar-ring: 160 100% 45%;
   }
 }
 
@@ -69,28 +76,57 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    @apply bg-background text-foreground antialiased;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Rajdhani', 'Space Grotesk', system-ui, sans-serif;
   }
 }
 
 @layer utilities {
-  .gradient-game-blue {
-    background: var(--gradient-game-blue);
+  .gradient-neon-primary {
+    background: var(--gradient-neon-primary);
   }
-  .gradient-game-orange {
-    background: var(--gradient-game-orange);
+  .gradient-neon-accent {
+    background: var(--gradient-neon-accent);
   }
-  .gradient-game-pink {
-    background: var(--gradient-game-pink);
+  .gradient-neon-purple {
+    background: var(--gradient-neon-purple);
   }
-  .gradient-game-green {
-    background: var(--gradient-game-green);
+  .gradient-dark-card {
+    background: var(--gradient-dark-card);
   }
   .shadow-card {
     box-shadow: var(--shadow-card);
   }
   .shadow-card-hover {
     box-shadow: var(--shadow-card-hover);
+  }
+  .shadow-neon {
+    box-shadow: var(--shadow-neon);
+  }
+  .text-neon {
+    color: hsl(var(--neon-green));
+    text-shadow: 0 0 10px hsl(var(--neon-green) / 0.5);
+  }
+  .glow-border {
+    border-color: hsl(var(--neon-green) / 0.3);
+    box-shadow: inset 0 0 20px hsl(var(--neon-green) / 0.05), 0 0 15px hsl(var(--neon-green) / 0.1);
+  }
+
+  /* Game card gradients */
+  .gradient-game-blue {
+    background: linear-gradient(135deg, hsl(200 80% 30%), hsl(220 70% 25%));
+  }
+  .gradient-game-orange {
+    background: linear-gradient(135deg, hsl(25 90% 40%), hsl(15 80% 35%));
+  }
+  .gradient-game-pink {
+    background: linear-gradient(135deg, hsl(300 50% 35%), hsl(330 60% 35%));
+  }
+  .gradient-game-green {
+    background: linear-gradient(135deg, hsl(160 60% 25%), hsl(140 50% 30%));
   }
 }

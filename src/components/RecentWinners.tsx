@@ -12,7 +12,7 @@ const winners = [
 
 const RecentWinners = () => {
   return (
-    <section className="bg-secondary/50 py-20">
+    <section className="py-20">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -20,12 +20,12 @@ const RecentWinners = () => {
           viewport={{ once: true }}
           className="mb-12 text-center"
         >
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border bg-card px-4 py-1.5 text-sm font-medium text-muted-foreground">
-            <Trophy className="h-4 w-4 text-accent" />
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
+            <Trophy className="h-4 w-4" />
             Recent Winners
           </div>
           <h2 className="mb-3 text-4xl font-extrabold text-foreground">
-            Our Latest Champions!
+            Our Latest <span className="text-neon">Champions!</span>
           </h2>
           <p className="mx-auto max-w-lg text-muted-foreground">
             Join the winners circle! See who's been winning big on our platform.
@@ -40,7 +40,7 @@ const RecentWinners = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.06 }}
-              className="flex items-center gap-4 rounded-xl bg-card p-4 shadow-card"
+              className="flex items-center gap-4 rounded-xl border border-border/50 bg-card p-4 shadow-card transition-all hover:glow-border"
             >
               <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
                 #{i + 1}
@@ -50,7 +50,7 @@ const RecentWinners = () => {
                 <p className="text-xs text-muted-foreground">less than a minute ago</p>
               </div>
               <div className="text-right">
-                <p className="font-bold text-success">₹{w.win.toLocaleString()}</p>
+                <p className="font-bold text-primary">₹{w.win.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">Bet: ₹{w.bet.toLocaleString()}</p>
               </div>
             </motion.div>

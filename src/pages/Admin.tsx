@@ -56,7 +56,7 @@ const Admin = () => {
   }, [user]);
 
   const fetchMatches = async () => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("matches")
       .select("*")
       .order("match_date", { ascending: false });

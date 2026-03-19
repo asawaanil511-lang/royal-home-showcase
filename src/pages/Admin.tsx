@@ -12,12 +12,13 @@ import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBets from "@/components/admin/AdminBets";
 
 const Admin = () => {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
+    if (authLoading) return; // Wait for auth to finish loading
     if (!user) { navigate("/login"); return; }
     const checkRole = async () => {
       const { data } = await (supabase as any)
@@ -28,12 +29,12 @@ const Admin = () => {
         .maybeSingle();
       if (!data) { navigate("/"); return; }
       setIsAdmin(true);
-      setLoading(false);
+      setChecking(false);
     };
     checkRole();
-  }, [user]);
+  }, [user, authLoading]);
 
-  if (loading || !isAdmin) {
+  if (authLoading || checking || !isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

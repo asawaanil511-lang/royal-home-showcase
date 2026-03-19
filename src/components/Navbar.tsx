@@ -77,7 +77,7 @@ const Navbar = () => {
                   <Shield className="h-4 w-4" /> Admin
                 </Link>
               )}
-                to="/wallet"
+              <Link
                 className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 title="Profile"
               >

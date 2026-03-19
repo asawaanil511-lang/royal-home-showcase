@@ -69,7 +69,14 @@ const Navbar = () => {
               >
                 My Bets
               </Link>
-              <Link
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  className="flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/20"
+                >
+                  <Shield className="h-4 w-4" /> Admin
+                </Link>
+              )}
                 to="/wallet"
                 className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 title="Profile"

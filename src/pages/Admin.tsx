@@ -34,7 +34,7 @@ const Admin = () => {
     checkRole();
   }, [user, authLoading]);
 
-  if (loading || !isAdmin) {
+  if (authLoading || checking || !isAdmin) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />

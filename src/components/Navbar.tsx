@@ -78,6 +78,7 @@ const Navbar = () => {
                 </Link>
               )}
               <Link
+                to="/wallet"
                 className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 title="Profile"
               >

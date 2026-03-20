@@ -15,6 +15,7 @@ import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import WalletAnimation from "./components/WalletAnimation";
 
 const queryClient = new QueryClient();
 
@@ -25,6 +26,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <WalletAnimation />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/matches" element={<Matches />} />

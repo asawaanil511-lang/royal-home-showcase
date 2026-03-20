@@ -3,11 +3,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Wallet as WalletIcon, Plus, ArrowDownLeft, ArrowUpRight } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Wallet as WalletIcon, ExternalLink, ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { motion } from "framer-motion";
+
+const TELEGRAM_LINK = "https://t.me/shrey14a";
 
 const AnimatedBalance = ({ value }: { value: number }) => {
   const [display, setDisplay] = useState(value);
@@ -60,8 +61,8 @@ const AnimatedBalance = ({ value }: { value: number }) => {
 };
 
 const Wallet = () => {
-  const { user, profile, refreshProfile } = useAuth();
-  const { toast } = useToast();
+  const { user, profile } = useAuth();
+  const [customAmount, setCustomAmount] = useState("");
 
   if (!user) {
     return (
@@ -79,12 +80,8 @@ const Wallet = () => {
     );
   }
 
-  const handleTopUp = async (amount: number) => {
-    if (!profile) return;
-    const newBalance = profile.wallet_balance + amount;
-    await supabase.from("profiles").update({ wallet_balance: newBalance }).eq("user_id", user.id);
-    await refreshProfile();
-    toast({ title: "💰 Coins Added!", description: `₹${amount.toLocaleString()} added to your wallet.` });
+  const handleRedirect = () => {
+    window.open(TELEGRAM_LINK, "_blank");
   };
 
   return (
@@ -101,22 +98,45 @@ const Wallet = () => {
             <p className="text-xs text-muted-foreground mt-1">Virtual coins</p>
           </div>
 
-          {/* Top up */}
+          {/* Add Coins */}
           <div className="rounded-2xl border border-border/50 bg-card p-6 mb-6">
-            <h3 className="text-lg font-bold text-foreground mb-4 flex items-center gap-2">
-              <Plus className="h-5 w-5 text-primary" /> Add Coins
-            </h3>
-            <div className="grid grid-cols-2 gap-3">
+            <h3 className="text-lg font-bold text-foreground mb-1">Add Coins</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Select an amount or enter a custom value — you'll be redirected to complete payment.
+            </p>
+            <div className="grid grid-cols-2 gap-3 mb-5">
               {[500, 1000, 5000, 10000].map((amt) => (
                 <Button
                   key={amt}
                   variant="outline"
-                  className="border-primary/30 text-primary hover:bg-primary/10"
-                  onClick={() => handleTopUp(amt)}
+                  className="border-primary/30 text-primary hover:bg-primary/10 gap-2"
+                  onClick={handleRedirect}
                 >
-                  + ₹{amt.toLocaleString()}
+                  <ExternalLink className="h-4 w-4" /> ₹{amt.toLocaleString()}
                 </Button>
               ))}
+            </div>
+
+            <p className="text-sm text-muted-foreground mb-2">Custom Amount</p>
+            <div className="flex gap-3">
+              <div className="relative flex-1">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">₹</span>
+                <Input
+                  type="number"
+                  min={1}
+                  placeholder="Enter amount"
+                  value={customAmount}
+                  onChange={(e) => setCustomAmount(e.target.value)}
+                  className="pl-7 bg-secondary border-border"
+                />
+              </div>
+              <Button
+                className="gradient-neon-primary text-primary-foreground gap-2 shrink-0"
+                onClick={handleRedirect}
+                disabled={!customAmount || Number(customAmount) <= 0}
+              >
+                <ExternalLink className="h-4 w-4" /> Pay Now
+              </Button>
             </div>
           </div>
 

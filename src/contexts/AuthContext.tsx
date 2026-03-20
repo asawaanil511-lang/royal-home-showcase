@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -11,11 +11,18 @@ type Profile = {
   wallet_balance: number;
 };
 
+type WalletChange = {
+  amount: number;
+  type: "credit" | "debit";
+  timestamp: number;
+};
+
 type AuthContextType = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  walletChange: WalletChange | null;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -25,6 +32,7 @@ const AuthContext = createContext<AuthContextType>({
   user: null,
   profile: null,
   loading: true,
+  walletChange: null,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -36,6 +44,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [walletChange, setWalletChange] = useState<WalletChange | null>(null);
+  const prevBalanceRef = useRef<number | null>(null);
 
   const fetchProfile = async (userId: string) => {
     const { data } = await supabase
@@ -43,12 +53,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .select("*")
       .eq("user_id", userId)
       .single();
+    if (data) {
+      // Track balance changes for animation
+      if (prevBalanceRef.current !== null && prevBalanceRef.current !== data.wallet_balance) {
+        const diff = data.wallet_balance - prevBalanceRef.current;
+        setWalletChange({
+          amount: Math.abs(diff),
+          type: diff > 0 ? "credit" : "debit",
+          timestamp: Date.now(),
+        });
+      }
+      prevBalanceRef.current = data.wallet_balance;
+    }
     setProfile(data);
   };
 
-  const refreshProfile = async () => {
+  const refreshProfile = useCallback(async () => {
     if (user) await fetchProfile(user.id);
-  };
+  }, [user]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -56,10 +78,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Use setTimeout to avoid deadlock with Supabase auth
           setTimeout(() => fetchProfile(session.user.id), 0);
         } else {
           setProfile(null);
+          prevBalanceRef.current = null;
         }
         setLoading(false);
       }
@@ -77,13 +99,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  // Realtime subscription for profile/wallet changes
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel(`profile-${user.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          const newData = payload.new as Profile;
+          if (prevBalanceRef.current !== null && prevBalanceRef.current !== newData.wallet_balance) {
+            const diff = newData.wallet_balance - prevBalanceRef.current;
+            setWalletChange({
+              amount: Math.abs(diff),
+              type: diff > 0 ? "credit" : "debit",
+              timestamp: Date.now(),
+            });
+          }
+          prevBalanceRef.current = newData.wallet_balance;
+          setProfile(newData);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user]);
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setProfile(null);
+    prevBalanceRef.current = null;
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, walletChange, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

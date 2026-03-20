@@ -37,7 +37,12 @@ const AdminUsers = () => {
   const handleWalletUpdate = async (userId: string) => {
     const val = Number(walletValue);
     if (isNaN(val) || val < 0) { toast({ title: "Invalid amount", variant: "destructive" }); return; }
-    await supabase.from("profiles").update({ wallet_balance: val }).eq("user_id", userId);
+    const { error } = await supabase.from("profiles").update({ wallet_balance: val }).eq("user_id", userId);
+    if (error) {
+      console.error("Wallet update error:", error);
+      toast({ title: "Failed to update wallet", description: error.message, variant: "destructive" });
+      return;
+    }
     setEditingWallet(null);
     toast({ title: "💰 Wallet updated!" });
     fetchUsers();

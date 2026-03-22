@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
-import CoinFlip from "./pages/CoinFlip";
+
 import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Leaderboard from "./pages/Leaderboard";

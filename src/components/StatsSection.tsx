@@ -3,10 +3,10 @@ import { Users, Coins, Trophy, TrendingUp } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const stats = [
-  { label: "Total Winners", value: 0, suffix: "", icon: Users, color: "text-primary" },
+  { label: "Total Winners", value: 0, prefix: "", suffix: "", icon: Users, color: "text-primary" },
   { label: "Total Paid Out", value: 0, prefix: "₹", suffix: "", icon: Coins, color: "text-accent" },
   { label: "Biggest Win", value: 0, prefix: "₹", suffix: "", icon: Trophy, color: "text-[hsl(45_100%_60%)]" },
-  { label: "Win Rate", value: 0, suffix: "%", icon: TrendingUp, color: "text-primary" },
+  { label: "Win Rate", value: 0, prefix: "", suffix: "%", icon: TrendingUp, color: "text-primary" },
 ];
 
 function AnimatedCounter({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
@@ -24,10 +24,12 @@ function AnimatedCounter({ value, prefix = "", suffix = "" }: { value: number; p
 
   useEffect(() => {
     if (!inView) return;
-    const mv = useMotionValue(0);
-    const unsub = mv.on("change", (v) => setDisplay(Math.round(v)));
-    animate(mv, value, { duration: 2, ease: "easeOut" });
-    return unsub;
+    const controls = animate(0, value, {
+      duration: 2,
+      ease: "easeOut",
+      onUpdate: (v) => setDisplay(Math.round(v)),
+    });
+    return () => controls.stop();
   }, [inView, value]);
 
   return (
@@ -52,9 +54,7 @@ const StatsSection = () => {
               whileHover={{ scale: 1.05, y: -4 }}
               className="relative flex flex-col items-center rounded-2xl border border-border/50 bg-card p-8 text-center shadow-card transition-all hover:glow-border overflow-hidden group"
             >
-              {/* Glow effect */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-gradient-to-br from-primary/5 via-transparent to-accent/5" />
-              
               <motion.div
                 className="relative mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10"
                 whileHover={{ rotate: [0, -10, 10, 0] }}

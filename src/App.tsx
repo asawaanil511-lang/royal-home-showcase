@@ -30,7 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/matches" element={<Matches />} />
-            <Route path="/coinflip" element={<CoinFlip />} />
+            
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/my-bets" element={<MyBets />} />
             <Route path="/leaderboard" element={<Leaderboard />} />

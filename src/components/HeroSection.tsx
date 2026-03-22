@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Play, Zap } from "lucide-react";
+import { Play, LogIn, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 const HeroSection = () => {
+  const { user } = useAuth();
+
   return (
     <section className="relative overflow-hidden py-24">
-      {/* Neon glow blobs */}
       <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-primary/8 blur-[120px]" />
       <div className="pointer-events-none absolute -bottom-40 -right-40 h-[500px] w-[500px] rounded-full bg-accent/8 blur-[120px]" />
       <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[300px] rounded-full bg-[hsl(270_80%_60%/0.06)] blur-[100px]" />
@@ -25,15 +27,17 @@ const HeroSection = () => {
             Play. Win. <span className="text-neon">Repeat.</span>
           </h1>
           <p className="mx-auto mb-8 max-w-xl text-lg text-muted-foreground">
-            India's most exciting gaming platform. Flip coins, bet on cricket matches, spin wheels and win virtual rewards.
+            The most exciting gaming platform. Bet on cricket matches and win virtual rewards.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Button size="lg" className="gap-2 text-base font-semibold gradient-neon-primary text-primary-foreground shadow-neon hover:opacity-90" asChild>
               <Link to="/matches"><Play className="h-4 w-4" /> Start Playing</Link>
             </Button>
-            <Button size="lg" variant="outline" className="text-base font-semibold border-primary/30 text-primary hover:bg-primary/10" asChild>
-              <Link to="/coinflip">Coin Flip</Link>
-            </Button>
+            {!user && (
+              <Button size="lg" variant="outline" className="text-base font-semibold border-primary/30 text-primary hover:bg-primary/10 gap-2" asChild>
+                <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
+              </Button>
+            )}
           </div>
         </motion.div>
       </div>

@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Wallet, LogOut, User, Shield } from "lucide-react";
+import { Menu, X, Wallet, LogOut, User, Shield, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -29,10 +30,9 @@ const Navbar = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg gradient-neon-primary font-bold text-primary-foreground text-sm shadow-neon">
-              R
-            </div>
-            <span className="text-xl font-bold tracking-tight text-foreground">ROYAL11</span>
+            <img src={lawrenceLogo} alt="Lawrence Toss Book" className="h-9 w-9 rounded-lg object-cover" />
+            <span className="text-lg font-bold tracking-tight text-foreground hidden sm:block">LAWRENCE TOSS BOOK</span>
+            <span className="text-lg font-bold tracking-tight text-foreground sm:hidden">LTB</span>
           </Link>
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (
@@ -93,8 +93,8 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex border-primary/30 text-primary hover:bg-primary/10" asChild>
-                <Link to="/login">Login</Link>
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex border-primary/30 text-primary hover:bg-primary/10 gap-1.5" asChild>
+                <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
               </Button>
               <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon" asChild>
                 <Link to="/register">Register</Link>

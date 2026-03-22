@@ -39,7 +39,7 @@ const Register = () => {
     if (error) {
       toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "🎉 Account created!", description: "Welcome to Royal11! You have ₹1,000 in your wallet." });
+      toast({ title: "🎉 Account created!", description: "Welcome to Lawrence Toss Book! Start playing now." });
       navigate("/");
     }
   };

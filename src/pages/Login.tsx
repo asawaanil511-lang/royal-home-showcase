@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, ArrowRight } from "lucide-react";
 

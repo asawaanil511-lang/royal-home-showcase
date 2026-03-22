@@ -4,14 +4,6 @@ import GameCard from "./GameCard";
 
 const games = [
   {
-    title: "Coin Flip",
-    description: "50/50 chance to double your bet",
-    badge: "Popular" as const,
-    gradient: "gradient-game-blue" as const,
-    icon: "🪙",
-    href: "/coinflip",
-  },
-  {
     title: "Match Betting",
     description: "Bet on live cricket matches",
     badge: "Live" as const,
@@ -20,20 +12,12 @@ const games = [
     href: "/matches",
   },
   {
-    title: "Lucky Wheel",
-    description: "Spin and win big prizes",
-    badge: "Coming Soon" as const,
-    gradient: "gradient-game-pink" as const,
-    icon: "🎡",
-    href: "#",
-  },
-  {
-    title: "Jackpot",
-    description: "Win massive jackpot prizes",
-    badge: "Coming Soon" as const,
-    gradient: "gradient-game-green" as const,
-    icon: "💎",
-    href: "#",
+    title: "Leaderboard",
+    description: "See top winners & rankings",
+    badge: "Popular" as const,
+    gradient: "gradient-game-blue" as const,
+    icon: "📊",
+    href: "/leaderboard",
   },
 ];
 
@@ -55,11 +39,11 @@ const GameZone = () => {
             Get Ready for <span className="text-neon">Big Wins!</span>
           </h2>
           <p className="mx-auto max-w-lg text-muted-foreground">
-            Check out all our games! From upcoming releases to player favorites, there's always something fun waiting for you.
+            Place your bets on live matches and climb the leaderboard!
           </p>
         </motion.div>
 
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 max-w-2xl mx-auto">
           {games.map((game, i) => (
             <GameCard key={game.title} {...game} index={i} />
           ))}

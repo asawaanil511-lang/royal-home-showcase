@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
-import CoinFlip from "./pages/CoinFlip";
+
 import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Leaderboard from "./pages/Leaderboard";
@@ -30,7 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/matches" element={<Matches />} />
-            <Route path="/coinflip" element={<CoinFlip />} />
+            
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/my-bets" element={<MyBets />} />
             <Route path="/leaderboard" element={<Leaderboard />} />

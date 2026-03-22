@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Lock, User, ArrowRight } from "lucide-react";
 
@@ -39,7 +40,7 @@ const Register = () => {
     if (error) {
       toast({ title: "Registration failed", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "🎉 Account created!", description: "Welcome to Royal11! You have ₹1,000 in your wallet." });
+      toast({ title: "🎉 Account created!", description: "Welcome to Lawrence Toss Book! Start playing now." });
       navigate("/");
     }
   };
@@ -48,11 +49,9 @@ const Register = () => {
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 px-4">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-card">
         <div className="mb-6 text-center">
-          <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-lg font-bold text-primary-foreground">
-            R
-          </div>
+          <img src={lawrenceLogo} alt="Lawrence Toss Book" className="mx-auto mb-3 h-12 w-12 rounded-xl object-cover" />
           <h1 className="text-2xl font-extrabold text-foreground">Create Account</h1>
-          <p className="text-sm text-muted-foreground">Join Royal11 and start winning</p>
+          <p className="text-sm text-muted-foreground">Join Lawrence Toss Book and start winning</p>
         </div>
 
         <form onSubmit={handleRegister} className="space-y-4">

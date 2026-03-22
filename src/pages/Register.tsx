@@ -49,7 +49,7 @@ const Register = () => {
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 px-4">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-card">
         <div className="mb-6 text-center">
-          <img src="/src/assets/lawrence-logo.jpg" alt="Lawrence Toss Book" className="mx-auto mb-3 h-12 w-12 rounded-xl object-cover" />
+          <img src={lawrenceLogo} alt="Lawrence Toss Book" className="mx-auto mb-3 h-12 w-12 rounded-xl object-cover" />
           <h1 className="text-2xl font-extrabold text-foreground">Create Account</h1>
           <p className="text-sm text-muted-foreground">Join Lawrence Toss Book and start winning</p>
         </div>

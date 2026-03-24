@@ -10,6 +10,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminMatches from "@/components/admin/AdminMatches";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBets from "@/components/admin/AdminBets";
+import AdminUserManagement from "@/components/admin/AdminUserManagement";
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();

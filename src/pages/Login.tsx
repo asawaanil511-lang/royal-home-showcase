@@ -3,34 +3,61 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
-import { Mail, Lock, ArrowRight } from "lucide-react";
+import { User, Lock, ArrowRight } from "lucide-react";
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState(() => localStorage.getItem("ltb_remember_user") || "");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("ltb_remember_user"));
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password) {
+    if (!username || !password) {
       toast({ title: "All fields required", variant: "destructive" });
       return;
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setLoading(false);
 
-    if (error) {
-      toast({ title: "Login failed", description: error.message, variant: "destructive" });
-    } else {
+    try {
+      const res = await supabase.functions.invoke("login-by-username", {
+        body: { username, password },
+      });
+
+      if (res.error || res.data?.error) {
+        toast({ title: "Login failed", description: res.data?.error || res.error?.message, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
+      // Set session from edge function response
+      const { session } = res.data;
+      if (session) {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+      }
+
+      // Remember me
+      if (rememberMe) {
+        localStorage.setItem("ltb_remember_user", username);
+      } else {
+        localStorage.removeItem("ltb_remember_user");
+      }
+
       toast({ title: "Welcome back! 🎉" });
       navigate("/");
+    } catch (err: any) {
+      toast({ title: "Login failed", description: err.message, variant: "destructive" });
     }
+    setLoading(false);
   };
 
   return (
@@ -44,12 +71,11 @@ const Login = () => {
 
         <form onSubmit={handleLogin} className="space-y-4">
           <div className="relative">
-            <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               className="pl-10"
             />
           </div>
@@ -64,6 +90,17 @@ const Login = () => {
             />
           </div>
 
+          <div className="flex items-center space-x-2">
+            <Checkbox
+              id="remember"
+              checked={rememberMe}
+              onCheckedChange={(checked) => setRememberMe(!!checked)}
+            />
+            <label htmlFor="remember" className="text-sm text-muted-foreground cursor-pointer">
+              Remember me
+            </label>
+          </div>
+
           <Button type="submit" className="w-full gap-2 font-semibold" size="lg" disabled={loading}>
             {loading ? "Logging in..." : <>Login <ArrowRight className="h-4 w-4" /></>}
           </Button>
@@ -71,9 +108,9 @@ const Login = () => {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <Link to="/register" className="font-semibold text-primary hover:underline">
-            Register
-          </Link>
+          <a href="https://t.me/shrey14a" target="_blank" rel="noopener noreferrer" className="font-semibold text-primary hover:underline">
+            Register via Telegram
+          </a>
         </p>
       </div>
     </div>

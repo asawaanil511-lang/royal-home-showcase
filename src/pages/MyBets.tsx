@@ -12,7 +12,7 @@ type Bet = {
   match_id: string;
   team_picked: string;
   amount: number;
-  odds_at_bet: number;
+  odds: number;
   potential_win: number;
   result: string;
   created_at: string;
@@ -77,7 +77,7 @@ const MyBets = () => {
               >
                 <div>
                   <p className="font-semibold text-card-foreground">
-                    Team {bet.team_picked} • {bet.odds_at_bet}x
+                    Team {bet.team_picked} • {bet.odds}x
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(bet.created_at).toLocaleDateString()}

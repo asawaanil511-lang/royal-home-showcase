@@ -62,14 +62,24 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
     }).eq("user_id", user.id);
 
     // Insert bet
-    await (supabase as any).from("bets").insert({
+    const { error: betError } = await supabase.from("bets").insert({
       user_id: user.id,
       match_id: match.id,
       team_picked: selectedTeam,
       amount: betAmount,
-      odds_at_bet: selectedOdds,
+      odds: selectedOdds,
       potential_win: potentialWin,
     });
+
+    if (betError) {
+      // Refund wallet on bet failure
+      await supabase.from("profiles").update({
+        wallet_balance: profile.wallet_balance,
+      }).eq("user_id", user.id);
+      toast({ title: "Bet failed", description: betError.message, variant: "destructive" });
+      setPlacing(false);
+      return;
+    }
 
     await refreshProfile();
     setPlacing(false);

@@ -10,6 +10,7 @@ import AdminDashboard from "@/components/admin/AdminDashboard";
 import AdminMatches from "@/components/admin/AdminMatches";
 import AdminUsers from "@/components/admin/AdminUsers";
 import AdminBets from "@/components/admin/AdminBets";
+import AdminUserManagement from "@/components/admin/AdminUserManagement";
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth();
@@ -54,17 +55,19 @@ const Admin = () => {
         </h1>
 
         <Tabs defaultValue="dashboard" className="w-full">
-          <TabsList className="bg-secondary border border-border/50 mb-6">
+          <TabsList className="bg-secondary border border-border/50 mb-6 flex-wrap">
             <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
             <TabsTrigger value="matches">Matches</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="bets">Bets</TabsTrigger>
+            <TabsTrigger value="user-mgmt">User Mgmt</TabsTrigger>
           </TabsList>
 
           <TabsContent value="dashboard"><AdminDashboard /></TabsContent>
           <TabsContent value="matches"><AdminMatches /></TabsContent>
           <TabsContent value="users"><AdminUsers /></TabsContent>
           <TabsContent value="bets"><AdminBets /></TabsContent>
+          <TabsContent value="user-mgmt"><AdminUserManagement /></TabsContent>
         </Tabs>
       </section>
       <Footer />

@@ -13,10 +13,8 @@ Deno.serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const anonKey = Deno.env.get('SUPABASE_PUBLISHABLE_KEY')!;
     
     const adminClient = createClient(supabaseUrl, serviceRoleKey);
-    const anonClient = createClient(supabaseUrl, anonKey);
 
     const { username, password } = await req.json();
     if (!username || !password) {

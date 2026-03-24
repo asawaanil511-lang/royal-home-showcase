@@ -17,17 +17,17 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
+const DEFAULT_PASSWORD = "Abcd@1234";
+
 const AdminUserManagement = () => {
   const { toast } = useToast();
   const [createUsername, setCreateUsername] = useState("");
-  const [createPassword, setCreatePassword] = useState("");
   const [creating, setCreating] = useState(false);
 
   const [deleteUserId, setDeleteUserId] = useState("");
   const [deleting, setDeleting] = useState(false);
 
   const [resetUserId, setResetUserId] = useState("");
-  const [resetPassword, setResetPassword] = useState("");
   const [resetting, setResetting] = useState(false);
 
   const [recentActions, setRecentActions] = useState<{ action: string; detail: string; time: string }[]>([]);
@@ -37,28 +37,22 @@ const AdminUserManagement = () => {
   };
 
   const handleCreate = async () => {
-    if (!createUsername || !createPassword) {
-      toast({ title: "Username and password required", variant: "destructive" });
-      return;
-    }
-    if (createPassword.length < 6) {
-      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+    if (!createUsername) {
+      toast({ title: "Username required", variant: "destructive" });
       return;
     }
     setCreating(true);
-    const { data: { session } } = await supabase.auth.getSession();
     const res = await supabase.functions.invoke("admin-create-user", {
-      body: { action: "create", username: createUsername, password: createPassword },
+      body: { action: "create", username: createUsername },
     });
     setCreating(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "✅ User created!", description: `Username: ${createUsername}` });
-    addAction("Created User", createUsername);
+    toast({ title: "✅ User created!", description: `Username: ${createUsername} | Default Password: ${DEFAULT_PASSWORD}` });
+    addAction("Created User", `${createUsername} (pwd: ${DEFAULT_PASSWORD})`);
     setCreateUsername("");
-    setCreatePassword("");
   };
 
   const handleDelete = async () => {
@@ -81,27 +75,22 @@ const AdminUserManagement = () => {
   };
 
   const handleReset = async () => {
-    if (!resetUserId || !resetPassword) {
-      toast({ title: "User ID and new password required", variant: "destructive" });
-      return;
-    }
-    if (resetPassword.length < 6) {
-      toast({ title: "Password must be at least 6 characters", variant: "destructive" });
+    if (!resetUserId) {
+      toast({ title: "User ID required", variant: "destructive" });
       return;
     }
     setResetting(true);
     const res = await supabase.functions.invoke("admin-create-user", {
-      body: { action: "reset_password", user_id: resetUserId, password: resetPassword },
+      body: { action: "reset_password", user_id: resetUserId },
     });
     setResetting(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "🔑 Password reset!" });
-    addAction("Reset Password", resetUserId.slice(0, 8));
+    toast({ title: "🔑 Password reset to default!", description: `New password: ${DEFAULT_PASSWORD}` });
+    addAction("Reset Password", `${resetUserId.slice(0, 8)} → ${DEFAULT_PASSWORD}`);
     setResetUserId("");
-    setResetPassword("");
   };
 
   return (
@@ -112,21 +101,17 @@ const AdminUserManagement = () => {
         animate={{ opacity: 1, y: 0 }}
         className="rounded-xl border border-border/50 bg-card p-5 shadow-card"
       >
-        <h3 className="flex items-center gap-2 text-lg font-bold text-foreground mb-4">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-foreground mb-2">
           <UserPlus className="h-5 w-5 text-primary" /> Create User
         </h3>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <p className="text-xs text-muted-foreground mb-4">
+          Default password: <span className="text-primary font-mono">{DEFAULT_PASSWORD}</span> — user will be forced to change on first login.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
           <Input
             placeholder="Username"
             value={createUsername}
             onChange={(e) => setCreateUsername(e.target.value)}
-            className="bg-secondary border-border"
-          />
-          <Input
-            type="password"
-            placeholder="Default Password (min 6)"
-            value={createPassword}
-            onChange={(e) => setCreatePassword(e.target.value)}
             className="bg-secondary border-border"
           />
           <Button
@@ -185,21 +170,17 @@ const AdminUserManagement = () => {
         transition={{ delay: 0.2 }}
         className="rounded-xl border border-border/50 bg-card p-5 shadow-card"
       >
-        <h3 className="flex items-center gap-2 text-lg font-bold text-foreground mb-4">
+        <h3 className="flex items-center gap-2 text-lg font-bold text-foreground mb-2">
           <KeyRound className="h-5 w-5 text-accent" /> Reset Password
         </h3>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <p className="text-xs text-muted-foreground mb-4">
+          Resets to default: <span className="text-primary font-mono">{DEFAULT_PASSWORD}</span>
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
           <Input
             placeholder="User ID"
             value={resetUserId}
             onChange={(e) => setResetUserId(e.target.value)}
-            className="bg-secondary border-border"
-          />
-          <Input
-            type="password"
-            placeholder="New Password (min 6)"
-            value={resetPassword}
-            onChange={(e) => setResetPassword(e.target.value)}
             className="bg-secondary border-border"
           />
           <Button
@@ -207,7 +188,7 @@ const AdminUserManagement = () => {
             disabled={resetting}
             className="bg-accent text-accent-foreground hover:bg-accent/90"
           >
-            {resetting ? "Resetting..." : "Reset Password"}
+            {resetting ? "Resetting..." : "Reset to Default"}
           </Button>
         </div>
       </motion.div>

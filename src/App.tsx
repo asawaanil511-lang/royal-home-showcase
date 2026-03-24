@@ -3,10 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/contexts/AuthContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
-
 import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Leaderboard from "./pages/Leaderboard";
@@ -16,8 +15,15 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import WalletAnimation from "./components/WalletAnimation";
+import ChangePasswordDialog from "./components/ChangePasswordDialog";
 
 const queryClient = new QueryClient();
+
+const PasswordGate = () => {
+  const { user, mustChangePassword } = useAuth();
+  if (!user || !mustChangePassword) return null;
+  return <ChangePasswordDialog open={true} userId={user.id} />;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -27,10 +33,10 @@ const App = () => (
       <BrowserRouter>
         <AuthProvider>
           <WalletAnimation />
+          <PasswordGate />
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/matches" element={<Matches />} />
-            
             <Route path="/wallet" element={<Wallet />} />
             <Route path="/my-bets" element={<MyBets />} />
             <Route path="/leaderboard" element={<Leaderboard />} />

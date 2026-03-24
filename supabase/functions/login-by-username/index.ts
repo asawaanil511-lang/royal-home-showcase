@@ -35,7 +35,7 @@ Deno.serve(async (req) => {
     }
 
     // Sign in with email/password
-    const { data: session, error } = await anonClient.auth.signInWithPassword({
+    const { data: session, error } = await adminClient.auth.signInWithPassword({
       email: user.email,
       password,
     });

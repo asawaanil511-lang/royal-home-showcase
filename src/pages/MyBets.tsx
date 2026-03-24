@@ -12,7 +12,7 @@ type Bet = {
   match_id: string;
   team_picked: string;
   amount: number;
-  odds_at_bet: number;
+  odds: number;
   potential_win: number;
   result: string;
   created_at: string;

@@ -77,7 +77,7 @@ const MyBets = () => {
               >
                 <div>
                   <p className="font-semibold text-card-foreground">
-                    Team {bet.team_picked} • {bet.odds_at_bet}x
+                    Team {bet.team_picked} • {bet.odds}x
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {new Date(bet.created_at).toLocaleDateString()}

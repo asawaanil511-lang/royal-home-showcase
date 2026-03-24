@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Menu, X, Wallet, LogOut, User, Shield, LogIn } from "lucide-react";
+import { Menu, X, Wallet, LogOut, User, Shield, LogIn, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
 import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 
 const navLinks = [
@@ -18,12 +19,15 @@ const Navbar = () => {
   const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showUsername, setShowUsername] = useState(true);
 
   useEffect(() => {
     if (!user) { setIsAdmin(false); return; }
     (supabase as any).from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
       .then(({ data }: any) => setIsAdmin(!!data));
   }, [user]);
+
+  const balance = profile?.wallet_balance ?? 0;
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border/50 bg-background/90 backdrop-blur-xl">
@@ -50,18 +54,48 @@ const Navbar = () => {
             ))}
           </div>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {user ? (
             <>
+              {/* Username tag with eye toggle */}
+              <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/5 px-3 py-1.5">
+                <User className="h-3.5 w-3.5 text-accent" />
+                <span className="text-xs font-semibold text-accent">
+                  {showUsername ? (profile?.username || "user") : "••••••"}
+                </span>
+                <button
+                  onClick={() => setShowUsername(!showUsername)}
+                  className="ml-0.5 text-muted-foreground hover:text-accent transition-colors"
+                >
+                  {showUsername ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                </button>
+              </div>
+
+              {/* Wallet showcase with animation */}
               <Link
                 to="/wallet"
-                className="hidden items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 sm:flex transition-colors hover:bg-primary/20"
+                className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 transition-all hover:bg-primary/20 hover:shadow-[0_0_12px_hsl(var(--primary)/0.3)]"
               >
-                <Wallet className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">
-                  ₹{(profile?.wallet_balance ?? 0).toLocaleString()}
-                </span>
+                <motion.div
+                  animate={{ rotate: [0, -10, 10, 0] }}
+                  transition={{ duration: 2, repeat: Infinity, repeatDelay: 4 }}
+                >
+                  <Wallet className="h-4 w-4 text-primary" />
+                </motion.div>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={balance}
+                    initial={{ y: -8, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    exit={{ y: 8, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="text-sm font-bold text-primary tabular-nums"
+                  >
+                    ₹{balance.toLocaleString()}
+                  </motion.span>
+                </AnimatePresence>
               </Link>
+
               <Link
                 to="/my-bets"
                 className="hidden text-sm font-medium text-muted-foreground hover:text-foreground transition-colors md:block"
@@ -76,13 +110,6 @@ const Navbar = () => {
                   <Shield className="h-4 w-4" /> Admin
                 </Link>
               )}
-              <Link
-                to="/wallet"
-                className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                title="Profile"
-              >
-                <User className="h-5 w-5" />
-              </Link>
               <button
                 onClick={signOut}
                 className="rounded-full p-2 text-muted-foreground transition-colors hover:bg-secondary hover:text-destructive"
@@ -97,7 +124,7 @@ const Navbar = () => {
                 <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
               </Button>
               <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon" asChild>
-                <Link to="/register">Register</Link>
+                <a href="https://t.me/shrey14a" target="_blank" rel="noopener noreferrer">Register</a>
               </Button>
             </>
           )}
@@ -138,14 +165,26 @@ const Navbar = () => {
             )}
           </div>
           {user ? (
-            <div className="mt-3 flex items-center justify-between">
-              <Link to="/wallet" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
-                <Wallet className="h-4 w-4 text-primary" />
-                <span className="text-sm font-semibold text-primary">₹{(profile?.wallet_balance ?? 0).toLocaleString()}</span>
-              </Link>
-              <Button variant="outline" size="sm" onClick={signOut} className="border-destructive/30 text-destructive">
-                Logout
-              </Button>
+            <div className="mt-3 space-y-3">
+              {/* Mobile username tag */}
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-accent" />
+                <span className="text-sm font-semibold text-accent">
+                  {showUsername ? (profile?.username || "user") : "••••••"}
+                </span>
+                <button onClick={() => setShowUsername(!showUsername)} className="text-muted-foreground">
+                  {showUsername ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <Link to="/wallet" className="flex items-center gap-2" onClick={() => setMobileOpen(false)}>
+                  <Wallet className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-semibold text-primary">₹{balance.toLocaleString()}</span>
+                </Link>
+                <Button variant="outline" size="sm" onClick={signOut} className="border-destructive/30 text-destructive">
+                  Logout
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="mt-3 flex gap-2">
@@ -153,7 +192,7 @@ const Navbar = () => {
                 <Link to="/login" onClick={() => setMobileOpen(false)}>Login</Link>
               </Button>
               <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold" asChild>
-                <Link to="/register" onClick={() => setMobileOpen(false)}>Register</Link>
+                <a href="https://t.me/shrey14a" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>Register</a>
               </Button>
             </div>
           )}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +26,9 @@ const Login = () => {
     setLoading(true);
 
     try {
+      // Step 1: Look up email from username via edge function
       const res = await supabase.functions.invoke("login-by-username", {
-        body: { username, password },
+        body: { username },
       });
 
       if (res.error || res.data?.error) {
@@ -36,13 +37,23 @@ const Login = () => {
         return;
       }
 
-      // Set session from edge function response
-      const { session } = res.data;
-      if (session) {
-        await supabase.auth.setSession({
-          access_token: session.access_token,
-          refresh_token: session.refresh_token,
-        });
+      const { email } = res.data;
+      if (!email) {
+        toast({ title: "Login failed", description: "User not found", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
+      // Step 2: Sign in directly on the client with the resolved email
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (signInError) {
+        toast({ title: "Login failed", description: "Invalid username or password", variant: "destructive" });
+        setLoading(false);
+        return;
       }
 
       // Remember me

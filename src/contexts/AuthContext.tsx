@@ -9,6 +9,7 @@ type Profile = {
   display_name: string | null;
   avatar_url: string | null;
   wallet_balance: number;
+  must_change_password?: boolean;
 };
 
 type WalletChange = {
@@ -23,6 +24,7 @@ type AuthContextType = {
   profile: Profile | null;
   loading: boolean;
   walletChange: WalletChange | null;
+  mustChangePassword: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -33,6 +35,7 @@ const AuthContext = createContext<AuthContextType>({
   profile: null,
   loading: true,
   walletChange: null,
+  mustChangePassword: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -45,16 +48,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [walletChange, setWalletChange] = useState<WalletChange | null>(null);
+  const [mustChangePassword, setMustChangePassword] = useState(false);
   const prevBalanceRef = useRef<number | null>(null);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
+    const { data } = await (supabase as any)
       .from("profiles")
       .select("*")
       .eq("user_id", userId)
       .single();
     if (data) {
-      // Track balance changes for animation
       if (prevBalanceRef.current !== null && prevBalanceRef.current !== data.wallet_balance) {
         const diff = data.wallet_balance - prevBalanceRef.current;
         setWalletChange({
@@ -64,6 +67,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         });
       }
       prevBalanceRef.current = data.wallet_balance;
+      setMustChangePassword(!!data.must_change_password);
     }
     setProfile(data);
   };
@@ -82,6 +86,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } else {
           setProfile(null);
           prevBalanceRef.current = null;
+          setMustChangePassword(false);
         }
         setLoading(false);
       }
@@ -138,10 +143,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await supabase.auth.signOut();
     setProfile(null);
     prevBalanceRef.current = null;
+    setMustChangePassword(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, walletChange, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, walletChange, mustChangePassword, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

@@ -138,7 +138,7 @@ const AdminUsers = () => {
                   </div>
                   <div>
                     <p className="font-semibold text-foreground text-sm">{u.username || "—"}</p>
-                    <p className="text-xs text-muted-foreground">{u.display_name || "—"} • Joined {new Date(u.created_at).toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground">{u.display_name || "—"} • ID: <span className="font-mono text-[10px] select-all">{u.user_id}</span></p>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

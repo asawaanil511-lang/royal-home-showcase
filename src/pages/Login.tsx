@@ -26,18 +26,21 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Step 1: Look up email from username via edge function
-      const res = await supabase.functions.invoke("login-by-username", {
-        body: { username },
+      // Step 1: Look up email from username via API
+      const response = await fetch("/api/login-by-username", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username }),
       });
+      const res = await response.json();
 
-      if (res.error || res.data?.error) {
-        toast({ title: "Login failed", description: res.data?.error || res.error?.message, variant: "destructive" });
+      if (!response.ok || res.error) {
+        toast({ title: "Login failed", description: res.error || "Unknown error", variant: "destructive" });
         setLoading(false);
         return;
       }
 
-      const { email } = res.data;
+      const { email } = res;
       if (!email) {
         toast({ title: "Login failed", description: "User not found", variant: "destructive" });
         setLoading(false);

@@ -1,5 +1,20 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+async function callAdminApi(body: object) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token || "";
+  const response = await fetch("/api/admin-create-user", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json();
+  return { data, error: response.ok ? null : { message: data.error || "Request failed" } };
+}
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -42,9 +57,7 @@ const AdminUserManagement = () => {
       return;
     }
     setCreating(true);
-    const res = await supabase.functions.invoke("admin-create-user", {
-      body: { action: "create", username: createUsername },
-    });
+    const res = await callAdminApi({ action: "create", username: createUsername });
     setCreating(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
@@ -61,9 +74,7 @@ const AdminUserManagement = () => {
       return;
     }
     setDeleting(true);
-    const res = await supabase.functions.invoke("admin-create-user", {
-      body: { action: "delete", user_id: deleteUserId },
-    });
+    const res = await callAdminApi({ action: "delete", user_id: deleteUserId });
     setDeleting(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
@@ -80,9 +91,7 @@ const AdminUserManagement = () => {
       return;
     }
     setResetting(true);
-    const res = await supabase.functions.invoke("admin-create-user", {
-      body: { action: "reset_password", user_id: resetUserId },
-    });
+    const res = await callAdminApi({ action: "reset_password", user_id: resetUserId });
     setResetting(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });

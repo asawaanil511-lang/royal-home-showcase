@@ -59,5 +59,4 @@ externalPort = 8081
 
 [userenv.shared]
 VITE_SUPABASE_URL = "https://xzgccthebdjchdumgrvv.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1ewPjDhKFs-zEi0WoMwpvg_fj4fdSBZ"
 VITE_SUPABASE_PROJECT_ID = "xzgccthebdjchdumgrvv"

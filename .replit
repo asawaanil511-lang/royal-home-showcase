@@ -26,15 +26,26 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "npm run dev"
+args = "npx concurrently \"npx tsx server/index.ts\" \"npx vite\""
 waitForPort = 5000
+
+[workflows.workflow.metadata]
+outputType = "webview"
 
 [agent]
 integrations = ["javascript_database:1.0.0"]
 
 [[ports]]
+localPort = 3001
+externalPort = 3001
+
+[[ports]]
 localPort = 5000
 externalPort = 5000
+
+[[ports]]
+localPort = 5001
+externalPort = 3000
 
 [[ports]]
 localPort = 8080
@@ -48,5 +59,5 @@ externalPort = 8081
 
 [userenv.shared]
 VITE_SUPABASE_URL = "https://oaywgkovfxaxzjzixbor.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9heXdna292ZnhheHpqeml4Ym9yIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4NDA5MzAsImV4cCI6MjA4ODQxNjkzMH0.ST4ElBGmVgm5El_n1hSJqXbcaM_b9PPdYc3la1XBYfY"
-VITE_SUPABASE_PROJECT_ID = "oaywgkovfxaxzjzixbor"
+VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_1ewPjDhKFs-zEi0WoMwpvg_fj4fdSBZ"
+VITE_SUPABASE_PROJECT_ID = "xzgccthebdjchdumgrvv"

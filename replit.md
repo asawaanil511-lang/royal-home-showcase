@@ -1,6 +1,6 @@
 # Superman Toss Book
 
-A cricket sports betting/gaming web app rebranded from "Lawrence Toss Book" to "Superman Toss Book".
+A cricket sports betting/gaming web app — Superman Toss Book.
 
 ## Architecture
 
@@ -12,40 +12,36 @@ A cricket sports betting/gaming web app rebranded from "Lawrence Toss Book" to "
 
 - `server/index.ts` — Express API server with `/api/login-by-username` and `/api/admin-create-user` routes; serves static frontend in production
 - `src/integrations/supabase/client.ts` — Supabase client (uses `VITE_SUPABASE_ANON_KEY`)
-- `src/contexts/AuthContext.tsx` — Auth state, profile management
+- `src/contexts/AuthContext.tsx` — Auth state, profile management, realtime wallet updates
 - `src/pages/Login.tsx` — Username-based login (resolves username → email via API)
 - `src/components/Navbar.tsx` — Navigation with Superman Toss Book branding
-- `src/components/Footer.tsx` — Footer with Superman Toss Book branding
-- `src/assets/superman-logo.jpg` — Superman Toss Book logo
+- `src/components/admin/` — Admin dashboard, match management, user management, bet tracking
 
 ## Database (Supabase)
 
 Tables: `profiles`, `matches`, `bets`, `user_roles`, `coin_flips`
-Views: `leaderboard`
 
-## Admin User Credentials
+## Secrets (Replit Secrets)
 
-- **Username**: `admin`
-- **Password**: `Abcd@1234`
-- **Role**: admin
+- `SUPABASE_SERVICE_ROLE_KEY` — Admin Supabase key (server-only, never exposed to frontend)
+- `VITE_SUPABASE_ANON_KEY` — Public Supabase key (frontend)
 
-## Deployment
+## Env Vars (Replit shared)
 
-**Build command**: `npm run build && npx esbuild server/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:fsevents`
-
-**Run command**: `NODE_ENV=production node ./dist/index.cjs`
-
-In production, Express serves the Vite-built frontend from `dist/` as static files, plus handles all `/api/*` routes.
+- `VITE_SUPABASE_URL` — `https://xzgccthebdjchdumgrvv.supabase.co`
+- `VITE_SUPABASE_PROJECT_ID` — `xzgccthebdjchdumgrvv`
 
 ## Dev Workflow
 
 ```
-npx concurrently "npx tsx server/index.ts" "npx vite"
+npm run dev
 ```
 
-## Secrets Required
+Runs Express server (port 3001) + Vite dev server (port 5000) concurrently. Vite proxies `/api/*` requests to port 3001.
 
-- `SUPABASE_SERVICE_ROLE_KEY` — Admin Supabase key (server-only)
-- `VITE_SUPABASE_ANON_KEY` — Public Supabase key (frontend)
-- `VITE_SUPABASE_URL` — `https://xzgccthebdjchdumgrvv.supabase.co`
-- `VITE_SUPABASE_PROJECT_ID` — `xzgccthebdjchdumgrvv`
+## Deployment
+
+**Build command**: `bash build.sh`  
+**Run command**: `NODE_ENV=production node ./dist/index.cjs`
+
+In production, Express serves the Vite-built frontend from `dist/` as static files and handles all `/api/*` routes.

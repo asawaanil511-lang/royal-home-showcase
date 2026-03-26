@@ -4,14 +4,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import lawrenceLogo from "@/assets/lawrence-logo.jpg";
+import supermanLogo from "@/assets/superman-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, ArrowRight } from "lucide-react";
 
 const Login = () => {
-  const [username, setUsername] = useState(() => localStorage.getItem("ltb_remember_user") || "");
+  const [username, setUsername] = useState(() => localStorage.getItem("stb_remember_user") || "");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("ltb_remember_user"));
+  const [rememberMe, setRememberMe] = useState(() => !!localStorage.getItem("stb_remember_user"));
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -61,9 +61,9 @@ const Login = () => {
 
       // Remember me
       if (rememberMe) {
-        localStorage.setItem("ltb_remember_user", username);
+        localStorage.setItem("stb_remember_user", username);
       } else {
-        localStorage.removeItem("ltb_remember_user");
+        localStorage.removeItem("stb_remember_user");
       }
 
       toast({ title: "Welcome back! 🎉" });
@@ -78,9 +78,9 @@ const Login = () => {
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 px-4">
       <div className="w-full max-w-md rounded-2xl border bg-card p-8 shadow-card">
         <div className="mb-6 text-center">
-          <img src={lawrenceLogo} alt="Lawrence Toss Book" className="mx-auto mb-3 h-12 w-12 rounded-xl object-cover" />
+          <img src={supermanLogo} alt="Superman Toss Book" className="mx-auto mb-3 h-14 w-14 rounded-full object-cover" />
           <h1 className="text-2xl font-extrabold text-foreground">Welcome Back</h1>
-          <p className="text-sm text-muted-foreground">Login to your Lawrence Toss Book account</p>
+          <p className="text-sm text-muted-foreground">Login to your Superman Toss Book account</p>
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4">

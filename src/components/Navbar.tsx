@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
-import lawrenceLogo from "@/assets/lawrence-logo.jpg";
+import supermanLogo from "@/assets/superman-logo.jpg";
 
 const navLinks = [
   { label: "Home", href: "/" },
@@ -34,9 +34,9 @@ const Navbar = () => {
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <img src={lawrenceLogo} alt="Lawrence Toss Book" className="h-9 w-9 rounded-lg object-cover" />
-            <span className="text-lg font-bold tracking-tight text-foreground hidden sm:block">LAWRENCE TOSS BOOK</span>
-            <span className="text-lg font-bold tracking-tight text-foreground sm:hidden">LTB</span>
+            <img src={supermanLogo} alt="Superman Toss Book" className="h-9 w-9 rounded-full object-cover" />
+            <span className="text-lg font-bold tracking-tight text-foreground hidden sm:block">SUPERMAN TOSS BOOK</span>
+            <span className="text-lg font-bold tracking-tight text-foreground sm:hidden">STB</span>
           </Link>
           <div className="hidden items-center gap-1 md:flex">
             {navLinks.map((link) => (

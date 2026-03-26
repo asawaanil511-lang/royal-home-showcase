@@ -2,6 +2,9 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
+import pg from "pg";
+
+const { Pool } = pg;
 
 const app = express();
 app.use(cors());
@@ -14,10 +17,26 @@ function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
+// Direct PostgreSQL pool using Supabase pooler URL
+export const db = new Pool({
+  connectionString: process.env.SUPABASE_DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+  max: 10,
+});
+
+db.connect()
+  .then((client) => {
+    console.log("PostgreSQL connected via Supabase pooler");
+    client.release();
+  })
+  .catch((err) => {
+    console.error("PostgreSQL connection error:", err.message);
+  });
+
 // ---- login-by-username ----
 app.post("/api/login-by-username", async (req, res) => {
   try {
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!serviceRoleKey) {
       return res.status(500).json({ error: "Server not configured. SUPABASE_SERVICE_ROLE_KEY is missing." });
     }
     const adminClient = getAdminClient();
@@ -44,7 +63,7 @@ app.post("/api/login-by-username", async (req, res) => {
 // ---- admin-create-user ----
 app.post("/api/admin-create-user", async (req, res) => {
   try {
-    if (!supabaseUrl || !serviceRoleKey) {
+    if (!serviceRoleKey) {
       return res.status(500).json({ error: "Server not configured. SUPABASE_SERVICE_ROLE_KEY is missing." });
     }
     const adminClient = getAdminClient();
@@ -114,8 +133,17 @@ app.post("/api/admin-create-user", async (req, res) => {
   }
 });
 
+// ---- health check ----
+app.get("/api/health", async (_req, res) => {
+  try {
+    const result = await db.query("SELECT NOW() as time");
+    return res.json({ status: "ok", db: "connected", time: result.rows[0].time });
+  } catch (err: any) {
+    return res.status(500).json({ status: "error", db: "disconnected", error: err.message });
+  }
+});
+
 // In production, serve the built frontend static files
-// NODE_ENV=production is set by the deploy run command
 if (process.env.NODE_ENV === "production") {
   const distPath = path.resolve(process.cwd(), "dist");
   app.use(express.static(distPath, { index: "index.html" }));

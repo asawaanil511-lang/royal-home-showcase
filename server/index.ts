@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import path from "path";
 import { createClient } from "@supabase/supabase-js";
 
 const app = express();
@@ -68,7 +69,7 @@ app.post("/api/admin-create-user", async (req, res) => {
 
     if (action === "create") {
       if (!username) return res.status(400).json({ error: "Username required" });
-      const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@lawrence.local`;
+      const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@superman.local`;
 
       const { data: newUser, error } = await adminClient.auth.admin.createUser({
         email,
@@ -112,6 +113,17 @@ app.post("/api/admin-create-user", async (req, res) => {
     return res.status(500).json({ error: err.message });
   }
 });
+
+// In production, serve the built frontend static files
+// NODE_ENV=production is set by the deploy run command
+if (process.env.NODE_ENV === "production") {
+  const distPath = path.resolve(process.cwd(), "dist");
+  app.use(express.static(distPath, { index: "index.html" }));
+  app.get("/{*path}", (_req, res) => {
+    res.sendFile(path.join(distPath, "index.html"));
+  });
+  console.log(`Serving static files from: ${distPath}`);
+}
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

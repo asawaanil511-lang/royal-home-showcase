@@ -7,11 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
   Receipt, TrendingUp, Clock, Trophy, XCircle, Share2,
-  Download, AlertCircle, Loader2, Filter
+  Download, AlertCircle, Loader2, Filter, Swords
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
+import supermanLogo from "@/assets/superman-logo.jpg";
 
 type BetWithMatch = {
   id: string;
@@ -32,10 +33,10 @@ type BetWithMatch = {
 };
 
 const resultConfig = {
-  pending:   { label: "Pending",   color: "text-accent",       bg: "bg-accent/10 border-accent/30",      icon: Clock },
-  won:       { label: "Won",       color: "text-primary",      bg: "bg-primary/10 border-primary/30",    icon: Trophy },
-  lost:      { label: "Lost",      color: "text-destructive",  bg: "bg-destructive/10 border-destructive/30", icon: XCircle },
-  cancelled: { label: "Cancelled", color: "text-muted-foreground", bg: "bg-muted/30 border-border/50",  icon: AlertCircle },
+  pending:   { label: "Pending",   color: "text-yellow-400",    bg: "bg-yellow-400/10 border-yellow-400/30",       icon: Clock },
+  won:       { label: "Won",       color: "text-emerald-400",   bg: "bg-emerald-400/10 border-emerald-400/30",     icon: Trophy },
+  lost:      { label: "Lost",      color: "text-red-400",       bg: "bg-red-400/10 border-red-400/30",             icon: XCircle },
+  cancelled: { label: "Cancelled", color: "text-muted-foreground", bg: "bg-muted/30 border-border/50",            icon: AlertCircle },
 };
 
 const WinCard = ({ bet }: { bet: BetWithMatch }) => {
@@ -43,23 +44,41 @@ const WinCard = ({ bet }: { bet: BetWithMatch }) => {
   return (
     <div
       id={`win-card-${bet.id}`}
-      className="rounded-2xl bg-gradient-to-br from-primary/20 to-accent/20 border-2 border-primary/50 p-6 text-center"
-      style={{ background: "linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)" }}
+      className="rounded-2xl p-6 text-center relative overflow-hidden"
+      style={{ background: "linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 40%, #0d1a2e 100%)" }}
     >
-      <div className="text-4xl mb-3">🏆</div>
-      <p className="text-sm text-primary font-semibold mb-1">SUPERMAN TOSS BOOK</p>
-      <p className="text-white text-lg font-bold mb-1">{bet.matches?.team_a_name} vs {bet.matches?.team_b_name}</p>
-      <p className="text-gray-400 text-xs mb-4">Picked: {teamName}</p>
-      <div className="rounded-xl bg-white/10 p-4 mb-4">
-        <p className="text-gray-400 text-xs mb-1">Bet Amount</p>
-        <p className="text-white text-2xl font-bold">₹{Number(bet.amount).toLocaleString()}</p>
+      {/* Glow effects */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-24 rounded-full blur-3xl opacity-30" style={{ background: "hsl(var(--primary))" }} />
       </div>
-      <div className="rounded-xl bg-primary/30 p-4 border border-primary/50">
-        <p className="text-primary text-xs mb-1">🎉 YOU WON</p>
-        <p className="text-primary text-3xl font-extrabold">₹{Number(bet.potential_win).toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
-        <p className="text-gray-400 text-xs mt-1">at {bet.odds}x odds</p>
+      <div className="relative">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <img src={supermanLogo} alt="Superman Toss Book" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
+          <div className="text-left">
+            <p className="text-xs font-bold text-primary tracking-widest uppercase">Superman Toss Book</p>
+            <p className="text-[10px] text-gray-400">Official Win Certificate</p>
+          </div>
+        </div>
+        <div className="text-4xl mb-3">🏆</div>
+        <p className="text-white text-lg font-bold mb-1">{bet.matches?.team_a_name} vs {bet.matches?.team_b_name}</p>
+        <p className="text-gray-400 text-xs mb-4">You picked: <span className="text-primary font-semibold">{teamName}</span></p>
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="rounded-xl p-3" style={{ background: "rgba(255,255,255,0.05)" }}>
+            <p className="text-gray-400 text-xs mb-1">Bet Amount</p>
+            <p className="text-white text-xl font-bold">₹{Number(bet.amount).toLocaleString()}</p>
+          </div>
+          <div className="rounded-xl p-3 border" style={{ background: "rgba(var(--primary)/0.15)", borderColor: "hsl(var(--primary)/0.4)" }}>
+            <p className="text-xs mb-1" style={{ color: "hsl(var(--primary))" }}>🎉 You Won</p>
+            <p className="text-2xl font-extrabold" style={{ color: "hsl(var(--primary))" }}>
+              ₹{Number(bet.potential_win).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </p>
+          </div>
+        </div>
+        <p className="text-gray-500 text-xs border-t border-white/10 pt-3 mt-2">
+          at {bet.odds}x odds • {new Date(bet.created_at).toLocaleString("en-IN")}
+        </p>
+        <p className="text-gray-600 text-[10px] mt-1">superman-toss-book.com</p>
       </div>
-      <p className="text-gray-500 text-[10px] mt-4">{new Date(bet.created_at).toLocaleString()}</p>
     </div>
   );
 };
@@ -77,116 +96,156 @@ const BetCard = ({
 }) => {
   const cfg = resultConfig[bet.result] || resultConfig.pending;
   const Icon = cfg.icon;
-  const teamPicked = bet.team_picked === "A" ? bet.matches?.team_a_name : bet.matches?.team_b_name;
+  const teamPickedName = bet.team_picked === "A" ? bet.matches?.team_a_name : bet.matches?.team_b_name;
   const matchOpen = bet.matches && (bet.matches.status === "live" || bet.matches.status === "upcoming");
-  const canCancel = bet.result === "pending" && matchOpen;
+  const canCancel = bet.result === "pending";
+  const totalReturn = Number(bet.amount) + Number(bet.potential_win);
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      className={`rounded-2xl border bg-card shadow-card overflow-hidden ${
-        bet.result === "won" ? "border-primary/40 shadow-[0_0_16px_hsl(var(--primary)/0.15)]" : "border-border/50"
-      }`}
+      exit={{ opacity: 0, scale: 0.95 }}
+      className={`rounded-2xl overflow-hidden border ${
+        bet.result === "won"
+          ? "border-emerald-500/40 shadow-[0_0_24px_hsl(142deg_76%_36%/0.15)]"
+          : bet.result === "cancelled"
+          ? "border-border/30 opacity-70"
+          : "border-border/50"
+      } bg-card`}
     >
-      {/* Top colored strip */}
+      {/* Top color strip */}
       <div className={`h-1 w-full ${
-        bet.result === "won" ? "bg-gradient-to-r from-primary to-accent" :
-        bet.result === "lost" ? "bg-destructive" :
-        bet.result === "cancelled" ? "bg-muted-foreground" :
-        "bg-accent"
+        bet.result === "won" ? "bg-gradient-to-r from-emerald-500 to-primary" :
+        bet.result === "lost" ? "bg-red-500" :
+        bet.result === "cancelled" ? "bg-muted-foreground/40" :
+        "bg-gradient-to-r from-yellow-500 to-amber-400"
       }`} />
 
-      <div className="p-4 sm:p-5">
-        {/* Header row */}
-        <div className="flex items-start justify-between gap-3 mb-3">
-          <div className="flex-1 min-w-0">
-            <p className="font-bold text-foreground truncate">
-              {bet.matches ? `${bet.matches.team_a_name} vs ${bet.matches.team_b_name}` : "Match"}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              Picked: <span className="font-semibold text-foreground">{teamPicked || bet.team_picked}</span>
-              {" • "}{bet.odds}x odds
-            </p>
-          </div>
-          <span className={`shrink-0 flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
+      <div className="p-4 sm:p-5 space-y-4">
+        {/* Status badge row */}
+        <div className="flex items-center justify-between">
+          <span className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-bold ${cfg.bg} ${cfg.color}`}>
             <Icon className="h-3 w-3" />
             {cfg.label}
           </span>
-        </div>
-
-        {/* Amount row */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="rounded-xl bg-secondary/60 p-3">
-            <p className="text-[11px] text-muted-foreground mb-0.5">Bet Amount</p>
-            <p className="text-base font-bold text-foreground">₹{Number(bet.amount).toLocaleString()}</p>
-          </div>
-          <div className={`rounded-xl p-3 ${bet.result === "won" ? "bg-primary/15 border border-primary/30" : "bg-secondary/60"}`}>
-            <p className="text-[11px] text-muted-foreground mb-0.5">
-              {bet.result === "won" ? "💰 Won" : "Potential Win"}
-            </p>
-            <p className={`text-base font-bold ${bet.result === "won" ? "text-primary" : "text-muted-foreground"}`}>
-              ₹{Number(bet.potential_win).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </p>
-          </div>
-        </div>
-
-        {/* Time & Match status */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground mb-4">
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            Placed: {new Date(bet.created_at).toLocaleString("en-IN", {
-              day: "2-digit", month: "short", year: "numeric",
-              hour: "2-digit", minute: "2-digit"
-            })}
+          <span className="text-[11px] text-muted-foreground">
+            {new Date(bet.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
           </span>
-          {bet.matches && (
-            <span className={`font-semibold px-2 py-0.5 rounded-full text-[10px] ${
-              bet.matches.status === "live" ? "bg-destructive/10 text-destructive" :
-              bet.matches.status === "upcoming" ? "bg-accent/10 text-accent" :
-              "bg-muted text-muted-foreground"
-            }`}>
-              Match: {bet.matches.status.toUpperCase()}
+        </div>
+
+        {/* Match VS display */}
+        <div className="rounded-xl overflow-hidden" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)" }}>
+          <div className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              {bet.matches?.status === "live" && (
+                <span className="flex items-center gap-1 text-[10px] font-bold text-red-400 bg-red-400/15 border border-red-400/30 px-2 py-0.5 rounded-full">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+                  LIVE
+                </span>
+              )}
+              {bet.matches?.status === "upcoming" && (
+                <span className="text-[10px] font-semibold text-blue-400 bg-blue-400/10 border border-blue-400/30 px-2 py-0.5 rounded-full">UPCOMING</span>
+              )}
+              {bet.matches?.status === "closed" && (
+                <span className="text-[10px] font-semibold text-muted-foreground bg-muted/30 border border-border/40 px-2 py-0.5 rounded-full">CLOSED</span>
+              )}
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="flex-1 text-center">
+                <p className={`text-sm font-extrabold tracking-tight ${bet.team_picked === "A" && bet.result !== "cancelled" ? "text-white" : "text-white/60"}`}>
+                  {bet.matches?.team_a_name || "Team A"}
+                </p>
+                {bet.team_picked === "A" && (
+                  <span className="text-[10px] text-blue-400 font-medium">Your Pick</span>
+                )}
+              </div>
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-xs font-bold text-white/60">
+                VS
+              </div>
+              <div className="flex-1 text-center">
+                <p className={`text-sm font-extrabold tracking-tight ${bet.team_picked === "B" && bet.result !== "cancelled" ? "text-white" : "text-white/60"}`}>
+                  {bet.matches?.team_b_name || "Team B"}
+                </p>
+                {bet.team_picked === "B" && (
+                  <span className="text-[10px] text-blue-400 font-medium">Your Pick</span>
+                )}
+              </div>
+            </div>
+          </div>
+          {/* You bet on pill */}
+          <div className="px-4 pb-4">
+            <div className="flex items-center justify-center gap-2 bg-white/5 rounded-lg py-2 px-3">
+              <span className="text-xs text-white/50">You bet on:</span>
+              <span className="text-xs font-bold text-white bg-primary/30 border border-primary/40 px-2.5 py-0.5 rounded-full uppercase tracking-wide">
+                {teamPickedName || bet.team_picked}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats grid */}
+        <div className="rounded-xl border border-border/40 bg-secondary/30 divide-y divide-border/30 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Amount</span>
+            <span className="text-sm font-bold text-foreground">₹{Number(bet.amount).toLocaleString()}</span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Rate</span>
+            <span className="text-sm font-bold text-emerald-400 flex items-center gap-1">
+              <TrendingUp className="h-3 w-3" /> {bet.odds}x
             </span>
-          )}
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Potential Win</span>
+            <span className={`text-sm font-bold ${bet.result === "won" ? "text-emerald-400" : "text-primary"}`}>
+              ₹{Number(bet.potential_win).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </span>
+          </div>
+          <div className="flex items-center justify-between px-4 py-2.5">
+            <span className="text-xs text-muted-foreground">Total Return</span>
+            <span className={`text-sm font-bold ${bet.result === "won" ? "text-emerald-400" : "text-red-400"}`}>
+              ₹{totalReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+            </span>
+          </div>
         </div>
 
         {/* Action buttons */}
-        <div className="flex flex-wrap gap-2">
-          {canCancel && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-xs border-destructive/30 text-destructive hover:bg-destructive/10"
-              onClick={() => onCancel(bet.id)}
-              disabled={cancelling === bet.id}
-            >
-              {cancelling === bet.id ? (
-                <><Loader2 className="h-3 w-3 mr-1 animate-spin" /> Cancelling...</>
-              ) : (
-                <><XCircle className="h-3 w-3 mr-1" /> Cancel Bet</>
-              )}
-            </Button>
-          )}
+        <div className="space-y-2">
           {bet.result === "won" && (
             <Button
-              size="sm"
-              className="text-xs gradient-neon-primary text-primary-foreground shadow-neon"
+              className="w-full font-bold gap-2 bg-gradient-to-r from-emerald-600 to-primary text-white shadow-[0_0_20px_hsl(var(--primary)/0.3)]"
               onClick={() => onShare(bet)}
             >
-              <Share2 className="h-3 w-3 mr-1" /> Share Win
+              <Share2 className="h-4 w-4" /> Share Your Win 🎉
             </Button>
           )}
-        </div>
 
-        {/* Cancel note */}
-        {bet.result === "pending" && !matchOpen && (
-          <p className="text-[11px] text-muted-foreground mt-2 flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" /> Cannot cancel — match is {bet.matches?.status}
-          </p>
-        )}
+          {canCancel && (
+            <>
+              {matchOpen ? (
+                <Button
+                  variant="outline"
+                  className="w-full font-bold gap-2 border-red-500/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 hover:border-red-500/80"
+                  onClick={() => onCancel(bet.id)}
+                  disabled={cancelling === bet.id}
+                >
+                  {cancelling === bet.id ? (
+                    <><Loader2 className="h-4 w-4 animate-spin" /> Cancelling...</>
+                  ) : (
+                    <><XCircle className="h-4 w-4" /> Cancel Bet</>
+                  )}
+                </Button>
+              ) : (
+                <div className="flex items-center gap-2 rounded-xl border border-border/40 bg-muted/20 px-4 py-3">
+                  <AlertCircle className="h-4 w-4 text-muted-foreground shrink-0" />
+                  <p className="text-xs text-muted-foreground">Bet is in inactive state — cannot cancel after match closes.</p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </motion.div>
   );
@@ -231,40 +290,64 @@ const MyBets = () => {
 
   const handleCancel = async (betId: string) => {
     if (!user) return;
-    setCancelling(betId);
+
     const bet = bets.find((b) => b.id === betId);
-    if (!bet) { setCancelling(null); return; }
+    if (!bet) return;
 
-    const { error: updateErr } = await (supabase as any).from("bets").update({
-      result: "cancelled",
-      settled_at: new Date().toISOString(),
-    }).eq("id", betId);
-
-    if (updateErr) {
-      toast({ title: "Failed to cancel", description: updateErr.message, variant: "destructive" });
-      setCancelling(null);
+    // Prevent double cancellation
+    if (bet.result === "cancelled") {
+      toast({ title: "Already cancelled", description: "This bet has already been cancelled.", variant: "destructive" });
       return;
     }
 
-    const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", user.id).single();
-    if (profile) {
-      await supabase.from("profiles").update({
-        wallet_balance: profile.wallet_balance + Number(bet.amount),
-      }).eq("user_id", user.id);
+    // Check if match is active
+    const matchOpen = bet.matches && (bet.matches.status === "live" || bet.matches.status === "upcoming");
+    if (!matchOpen) {
+      toast({ title: "Failed to cancel bet", description: "Bet is in inactive state", variant: "destructive" });
+      return;
     }
 
-    await refreshProfile();
-    setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "cancelled" } : b));
+    // Optimistic UI update immediately — prevents double-click exploitation
+    setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "cancelled" as const } : b));
+    setCancelling(betId);
+
+    try {
+      const { error: updateErr } = await (supabase as any).from("bets").update({
+        result: "cancelled",
+        settled_at: new Date().toISOString(),
+      }).eq("id", betId);
+
+      if (updateErr) {
+        // Revert optimistic update on error
+        setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "pending" as const } : b));
+        toast({ title: "Failed to cancel", description: updateErr.message, variant: "destructive" });
+        setCancelling(null);
+        return;
+      }
+
+      // Refund wallet
+      const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", user.id).single();
+      if (profile) {
+        await supabase.from("profiles").update({
+          wallet_balance: profile.wallet_balance + Number(bet.amount),
+        }).eq("user_id", user.id);
+      }
+
+      await refreshProfile();
+      toast({
+        title: "✅ Bet Cancelled",
+        description: `₹${Number(bet.amount).toLocaleString()} refunded to your wallet.`,
+      });
+    } catch (err: any) {
+      // Revert on error
+      setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "pending" as const } : b));
+      toast({ title: "Failed to cancel", description: err.message, variant: "destructive" });
+    }
+
     setCancelling(null);
-    toast({
-      title: "✅ Bet Cancelled",
-      description: `₹${Number(bet.amount).toLocaleString()} refunded to your wallet.`,
-    });
   };
 
-  const handleShare = async (bet: BetWithMatch) => {
-    setShareModalBet(bet);
-  };
+  const handleShare = (bet: BetWithMatch) => setShareModalBet(bet);
 
   const handleCapture = async () => {
     if (!shareModalBet) return;
@@ -286,7 +369,7 @@ const MyBets = () => {
         link.click();
         toast({ title: "Screenshot saved!", description: "Win card downloaded." });
       }
-    } catch (e) {
+    } catch {
       toast({ title: "Could not share", description: "Try taking a screenshot manually.", variant: "destructive" });
     }
     setCapturing(false);
@@ -323,13 +406,18 @@ const MyBets = () => {
       <Navbar />
 
       <section className="py-10">
-        <div className="container mx-auto px-4">
-          {/* Page header */}
+        <div className="container mx-auto px-4 max-w-4xl">
+          {/* Header */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
-            <h1 className="text-3xl font-extrabold text-foreground flex items-center gap-3 mb-1">
-              <Receipt className="h-7 w-7 text-primary" /> My Bets
-            </h1>
-            <p className="text-muted-foreground text-sm">Track your betting history and manage active bets</p>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
+                <Receipt className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-extrabold text-foreground">My Bets</h1>
+                <p className="text-muted-foreground text-sm">Track your betting history and manage active bets</p>
+              </div>
+            </div>
           </motion.div>
 
           {/* Stats row */}
@@ -338,24 +426,25 @@ const MyBets = () => {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6"
             >
-              <div className="rounded-2xl border border-border/50 bg-card p-4 text-center shadow-card">
-                <p className="text-2xl font-extrabold text-foreground">{stats.total}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Total Bets</p>
-              </div>
-              <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-center shadow-card">
-                <p className="text-2xl font-extrabold text-primary">{stats.won}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Won</p>
-              </div>
-              <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4 text-center shadow-card">
-                <p className="text-2xl font-extrabold text-destructive">{stats.lost}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Lost</p>
-              </div>
-              <div className="rounded-2xl border border-accent/30 bg-accent/5 p-4 text-center shadow-card">
-                <p className="text-2xl font-extrabold text-accent">{stats.pending}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Pending</p>
-              </div>
+              {[
+                { label: "Total Bets", value: stats.total, color: "text-foreground", bg: "bg-card border-border/50" },
+                { label: "Won", value: stats.won, color: "text-emerald-400", bg: "bg-emerald-500/5 border-emerald-500/20" },
+                { label: "Lost", value: stats.lost, color: "text-red-400", bg: "bg-red-500/5 border-red-500/20" },
+                { label: "Pending", value: stats.pending, color: "text-yellow-400", bg: "bg-yellow-500/5 border-yellow-500/20" },
+              ].map((s, i) => (
+                <motion.div
+                  key={s.label}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.1 + i * 0.06 }}
+                  className={`rounded-2xl border p-4 text-center ${s.bg}`}
+                >
+                  <p className={`text-2xl font-extrabold ${s.color}`}>{s.value}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{s.label}</p>
+                </motion.div>
+              ))}
             </motion.div>
           )}
 
@@ -364,16 +453,19 @@ const MyBets = () => {
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="mb-6 rounded-2xl gradient-neon-primary p-4 flex items-center justify-between shadow-neon"
+              transition={{ delay: 0.2 }}
+              className="mb-6 rounded-2xl bg-gradient-to-r from-emerald-600/20 via-primary/20 to-emerald-600/20 border border-emerald-500/30 p-4 flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
-                <TrendingUp className="h-6 w-6 text-primary-foreground" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/20">
+                  <TrendingUp className="h-5 w-5 text-emerald-400" />
+                </div>
                 <div>
-                  <p className="text-primary-foreground text-sm font-semibold">Total Winnings</p>
-                  <p className="text-primary-foreground text-xs opacity-75">All time</p>
+                  <p className="text-sm font-semibold text-foreground">Total Winnings</p>
+                  <p className="text-xs text-muted-foreground">All time earnings</p>
                 </div>
               </div>
-              <p className="text-primary-foreground text-2xl font-extrabold">
+              <p className="text-2xl font-extrabold text-emerald-400">
                 ₹{stats.totalWon.toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </p>
             </motion.div>
@@ -382,6 +474,7 @@ const MyBets = () => {
           {/* Filters */}
           {!loading && bets.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
+              <Filter className="h-4 w-4 text-muted-foreground self-center" />
               {(["all", "pending", "won", "lost", "cancelled"] as const).map((f) => (
                 <button
                   key={f}
@@ -393,9 +486,7 @@ const MyBets = () => {
                   }`}
                 >
                   {f.charAt(0).toUpperCase() + f.slice(1)}
-                  {f !== "all" && (
-                    <span className="ml-1 opacity-70">({bets.filter((b) => b.result === f).length})</span>
-                  )}
+                  {f !== "all" && <span className="ml-1 opacity-60">({bets.filter((b) => b.result === f).length})</span>}
                 </button>
               ))}
             </div>
@@ -403,13 +494,17 @@ const MyBets = () => {
 
           {/* Bet list */}
           {loading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-44 rounded-2xl bg-card border border-border/50 animate-pulse" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="h-64 rounded-2xl bg-card border border-border/50 animate-pulse" />
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col items-center justify-center py-20 gap-4"
+            >
               <div className="text-5xl">{filter === "all" ? "🎲" : "🔍"}</div>
               <h3 className="text-xl font-bold text-foreground">
                 {filter === "all" ? "No bets yet" : `No ${filter} bets`}
@@ -422,10 +517,10 @@ const MyBets = () => {
                   </Button>
                 </>
               )}
-            </div>
+            </motion.div>
           ) : (
             <AnimatePresence mode="popLayout">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2">
                 {filtered.map((bet) => (
                   <BetCard
                     key={bet.id}
@@ -448,20 +543,20 @@ const MyBets = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
             onClick={() => setShareModalBet(null)}
           >
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.85, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.85, opacity: 0 }}
               onClick={(e) => e.stopPropagation()}
               className="w-full max-w-sm"
             >
               <WinCard bet={shareModalBet} />
               <div className="flex gap-3 mt-4">
                 <Button
-                  className="flex-1 gradient-neon-primary text-primary-foreground shadow-neon"
+                  className="flex-1 gradient-neon-primary text-primary-foreground shadow-neon font-semibold"
                   onClick={handleCapture}
                   disabled={capturing}
                 >
@@ -471,10 +566,12 @@ const MyBets = () => {
                     <><Download className="h-4 w-4 mr-2" /> Save & Share</>
                   )}
                 </Button>
-                <Button variant="outline" onClick={() => setShareModalBet(null)}>Close</Button>
+                <Button variant="outline" onClick={() => setShareModalBet(null)} className="border-border/50">
+                  Close
+                </Button>
               </div>
               <p className="text-center text-xs text-muted-foreground mt-3">
-                Screenshot this card to share your win!
+                Screenshot this card to share your win! 🏆
               </p>
             </motion.div>
           </motion.div>

@@ -14,8 +14,31 @@ A cricket sports betting/gaming web app — Superman Toss Book.
 - `src/integrations/supabase/client.ts` — Supabase client (uses `VITE_SUPABASE_ANON_KEY`)
 - `src/contexts/AuthContext.tsx` — Auth state, profile management, realtime wallet updates
 - `src/pages/Login.tsx` — Username-based login (resolves username → email via API)
-- `src/components/Navbar.tsx` — Navigation with Superman Toss Book branding
+- `src/pages/MyBets.tsx` — Bet history with VS team display, cancel fix (optimistic update), share win card with brand logo
+- `src/pages/Rules.tsx` — Full rules page with all 14+ rules, special info box, legend, animations
+- `src/pages/Leaderboard.tsx` — Computed leaderboard from bets + profiles (no view dependency)
+- `src/pages/Results.tsx` — Improved match results with VS team layout
+- `src/components/Navbar.tsx` — Navigation with Rules link, animated nav pill, mobile menu animation
+- `src/components/HeroSection.tsx` — Animated logo, glowing effects, stats bar, View Rules button
+- `src/components/GameZone.tsx` — 3-column layout (Matches, Leaderboard, Rules)
+- `src/components/Footer.tsx` — Improved footer with Rules link and Telegram contact
 - `src/components/admin/` — Admin dashboard, match management, user management, bet tracking
+
+## Features
+
+### My Bets Cancel Bug Fix
+- Optimistic UI update: bet immediately marked as "cancelled" in state before API call
+- Prevents double-cancellation exploitation
+- Shows "Bet is in inactive state" message when match is closed
+
+### Rules Page (/rules)
+- 14+ rules with color-coded icons (✅ allowed, ❌ not allowed, ⚠️ warning, 👍 note, ❤️ info)
+- Special Info box about Telegram vs Online toss validity
+- Legend, animations, hindi text support
+
+### Share Win Card
+- html2canvas capture of win card with brand logo
+- Uses Web Share API on mobile, fallback download on desktop
 
 ## Database (Supabase)
 

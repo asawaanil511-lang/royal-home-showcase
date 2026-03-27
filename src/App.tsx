@@ -10,6 +10,7 @@ import Wallet from "./pages/Wallet";
 import MyBets from "./pages/MyBets";
 import Leaderboard from "./pages/Leaderboard";
 import Results from "./pages/Results";
+import Rules from "./pages/Rules";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -41,6 +42,7 @@ const App = () => (
             <Route path="/my-bets" element={<MyBets />} />
             <Route path="/leaderboard" element={<Leaderboard />} />
             <Route path="/results" element={<Results />} />
+            <Route path="/rules" element={<Rules />} />
             <Route path="/admin" element={<Admin />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />

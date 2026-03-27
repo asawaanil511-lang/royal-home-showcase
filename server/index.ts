@@ -17,20 +17,20 @@ function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-// Direct PostgreSQL pool using Supabase pooler URL
+// PostgreSQL pool — uses Replit's built-in DATABASE_URL
 export const db = new Pool({
-  connectionString: process.env.SUPABASE_DATABASE_URL,
-  ssl: { rejectUnauthorized: false },
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL?.includes("localhost") ? false : { rejectUnauthorized: false },
   max: 10,
 });
 
 db.connect()
   .then((client) => {
-    console.log("PostgreSQL connected via Supabase pooler");
+    console.log("PostgreSQL connected");
     client.release();
   })
   .catch((err) => {
-    console.error("PostgreSQL connection error:", err.message);
+    console.warn("PostgreSQL connection warning:", err.message);
   });
 
 // ---- login-by-username ----

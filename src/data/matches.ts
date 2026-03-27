@@ -15,6 +15,9 @@ export type Match = {
   status: "live" | "upcoming" | "closed";
   oddsA: number;
   oddsB: number;
+  imageUrl?: string | null;
+  liveTime?: string | null;
+  closingTime?: string | null;
 };
 
 export const matches: Match[] = [
@@ -61,38 +64,5 @@ export const matches: Match[] = [
     status: "upcoming",
     oddsA: 2.10,
     oddsB: 1.70,
-  },
-  {
-    id: "5",
-    teamA: { name: "South Zone", logo: team4 },
-    teamB: { name: "Royal Kings", logo: team5 },
-    maxBet: 100000,
-    date: "08 Mar",
-    time: "10:00 PM",
-    status: "upcoming",
-    oddsA: 1.65,
-    oddsB: 2.15,
-  },
-  {
-    id: "6",
-    teamA: { name: "Central Zone", logo: team3 },
-    teamB: { name: "North East Zone", logo: team2 },
-    maxBet: 50000,
-    date: "05 Mar",
-    time: "08:00 PM",
-    status: "closed",
-    oddsA: 1.80,
-    oddsB: 2.00,
-  },
-  {
-    id: "7",
-    teamA: { name: "East Zone", logo: team1 },
-    teamB: { name: "Royal Kings", logo: team5 },
-    maxBet: 50000,
-    date: "04 Mar",
-    time: "07:00 PM",
-    status: "closed",
-    oddsA: 1.95,
-    oddsB: 1.85,
   },
 ];

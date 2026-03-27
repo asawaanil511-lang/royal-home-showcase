@@ -133,6 +133,79 @@ app.post("/api/admin-create-user", async (req, res) => {
   }
 });
 
+// ---- Run DB migration (add new columns to matches) ----
+const MIGRATION_SQL = `
+  ALTER TABLE matches
+  ADD COLUMN IF NOT EXISTS live_time TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS closing_time TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS image_url TEXT;
+`;
+
+app.post("/api/migrate", async (req, res) => {
+  try {
+    if (!serviceRoleKey) return res.status(500).json({ error: "SUPABASE_SERVICE_ROLE_KEY missing" });
+
+    // Verify admin caller
+    const authHeader = req.headers.authorization;
+    if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
+    const token = authHeader.replace("Bearer ", "");
+    const adminClient = getAdminClient();
+    const { data: { user: caller } } = await adminClient.auth.getUser(token);
+    if (!caller) return res.status(401).json({ error: "Unauthorized" });
+
+    const { data: roleData } = await adminClient
+      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
+    if (!roleData) return res.status(403).json({ error: "Admin only" });
+
+    // Try calling Supabase SQL via management API or pg pool
+    try {
+      // Attempt via pg pool (Replit DB for health, Supabase for actual data)
+      await db.query(MIGRATION_SQL);
+      return res.json({ success: true, message: "Migration applied to Replit DB" });
+    } catch (pgErr: any) {
+      // Return the SQL for manual application
+      return res.json({
+        success: false,
+        manual: true,
+        sql: MIGRATION_SQL.trim(),
+        message: "Please run the SQL in Supabase Dashboard → SQL Editor",
+      });
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Auto-update match statuses based on live_time / closing_time ----
+const autoUpdateMatchStatuses = async () => {
+  if (!serviceRoleKey) return;
+  const adminClient = getAdminClient();
+  const now = new Date().toISOString();
+  try {
+    // upcoming → live when live_time has passed
+    await (adminClient as any)
+      .from("matches")
+      .update({ status: "live" })
+      .lte("live_time", now)
+      .eq("status", "upcoming")
+      .not("live_time", "is", null);
+
+    // live/upcoming → closed when closing_time has passed
+    await (adminClient as any)
+      .from("matches")
+      .update({ status: "closed" })
+      .lte("closing_time", now)
+      .in("status", ["live", "upcoming"])
+      .not("closing_time", "is", null);
+  } catch {
+    // Column may not exist yet — silent
+  }
+};
+
+// Run every 30 seconds
+autoUpdateMatchStatuses();
+setInterval(autoUpdateMatchStatuses, 30000);
+
 // ---- health check ----
 app.get("/api/health", async (_req, res) => {
   try {

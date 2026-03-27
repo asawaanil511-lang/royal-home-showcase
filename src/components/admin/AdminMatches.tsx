@@ -3,7 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, CheckCircle, Trash2, X, Edit2, Save, AlertTriangle, Users as UsersIcon, Eye } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  Plus, CheckCircle, Trash2, X, Edit2, Save, AlertTriangle, Users as UsersIcon,
+  Eye, Clock, Image as ImageIcon, Database, Copy, Upload, Loader2,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -20,12 +24,21 @@ type DBMatch = {
   match_date: string;
   status: string;
   winner: string | null;
+  live_time?: string | null;
+  closing_time?: string | null;
+  image_url?: string | null;
 };
 
 type MatchBetStats = { total: number; volume: number; teamA: number; teamB: number };
 
+const MIGRATION_SQL = `ALTER TABLE matches
+ADD COLUMN IF NOT EXISTS live_time TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS closing_time TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS image_url TEXT;`;
+
 const AdminMatches = () => {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [matches, setMatches] = useState<DBMatch[]>([]);
   const [betStats, setBetStats] = useState<Map<string, MatchBetStats>>(new Map());
   const [showForm, setShowForm] = useState(false);
@@ -33,17 +46,23 @@ const AdminMatches = () => {
   const [editData, setEditData] = useState<Partial<DBMatch>>({});
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
-
-  // Confirmation dialog
   const [confirmAction, setConfirmAction] = useState<{ type: string; matchId: string; label: string } | null>(null);
+  const [showMigrationPanel, setShowMigrationPanel] = useState(false);
+  const [migrating, setMigrating] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
 
-  // Create form
+  // Create form state
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
-  const [oddsA, setOddsA] = useState("1.90");
-  const [oddsB, setOddsB] = useState("1.90");
+  const [oddsA, setOddsA] = useState("0.95");
+  const [oddsB, setOddsB] = useState("0.95");
   const [maxBet, setMaxBet] = useState("10000");
   const [matchDate, setMatchDate] = useState("");
+  const [liveTime, setLiveTime] = useState("");
+  const [closingTime, setClosingTime] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   const fetchMatches = async () => {
@@ -52,8 +71,6 @@ const AdminMatches = () => {
       (supabase as any).from("bets").select("match_id, amount, team_picked, result"),
     ]);
     setMatches((matchesData as DBMatch[]) || []);
-
-    // Build bet stats per match
     const statsMap = new Map<string, MatchBetStats>();
     (betsData || []).forEach((b: any) => {
       const existing = statsMap.get(b.match_id) || { total: 0, volume: 0, teamA: 0, teamB: 0 };
@@ -68,31 +85,132 @@ const AdminMatches = () => {
 
   useEffect(() => { fetchMatches(); }, []);
 
+  const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => setImagePreview(ev.target?.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (): Promise<string | null> => {
+    if (!imageFile) return imageUrl || null;
+    setImageUploading(true);
+    try {
+      const ext = imageFile.name.split(".").pop();
+      const fileName = `match-${Date.now()}.${ext}`;
+      const { data, error } = await (supabase as any).storage
+        .from("match-images")
+        .upload(fileName, imageFile, { upsert: true });
+
+      if (error) {
+        // Try to create the bucket if it doesn't exist
+        await (supabase as any).storage.createBucket("match-images", { public: true });
+        const { data: data2, error: err2 } = await (supabase as any).storage
+          .from("match-images")
+          .upload(fileName, imageFile, { upsert: true });
+        if (err2) {
+          toast({ title: "Image upload failed", description: err2.message, variant: "destructive" });
+          setImageUploading(false);
+          return imageUrl || null;
+        }
+        const { data: urlData } = (supabase as any).storage.from("match-images").getPublicUrl(fileName);
+        setImageUploading(false);
+        return urlData.publicUrl;
+      }
+      const { data: urlData } = (supabase as any).storage.from("match-images").getPublicUrl(fileName);
+      setImageUploading(false);
+      return urlData.publicUrl;
+    } catch {
+      setImageUploading(false);
+      return imageUrl || null;
+    }
+  };
+
   const handleCreate = async () => {
     if (!teamA || !teamB || !matchDate) {
-      toast({ title: "Fill all fields", variant: "destructive" });
+      toast({ title: "Fill required fields (Team A, Team B, Match Date)", variant: "destructive" });
       return;
     }
     setSaving(true);
-    await (supabase as any).from("matches").insert({
-      team_a_name: teamA, team_b_name: teamB,
-      odds_a: Number(oddsA), odds_b: Number(oddsB),
+    const uploadedUrl = await uploadImage();
+
+    const insertData: any = {
+      team_a_name: teamA,
+      team_b_name: teamB,
+      odds_a: Number(oddsA),
+      odds_b: Number(oddsB),
       max_bet: Number(maxBet),
-      match_date: new Date(matchDate).toISOString(), status: "upcoming",
-    });
+      match_date: new Date(matchDate).toISOString(),
+      status: "upcoming",
+    };
+
+    if (liveTime) insertData.live_time = new Date(liveTime).toISOString();
+    if (closingTime) insertData.closing_time = new Date(closingTime).toISOString();
+    if (uploadedUrl) insertData.image_url = uploadedUrl;
+
+    const { error } = await (supabase as any).from("matches").insert(insertData);
+
+    if (error) {
+      setSaving(false);
+      if (error.message?.includes("column")) {
+        setShowMigrationPanel(true);
+        toast({ title: "Schema update needed", description: "Please run the database migration first.", variant: "destructive" });
+      } else {
+        toast({ title: "Failed to create match", description: error.message, variant: "destructive" });
+      }
+      return;
+    }
+
     setSaving(false);
     setShowForm(false);
-    setTeamA(""); setTeamB(""); setOddsA("1.90"); setOddsB("1.90"); setMaxBet("10000"); setMatchDate("");
+    setTeamA(""); setTeamB(""); setOddsA("0.95"); setOddsB("0.95"); setMaxBet("10000");
+    setMatchDate(""); setLiveTime(""); setClosingTime(""); setImageUrl(""); setImageFile(null); setImagePreview(null);
     toast({ title: "✅ Match created!" });
     fetchMatches();
+  };
+
+  const runMigration = async () => {
+    if (!user) return;
+    setMigrating(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch("/api/migrate", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      });
+      const result = await res.json();
+      if (result.success) {
+        toast({ title: "✅ Migration applied!" });
+        setShowMigrationPanel(false);
+      } else if (result.manual) {
+        toast({ title: "⚠️ Run SQL manually", description: "Copy the SQL below and run it in Supabase Dashboard", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Migration failed", variant: "destructive" });
+    }
+    setMigrating(false);
+  };
+
+  const copyMigrationSQL = () => {
+    navigator.clipboard.writeText(MIGRATION_SQL);
+    toast({ title: "SQL copied to clipboard!" });
   };
 
   const handleEdit = (m: DBMatch) => {
     setEditingId(m.id);
     setEditData({
-      team_a_name: m.team_a_name, team_b_name: m.team_b_name,
-      odds_a: m.odds_a, odds_b: m.odds_b, max_bet: m.max_bet,
+      team_a_name: m.team_a_name,
+      team_b_name: m.team_b_name,
+      odds_a: m.odds_a,
+      odds_b: m.odds_b,
+      max_bet: m.max_bet,
       match_date: m.match_date.slice(0, 16),
+      live_time: m.live_time ? m.live_time.slice(0, 16) : "",
+      closing_time: m.closing_time ? m.closing_time.slice(0, 16) : "",
+      image_url: m.image_url || "",
     });
   };
 
@@ -100,6 +218,11 @@ const AdminMatches = () => {
     if (!editingId) return;
     const update: any = { ...editData };
     if (update.match_date) update.match_date = new Date(update.match_date).toISOString();
+    if (update.live_time) update.live_time = new Date(update.live_time).toISOString();
+    else delete update.live_time;
+    if (update.closing_time) update.closing_time = new Date(update.closing_time).toISOString();
+    else delete update.closing_time;
+    if (!update.image_url) delete update.image_url;
     await (supabase as any).from("matches").update(update).eq("id", editingId);
     setEditingId(null);
     toast({ title: "✅ Match updated!" });
@@ -118,16 +241,11 @@ const AdminMatches = () => {
     if (bets) {
       for (const bet of bets as any[]) {
         const won = bet.team_picked === winner;
-        await (supabase as any).from("bets").update({
-          result: won ? "won" : "lost",
-          settled_at: new Date().toISOString(),
-        }).eq("id", bet.id);
+        await (supabase as any).from("bets").update({ result: won ? "won" : "lost", settled_at: new Date().toISOString() }).eq("id", bet.id);
         if (won) {
           const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", bet.user_id).single();
           if (profile) {
-            await supabase.from("profiles").update({
-              wallet_balance: profile.wallet_balance + bet.potential_win,
-            }).eq("user_id", bet.user_id);
+            await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + bet.potential_win }).eq("user_id", bet.user_id);
           }
         }
       }
@@ -144,9 +262,7 @@ const AdminMatches = () => {
         await (supabase as any).from("bets").update({ result: "cancelled", settled_at: new Date().toISOString() }).eq("id", bet.id);
         const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", bet.user_id).single();
         if (profile) {
-          await supabase.from("profiles").update({
-            wallet_balance: profile.wallet_balance + Number(bet.amount),
-          }).eq("user_id", bet.user_id);
+          await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + Number(bet.amount) }).eq("user_id", bet.user_id);
         }
       }
     }
@@ -171,9 +287,9 @@ const AdminMatches = () => {
   };
 
   const statusBadge = (status: string) => {
-    const cls = status === "live" ? "bg-destructive/10 text-destructive border border-destructive/30" :
+    const cls = status === "live" ? "bg-red-500/15 text-red-400 border border-red-500/30" :
       status === "closed" ? "bg-muted text-muted-foreground border border-border/50" :
-      status === "cancelled" ? "bg-[hsl(var(--neon-purple))]/10 text-[hsl(var(--neon-purple))] border border-[hsl(var(--neon-purple))]/30" :
+      status === "cancelled" ? "bg-purple-500/10 text-purple-400 border border-purple-500/30" :
       "bg-primary/10 text-primary border border-primary/30";
     return <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cls}`}>{status.toUpperCase()}</span>;
   };
@@ -183,6 +299,46 @@ const AdminMatches = () => {
 
   return (
     <div>
+      {/* Migration Panel */}
+      <AnimatePresence>
+        {showMigrationPanel && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden mb-5"
+          >
+            <div className="rounded-2xl border border-yellow-500/40 bg-yellow-500/5 p-4">
+              <div className="flex items-start gap-3 mb-3">
+                <Database className="h-5 w-5 text-yellow-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-yellow-400">Database Schema Update Required</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    The matches table needs new columns for live time, closing time and image URL. Run this SQL in your{" "}
+                    <a href="https://supabase.com/dashboard" target="_blank" rel="noopener noreferrer" className="text-yellow-400 underline">
+                      Supabase SQL Editor
+                    </a>
+                    :
+                  </p>
+                </div>
+              </div>
+              <pre className="text-xs bg-black/40 rounded-lg p-3 text-emerald-400 mb-3 whitespace-pre-wrap font-mono">{MIGRATION_SQL}</pre>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" className="border-yellow-500/40 text-yellow-400 hover:bg-yellow-500/10 gap-1.5" onClick={copyMigrationSQL}>
+                  <Copy className="h-3.5 w-3.5" /> Copy SQL
+                </Button>
+                <Button size="sm" className="gradient-neon-primary text-primary-foreground gap-1.5" onClick={runMigration} disabled={migrating}>
+                  {migrating ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Running...</> : <><Database className="h-3.5 w-3.5" /> Try Auto-Migrate</>}
+                </Button>
+                <Button size="sm" variant="ghost" className="text-muted-foreground" onClick={() => setShowMigrationPanel(false)}>
+                  <X className="h-3.5 w-3.5 mr-1" /> Dismiss
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Filters + Create */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
         <div className="flex flex-wrap gap-2">
@@ -196,9 +352,19 @@ const AdminMatches = () => {
             </button>
           ))}
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gradient-neon-primary text-primary-foreground shadow-neon">
-          <Plus className="h-4 w-4 mr-1" /> New Match
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 gap-1.5"
+            onClick={() => setShowMigrationPanel(!showMigrationPanel)}
+          >
+            <Database className="h-4 w-4" /> DB Setup
+          </Button>
+          <Button onClick={() => setShowForm(!showForm)} className="gradient-neon-primary text-primary-foreground shadow-neon">
+            <Plus className="h-4 w-4 mr-1" /> New Match
+          </Button>
+        </div>
       </div>
 
       {/* Create Form */}
@@ -211,18 +377,117 @@ const AdminMatches = () => {
             className="overflow-hidden"
           >
             <div className="rounded-2xl border border-primary/30 bg-card p-6 mb-6 glow-border">
-              <h3 className="text-lg font-bold text-foreground mb-4">Create Match</h3>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <Input placeholder="Team A name" value={teamA} onChange={(e) => setTeamA(e.target.value)} className="bg-secondary border-border" />
-                <Input placeholder="Team B name" value={teamB} onChange={(e) => setTeamB(e.target.value)} className="bg-secondary border-border" />
-                <Input placeholder="Odds A" type="number" step="0.05" value={oddsA} onChange={(e) => setOddsA(e.target.value)} className="bg-secondary border-border" />
-                <Input placeholder="Odds B" type="number" step="0.05" value={oddsB} onChange={(e) => setOddsB(e.target.value)} className="bg-secondary border-border" />
-                <Input placeholder="Max Bet" type="number" value={maxBet} onChange={(e) => setMaxBet(e.target.value)} className="bg-secondary border-border" />
-                <Input type="datetime-local" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="bg-secondary border-border" />
+              <h3 className="text-lg font-bold text-foreground mb-4">Create New Match</h3>
+
+              <div className="space-y-4">
+                {/* Teams */}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Team A Name *</label>
+                    <Input placeholder="e.g. Mumbai Indians" value={teamA} onChange={(e) => setTeamA(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Team B Name *</label>
+                    <Input placeholder="e.g. CSK" value={teamB} onChange={(e) => setTeamB(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Odds A (e.g. 0.95)</label>
+                    <Input type="number" step="0.05" value={oddsA} onChange={(e) => setOddsA(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Odds B (e.g. 0.95)</label>
+                    <Input type="number" step="0.05" value={oddsB} onChange={(e) => setOddsB(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Max Bet (₹)</label>
+                    <Input type="number" value={maxBet} onChange={(e) => setMaxBet(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground mb-1 block">Match Date & Time *</label>
+                    <Input type="datetime-local" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="bg-secondary border-border" />
+                  </div>
+                </div>
+
+                {/* Time automation */}
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="h-4 w-4 text-primary" />
+                    <span className="text-sm font-bold text-primary">Auto-Status Times</span>
+                    <span className="text-xs text-muted-foreground">(optional — server updates status automatically)</span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        🟢 Live Time — match goes LIVE at this time
+                      </label>
+                      <Input
+                        type="datetime-local"
+                        value={liveTime}
+                        onChange={(e) => setLiveTime(e.target.value)}
+                        className="bg-secondary border-border"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">
+                        🔴 Closing Time — betting CLOSES at this time
+                      </label>
+                      <Input
+                        type="datetime-local"
+                        value={closingTime}
+                        onChange={(e) => setClosingTime(e.target.value)}
+                        className="bg-secondary border-border"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image */}
+                <div className="rounded-xl border border-border/50 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <ImageIcon className="h-4 w-4 text-accent" />
+                    <span className="text-sm font-bold text-foreground">Match Schedule Image</span>
+                    <span className="text-xs text-muted-foreground">(optional)</span>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Upload Image</label>
+                      <label className="flex flex-col items-center justify-center w-full h-20 border-2 border-dashed border-border/50 rounded-xl cursor-pointer hover:border-primary/40 hover:bg-primary/5 transition-all">
+                        <Upload className="h-5 w-5 text-muted-foreground mb-1" />
+                        <span className="text-xs text-muted-foreground">
+                          {imageFile ? imageFile.name : "Click to upload"}
+                        </span>
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageFile} />
+                      </label>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-muted-foreground mb-1 block">Or paste image URL</label>
+                      <Input
+                        type="url"
+                        placeholder="https://example.com/schedule.jpg"
+                        value={imageUrl}
+                        onChange={(e) => { setImageUrl(e.target.value); setImageFile(null); setImagePreview(null); }}
+                        className="bg-secondary border-border"
+                      />
+                    </div>
+                  </div>
+
+                  {(imagePreview || imageUrl) && (
+                    <div className="mt-3 rounded-lg overflow-hidden max-h-36">
+                      <img
+                        src={imagePreview || imageUrl}
+                        alt="Preview"
+                        className="w-full h-36 object-cover rounded-lg"
+                        onError={() => setImagePreview(null)}
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
+
               <div className="flex gap-2 mt-4">
-                <Button onClick={handleCreate} disabled={saving} className="gradient-neon-primary text-primary-foreground">
-                  {saving ? "Creating..." : "Create Match"}
+                <Button onClick={handleCreate} disabled={saving || imageUploading} className="gradient-neon-primary text-primary-foreground gap-2">
+                  {saving || imageUploading ? <><Loader2 className="h-4 w-4 animate-spin" /> Creating...</> : "Create Match"}
                 </Button>
                 <Button variant="outline" onClick={() => setShowForm(false)}>Cancel</Button>
               </div>
@@ -248,12 +513,42 @@ const AdminMatches = () => {
               {editingId === m.id ? (
                 <div className="p-4 space-y-3">
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <Input value={editData.team_a_name || ""} onChange={(e) => setEditData({ ...editData, team_a_name: e.target.value })} className="bg-secondary border-border" placeholder="Team A" />
-                    <Input value={editData.team_b_name || ""} onChange={(e) => setEditData({ ...editData, team_b_name: e.target.value })} className="bg-secondary border-border" placeholder="Team B" />
-                    <Input type="number" step="0.05" value={editData.odds_a || ""} onChange={(e) => setEditData({ ...editData, odds_a: Number(e.target.value) })} className="bg-secondary border-border" placeholder="Odds A" />
-                    <Input type="number" step="0.05" value={editData.odds_b || ""} onChange={(e) => setEditData({ ...editData, odds_b: Number(e.target.value) })} className="bg-secondary border-border" placeholder="Odds B" />
-                    <Input type="number" value={editData.max_bet || ""} onChange={(e) => setEditData({ ...editData, max_bet: Number(e.target.value) })} className="bg-secondary border-border" placeholder="Max Bet" />
-                    <Input type="datetime-local" value={editData.match_date || ""} onChange={(e) => setEditData({ ...editData, match_date: e.target.value })} className="bg-secondary border-border" />
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Team A</label>
+                      <Input value={editData.team_a_name || ""} onChange={(e) => setEditData({ ...editData, team_a_name: e.target.value })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Team B</label>
+                      <Input value={editData.team_b_name || ""} onChange={(e) => setEditData({ ...editData, team_b_name: e.target.value })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Odds A</label>
+                      <Input type="number" step="0.05" value={editData.odds_a || ""} onChange={(e) => setEditData({ ...editData, odds_a: Number(e.target.value) })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Odds B</label>
+                      <Input type="number" step="0.05" value={editData.odds_b || ""} onChange={(e) => setEditData({ ...editData, odds_b: Number(e.target.value) })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Max Bet</label>
+                      <Input type="number" value={editData.max_bet || ""} onChange={(e) => setEditData({ ...editData, max_bet: Number(e.target.value) })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">Match Date</label>
+                      <Input type="datetime-local" value={editData.match_date || ""} onChange={(e) => setEditData({ ...editData, match_date: e.target.value })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">🟢 Live Time</label>
+                      <Input type="datetime-local" value={editData.live_time || ""} onChange={(e) => setEditData({ ...editData, live_time: e.target.value })} className="bg-secondary border-border" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-muted-foreground mb-1 block">🔴 Closing Time</label>
+                      <Input type="datetime-local" value={editData.closing_time || ""} onChange={(e) => setEditData({ ...editData, closing_time: e.target.value })} className="bg-secondary border-border" />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs text-muted-foreground mb-1 block">Image URL</label>
+                      <Input type="url" value={editData.image_url || ""} onChange={(e) => setEditData({ ...editData, image_url: e.target.value })} className="bg-secondary border-border" placeholder="https://..." />
+                    </div>
                   </div>
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSaveEdit} className="gradient-neon-primary text-primary-foreground"><Save className="h-3 w-3 mr-1" /> Save</Button>
@@ -262,27 +557,49 @@ const AdminMatches = () => {
                 </div>
               ) : (
                 <div className="p-4">
+                  {/* Image preview */}
+                  {m.image_url && (
+                    <div className="mb-3 rounded-lg overflow-hidden h-24">
+                      <img src={m.image_url} alt="Match" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-between mb-2">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <p className="font-bold text-foreground">{m.team_a_name} vs {m.team_b_name}</p>
                       {statusBadge(m.status)}
                     </div>
-                    <button
-                      onClick={() => setExpandedId(isExpanded ? null : m.id)}
-                      className="text-muted-foreground hover:text-foreground transition-colors"
-                    >
+                    <button onClick={() => setExpandedId(isExpanded ? null : m.id)} className="text-muted-foreground hover:text-foreground transition-colors">
                       <Eye className="h-4 w-4" />
                     </button>
                   </div>
 
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-3">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground mb-2">
                     <span>{new Date(m.match_date).toLocaleString()}</span>
                     <span>Odds: {m.odds_a}x / {m.odds_b}x</span>
                     <span>Max: ₹{Number(m.max_bet).toLocaleString()}</span>
                     {m.winner && <span className="text-primary font-semibold">Winner: Team {m.winner}</span>}
                   </div>
 
-                  {/* Bet stats bar */}
+                  {/* Auto-status times */}
+                  {(m.live_time || m.closing_time) && (
+                    <div className="flex flex-wrap gap-3 text-xs mb-2">
+                      {m.live_time && (
+                        <span className="flex items-center gap-1 text-emerald-400 bg-emerald-500/10 rounded-full px-2 py-0.5">
+                          <Clock className="h-3 w-3" />
+                          Live: {new Date(m.live_time).toLocaleString()}
+                        </span>
+                      )}
+                      {m.closing_time && (
+                        <span className="flex items-center gap-1 text-red-400 bg-red-500/10 rounded-full px-2 py-0.5">
+                          <Clock className="h-3 w-3" />
+                          Closes: {new Date(m.closing_time).toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Bet stats */}
                   <div className="flex items-center gap-3 mb-3 text-xs">
                     <span className="flex items-center gap-1 text-muted-foreground">
                       <UsersIcon className="h-3 w-3" /> {bs.total} bets
@@ -292,10 +609,7 @@ const AdminMatches = () => {
                       <div className="flex-1 flex items-center gap-1">
                         <span className="text-[10px] text-muted-foreground">A:{bs.teamA}</span>
                         <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                          <div
-                            className="h-full rounded-full bg-primary transition-all"
-                            style={{ width: `${(bs.teamA / bs.total) * 100}%` }}
-                          />
+                          <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${(bs.teamA / bs.total) * 100}%` }} />
                         </div>
                         <span className="text-[10px] text-muted-foreground">B:{bs.teamB}</span>
                       </div>
@@ -306,9 +620,9 @@ const AdminMatches = () => {
                   <div className="flex flex-wrap gap-2">
                     {m.status === "upcoming" && (
                       <>
-                        <Button size="sm" variant="outline" className="text-xs border-primary/30 text-primary" onClick={() => handleStatusChange(m.id, "live")}>🔴 Go Live</Button>
+                        <Button size="sm" variant="outline" className="text-xs border-red-500/30 text-red-400 hover:bg-red-500/10" onClick={() => handleStatusChange(m.id, "live")}>🔴 Go Live</Button>
                         <Button size="sm" variant="outline" className="text-xs" onClick={() => handleEdit(m)}><Edit2 className="h-3 w-3 mr-1" /> Edit</Button>
-                        <Button size="sm" variant="outline" className="text-xs border-[hsl(var(--neon-purple))]/30 text-[hsl(var(--neon-purple))]"
+                        <Button size="sm" variant="outline" className="text-xs border-purple-500/30 text-purple-400"
                           onClick={() => setConfirmAction({ type: "cancel", matchId: m.id, label: "Cancel this match and refund all bets?" })}>
                           <X className="h-3 w-3 mr-1" /> Cancel
                         </Button>
@@ -321,14 +635,14 @@ const AdminMatches = () => {
                     {m.status === "live" && !m.winner && (
                       <>
                         <Button size="sm" variant="outline" className="text-xs border-primary/30 text-primary"
-                          onClick={() => setConfirmAction({ type: "winA", matchId: m.id, label: `Settle match: ${m.team_a_name} wins? This will pay out all winning bets.` })}>
+                          onClick={() => setConfirmAction({ type: "winA", matchId: m.id, label: `Settle: ${m.team_a_name} wins? This will pay out all winning bets.` })}>
                           <CheckCircle className="h-3 w-3 mr-1" /> {m.team_a_name} Wins
                         </Button>
                         <Button size="sm" variant="outline" className="text-xs border-accent/30 text-accent"
-                          onClick={() => setConfirmAction({ type: "winB", matchId: m.id, label: `Settle match: ${m.team_b_name} wins? This will pay out all winning bets.` })}>
+                          onClick={() => setConfirmAction({ type: "winB", matchId: m.id, label: `Settle: ${m.team_b_name} wins? This will pay out all winning bets.` })}>
                           <CheckCircle className="h-3 w-3 mr-1" /> {m.team_b_name} Wins
                         </Button>
-                        <Button size="sm" variant="outline" className="text-xs border-[hsl(var(--neon-purple))]/30 text-[hsl(var(--neon-purple))]"
+                        <Button size="sm" variant="outline" className="text-xs border-purple-500/30 text-purple-400"
                           onClick={() => setConfirmAction({ type: "cancel", matchId: m.id, label: "Cancel this match and refund all pending bets?" })}>
                           <X className="h-3 w-3 mr-1" /> Cancel Match
                         </Button>

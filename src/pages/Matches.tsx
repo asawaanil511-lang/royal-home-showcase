@@ -28,6 +28,9 @@ const Matches = () => {
     status: m.status as "live" | "upcoming" | "closed",
     oddsA: Number(m.odds_a),
     oddsB: Number(m.odds_b),
+    imageUrl: m.image_url || null,
+    liveTime: m.live_time || null,
+    closingTime: m.closing_time || null,
   });
 
   const fetchMatches = async () => {

@@ -1,30 +1,46 @@
 import { Link } from "react-router-dom";
 import supermanLogo from "@/assets/superman-logo.jpg";
 import { motion } from "framer-motion";
-import { MessageCircle, Shield } from "lucide-react";
+import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
+
+const footerLinks = [
+  { label: "Matches",     href: "/matches",     icon: Swords },
+  { label: "Leaderboard", href: "/leaderboard", icon: Trophy },
+  { label: "Results",     href: "/results",     icon: ListChecks },
+  { label: "Rules",       href: "/rules",       icon: BookOpen },
+  { label: "Wallet",      href: "/wallet",      icon: Wallet },
+];
 
 const Footer = () => {
   return (
-    <footer className="border-t border-border/50 bg-card/30 backdrop-blur-sm py-12">
-      <div className="container mx-auto px-4">
-        <div className="flex flex-col items-center justify-between gap-8 md:flex-row md:items-start">
+    <footer className="border-t border-border/40 bg-card/20 backdrop-blur-sm">
+      {/* Top gradient line */}
+      <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
+
+      <div className="container mx-auto px-4 py-12">
+        <div className="flex flex-col items-center justify-between gap-10 md:flex-row md:items-start">
+
           {/* Brand */}
           <div className="flex flex-col items-center md:items-start gap-3">
-            <Link to="/" className="flex items-center gap-2.5">
-              <img src={supermanLogo} alt="Superman Toss Book" className="h-8 w-8 rounded-full object-cover border border-primary/30" />
+            <Link to="/" className="flex items-center gap-2.5 group">
+              <img
+                src={supermanLogo}
+                alt="Superman Toss Book"
+                className="h-9 w-9 rounded-full object-cover border border-primary/30 group-hover:border-primary/60 transition-colors shadow-[0_0_10px_hsl(var(--primary)/0.15)]"
+              />
               <div>
                 <span className="text-base font-extrabold text-foreground">SUPERMAN</span>
                 <span className="text-base font-extrabold text-primary ml-1.5">TOSS BOOK</span>
               </div>
             </Link>
-            <p className="text-xs text-muted-foreground max-w-[200px] text-center md:text-left">
-              The most exciting virtual cricket betting platform.
+            <p className="text-xs text-muted-foreground max-w-[200px] text-center md:text-left leading-relaxed">
+              The most exciting virtual cricket toss betting platform.
             </p>
             <a
               href="https://t.me/shrey14a"
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 hover:border-primary/40 transition-all"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               Contact via Telegram
@@ -32,30 +48,42 @@ const Footer = () => {
           </div>
 
           {/* Links */}
-          <div className="flex flex-wrap justify-center gap-x-8 gap-y-3 text-sm text-muted-foreground">
-            <Link to="/matches" className="transition-colors hover:text-primary">Matches</Link>
-            <Link to="/leaderboard" className="transition-colors hover:text-primary">Leaderboard</Link>
-            <Link to="/results" className="transition-colors hover:text-primary">Results</Link>
-            <Link to="/rules" className="transition-colors hover:text-primary">Rules</Link>
-            <Link to="/wallet" className="transition-colors hover:text-primary">Wallet</Link>
+          <div className="flex flex-wrap justify-center gap-x-1 gap-y-1">
+            {footerLinks.map((link) => {
+              const IconComp = link.icon;
+              return (
+                <Link
+                  key={link.label}
+                  to={link.href}
+                  className="flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-primary hover:bg-primary/5"
+                >
+                  <IconComp className="h-3.5 w-3.5" />
+                  {link.label}
+                </Link>
+              );
+            })}
           </div>
 
-          {/* Copyright */}
-          <div className="flex flex-col items-center md:items-end gap-2">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Shield className="h-3 w-3" />
-              <span>Secure Platform</span>
+          {/* Right info */}
+          <div className="flex flex-col items-center md:items-end gap-3">
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/20 bg-emerald-500/8 px-3 py-1.5 text-xs text-emerald-400 font-medium">
+              <Shield className="h-3.5 w-3.5" />
+              Secure Platform
             </div>
             <p className="text-xs text-muted-foreground">© 2026 Superman Toss Book.</p>
-            <p className="text-xs text-muted-foreground">All rights reserved.</p>
+            <p className="text-xs text-muted-foreground/60">All rights reserved.</p>
           </div>
         </div>
 
-        {/* Bottom gradient line */}
+        {/* Bottom gradient divider */}
         <motion.div
-          className="mt-8 h-px w-full"
-          style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary)/0.4), transparent)" }}
+          className="mt-10 h-px w-full"
+          style={{ background: "linear-gradient(90deg, transparent, hsl(var(--primary)/0.3), transparent)" }}
         />
+
+        <p className="text-center text-[11px] text-muted-foreground/50 mt-4 tracking-wide">
+          Play responsibly. This is a virtual platform for entertainment purposes only.
+        </p>
       </div>
     </footer>
   );

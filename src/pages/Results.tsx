@@ -22,7 +22,7 @@ const Results = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchResults = async () => {
       const { data } = await (supabase as any)
         .from("matches")
         .select("*")
@@ -31,7 +31,7 @@ const Results = () => {
       setMatches((data as ClosedMatch[]) || []);
       setLoading(false);
     };
-    fetch();
+    fetchResults();
   }, []);
 
   return (
@@ -51,7 +51,7 @@ const Results = () => {
             <h1 className="text-4xl font-extrabold text-foreground md:text-5xl">
               Match <span className="text-neon">Results</span>
             </h1>
-            <p className="mt-2 text-muted-foreground">Completed matches and final outcomes</p>
+            <p className="mt-2 text-muted-foreground text-sm">Completed matches with final outcomes</p>
           </motion.div>
         </div>
       </section>
@@ -60,16 +60,18 @@ const Results = () => {
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-28 rounded-2xl bg-card border border-border/50 animate-pulse" />
+              <div key={i} className="h-32 rounded-2xl shimmer-bg border border-border/30" />
             ))}
           </div>
         ) : matches.length === 0 ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="flex flex-col items-center justify-center py-20 gap-3"
+            className="flex flex-col items-center justify-center py-20 gap-4"
           >
-            <div className="text-5xl">📋</div>
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border/50 bg-card text-5xl shadow-card">
+              📋
+            </div>
             <p className="text-xl font-bold text-foreground">No completed matches yet</p>
             <p className="text-muted-foreground text-sm">Results will appear here after matches are settled.</p>
           </motion.div>
@@ -84,51 +86,61 @@ const Results = () => {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
-                  className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card"
+                  className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card hover:border-primary/20 hover:shadow-card-hover transition-all"
                 >
-                  <div className="h-1 w-full bg-gradient-to-r from-primary/60 via-emerald-500/60 to-primary/60" />
+                  <div className="h-1 w-full bg-gradient-to-r from-primary/50 via-emerald-500/50 to-primary/50" />
+
                   <div className="p-5">
+                    {/* Header */}
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5" />
                         {new Date(m.match_date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                       </div>
-                      <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 text-xs font-bold text-emerald-400">
+                      <span className="flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 px-2.5 py-1 text-xs font-bold text-emerald-400">
                         <CheckCircle className="h-3 w-3" /> Settled
                       </span>
                     </div>
 
-                    <div className="rounded-xl overflow-hidden mb-4" style={{ background: "linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)" }}>
+                    {/* Teams matchup */}
+                    <div className="rounded-xl overflow-hidden mb-4" style={{ background: "linear-gradient(135deg, #0d1525 0%, #1a1438 50%, #0d1525 100%)" }}>
                       <div className="p-4 flex items-center gap-3">
-                        <div className={`flex-1 text-center ${m.winner === "A" ? "" : "opacity-50"}`}>
-                          <p className={`font-extrabold text-sm tracking-tight ${m.winner === "A" ? "text-white" : "text-white/60"}`}>
+                        <div className={`flex-1 text-center ${m.winner === "A" ? "" : "opacity-40"}`}>
+                          <p className={`font-extrabold text-sm tracking-tight ${m.winner === "A" ? "text-white" : "text-white/50"}`}>
                             {m.team_a_name}
                           </p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{m.odds_a}x odds</p>
                           {m.winner === "A" && (
-                            <span className="text-[10px] font-bold text-emerald-400">👑 WINNER</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-yellow-400 mt-1">
+                              <Trophy className="h-2.5 w-2.5" /> WINNER
+                            </span>
                           )}
                         </div>
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-white/20 text-xs font-bold text-white/60">
+
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-white/15 bg-white/5 text-xs font-bold text-white/40">
                           VS
                         </div>
-                        <div className={`flex-1 text-center ${m.winner === "B" ? "" : "opacity-50"}`}>
-                          <p className={`font-extrabold text-sm tracking-tight ${m.winner === "B" ? "text-white" : "text-white/60"}`}>
+
+                        <div className={`flex-1 text-center ${m.winner === "B" ? "" : "opacity-40"}`}>
+                          <p className={`font-extrabold text-sm tracking-tight ${m.winner === "B" ? "text-white" : "text-white/50"}`}>
                             {m.team_b_name}
                           </p>
                           <p className="text-[10px] text-muted-foreground mt-0.5">{m.odds_b}x odds</p>
                           {m.winner === "B" && (
-                            <span className="text-[10px] font-bold text-emerald-400">👑 WINNER</span>
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-yellow-400 mt-1">
+                              <Trophy className="h-2.5 w-2.5" /> WINNER
+                            </span>
                           )}
                         </div>
                       </div>
                     </div>
 
+                    {/* Winner banner */}
                     {winnerName && (
-                      <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 py-2.5 px-4">
+                      <div className="flex items-center justify-center gap-2 rounded-xl bg-emerald-500/8 border border-emerald-500/25 py-3 px-4">
                         <Trophy className="h-4 w-4 text-emerald-400" />
                         <p className="text-sm font-bold text-emerald-400">
-                          Winner: {winnerName}
+                          {winnerName} won the toss
                         </p>
                       </div>
                     )}

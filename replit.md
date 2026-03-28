@@ -18,10 +18,13 @@ A cricket sports betting/gaming web app — Superman Toss Book.
 - `src/pages/Rules.tsx` — Full rules page with all 14+ rules, special info box, legend, animations
 - `src/pages/Leaderboard.tsx` — Computed leaderboard from bets + profiles (no view dependency)
 - `src/pages/Results.tsx` — Improved match results with VS team layout
-- `src/components/Navbar.tsx` — Navigation with Rules link, animated nav pill, mobile menu animation
-- `src/components/HeroSection.tsx` — Animated logo, glowing effects, stats bar, View Rules button
-- `src/components/GameZone.tsx` — 3-column layout (Matches, Leaderboard, Rules)
-- `src/components/Footer.tsx` — Improved footer with Rules link and Telegram contact
+- `src/components/Navbar.tsx` — Navigation with icons per link, animated nav pill, improved mobile drawer with user card
+- `src/components/HeroSection.tsx` — Animated logo with rotating ring, 4-stat grid, neon effects
+- `src/components/GameZone.tsx` — 3-column layout (Matches, Leaderboard, Rules) with icon-based cards
+- `src/components/Footer.tsx` — Footer with icon nav links, Telegram contact badge
+- `src/components/StatsSection.tsx` — Fetches real stats from Supabase (winners, paid out, biggest win, win rate)
+- `src/components/RecentWinners.tsx` — Ranked winner cards with profit display
+- `src/components/MatchCard.tsx` — Premium team cards with letter fallback, improved odds badges
 - `src/components/admin/` — Admin dashboard, match management, user management, bet tracking
 
 ## Features

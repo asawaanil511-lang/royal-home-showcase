@@ -434,7 +434,7 @@ const Login = () => {
             ) : (
               <>
                 <Zap className="h-4 w-4" />
-                Try Demo ID &nbsp;<span className="opacity-60 text-xs font-normal">· ₹5 coins included</span>
+                Sign in with Demo ID
               </>
             )}
           </motion.button>

@@ -83,7 +83,7 @@ const Login = () => {
       }
       localStorage.setItem("stb_remember_user", username);
       toast({ title: "Welcome to the Arena! 🏆", description: `Logged in as ${username}` });
-      navigate(from, { replace: true });
+      navigate("/matches", { replace: true });
     } catch (err: any) {
       toast({ title: "Something went wrong", description: err.message, variant: "destructive" });
     }
@@ -111,7 +111,7 @@ const Login = () => {
         return;
       }
       toast({ title: "Demo mode active ⚡" });
-      navigate(from, { replace: true });
+      navigate("/matches", { replace: true });
     } catch {
       toast({ title: "Demo unavailable", variant: "destructive" });
     }

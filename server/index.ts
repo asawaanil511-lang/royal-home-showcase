@@ -133,6 +133,54 @@ app.post("/api/admin-create-user", async (req, res) => {
   }
 });
 
+// ---- Demo login — auto-creates demo user if needed ----
+app.post("/api/demo-login", async (req, res) => {
+  try {
+    if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured" });
+    const adminClient = getAdminClient();
+    const DEMO_USERNAME = "demo";
+    const DEMO_EMAIL = "demo@superman.local";
+    const DEMO_PASSWORD = "Demo@1234";
+    const DEMO_WALLET = 5;
+
+    // Check if demo profile already exists
+    const { data: existingProfile } = await adminClient
+      .from("profiles")
+      .select("user_id")
+      .eq("username", DEMO_USERNAME)
+      .maybeSingle();
+
+    if (!existingProfile) {
+      // Create fresh demo user
+      const { data: newUser, error: createErr } = await adminClient.auth.admin.createUser({
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        email_confirm: true,
+        user_metadata: { username: DEMO_USERNAME, display_name: "Demo User 🎮" },
+      });
+      if (createErr) return res.status(400).json({ error: createErr.message });
+
+      if (newUser.user) {
+        // Set wallet to 5 coins, no forced password change
+        await adminClient
+          .from("profiles")
+          .update({ wallet_balance: DEMO_WALLET, must_change_password: false })
+          .eq("user_id", newUser.user.id);
+      }
+    } else {
+      // Reset demo wallet back to 5 coins each time they log in fresh
+      await adminClient
+        .from("profiles")
+        .update({ wallet_balance: DEMO_WALLET, must_change_password: false })
+        .eq("user_id", existingProfile.user_id);
+    }
+
+    return res.json({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Run DB migration (add new columns to matches) ----
 const MIGRATION_SQL = `
   ALTER TABLE matches

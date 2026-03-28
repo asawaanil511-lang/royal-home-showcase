@@ -93,24 +93,24 @@ const Login = () => {
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
-      const response = await fetch("/api/login-by-username", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: "demo" }),
-      });
+      // Auto-creates demo account if needed, resets wallet to 5 coins
+      const response = await fetch("/api/demo-login", { method: "POST" });
       const res = await response.json();
-      if (!response.ok || res.error || !res.email) {
-        toast({ title: "Demo account not set up", description: "Ask admin to create a 'demo' account", variant: "destructive" });
+      if (!response.ok || res.error) {
+        toast({ title: "Demo unavailable", description: res.error || "Try again later", variant: "destructive" });
         setDemoLoading(false);
         return;
       }
-      const { error } = await supabase.auth.signInWithPassword({ email: res.email, password: "Demo@1234" });
+      const { error } = await supabase.auth.signInWithPassword({
+        email: res.email,
+        password: res.password,
+      });
       if (error) {
-        toast({ title: "Demo login failed", variant: "destructive" });
+        toast({ title: "Demo login failed", description: error.message, variant: "destructive" });
         setDemoLoading(false);
         return;
       }
-      toast({ title: "Demo mode active ⚡" });
+      toast({ title: "Demo mode active ⚡", description: "You have ₹5 coins to explore!" });
       navigate("/matches", { replace: true });
     } catch {
       toast({ title: "Demo unavailable", variant: "destructive" });
@@ -427,11 +427,16 @@ const Login = () => {
             }}
           >
             {demoLoading ? (
-              <span className="h-4 w-4 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+              <>
+                <span className="h-4 w-4 rounded-full border-2 border-current/30 border-t-current animate-spin" />
+                Setting up...
+              </>
             ) : (
-              <Zap className="h-4 w-4" />
+              <>
+                <Zap className="h-4 w-4" />
+                Try Demo ID &nbsp;<span className="opacity-60 text-xs font-normal">· ₹5 coins included</span>
+              </>
             )}
-            Try Demo Account
           </motion.button>
 
           {/* ── Contact footer ── */}

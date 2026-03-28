@@ -2,8 +2,9 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
 import Wallet from "./pages/Wallet";
@@ -13,7 +14,6 @@ import Results from "./pages/Results";
 import Rules from "./pages/Rules";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
-import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
 import WalletAnimation from "./components/WalletAnimation";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
@@ -36,16 +36,22 @@ const App = () => (
           <WalletAnimation />
           <PasswordGate />
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/matches" element={<Matches />} />
-            <Route path="/wallet" element={<Wallet />} />
-            <Route path="/my-bets" element={<MyBets />} />
-            <Route path="/leaderboard" element={<Leaderboard />} />
-            <Route path="/results" element={<Results />} />
-            <Route path="/rules" element={<Rules />} />
-            <Route path="/admin" element={<Admin />} />
+            {/* Public */}
             <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            <Route path="/rules" element={<Rules />} />
+
+            {/* Protected — redirect to /login if not authenticated */}
+            <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+            <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
+            <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+            <Route path="/my-bets" element={<ProtectedRoute><MyBets /></ProtectedRoute>} />
+            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
+            <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+
+            {/* Legacy register → login */}
+            <Route path="/register" element={<Navigate to="/login" replace />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

@@ -36,7 +36,10 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<"user" | "pass" | null>(null);
-  const [liveStats] = useState({ matches: 3, players: 128 });
+  const [liveStats] = useState({
+    matches: Math.floor(Math.random() * 8) + 2,
+    players: Math.floor(Math.random() * 200) + 50,
+  });
   const logoControls = useAnimation();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -256,7 +259,7 @@ const Login = () => {
                 </span>
               </h1>
               <p className="text-xs tracking-[0.2em] font-medium" style={{ color: "hsl(220 15% 45%)" }}>
-                YOUR PREMIER BETTING ARENA
+                A NEW EXPERIENCE
               </p>
             </motion.div>
           </div>
@@ -390,12 +393,12 @@ const Login = () => {
                 {loading ? (
                   <>
                     <span className="h-4 w-4 rounded-full border-2 border-current/30 border-t-current animate-spin" />
-                    Entering Arena...
+                    Logging in...
                   </>
                 ) : (
                   <>
                     <Shield className="h-4 w-4" />
-                    ENTER THE ARENA
+                    LOGIN TO ACCOUNT
                   </>
                 )}
               </span>

@@ -3,6 +3,10 @@ import cors from "cors";
 import path from "path";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
+import { createRequire } from "module";
+
+const requireModule = createRequire(import.meta.url);
+const appConfig = requireModule("../config.json");
 
 const { Pool } = pg;
 
@@ -11,16 +15,17 @@ app.use(cors());
 app.use(express.json());
 
 const supabaseUrl = "https://xzgccthebdjchdumgrvv.supabase.co";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+const serviceRoleKey = appConfig.SUPABASE_SERVICE_ROLE_KEY as string;
 
 function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-// PostgreSQL pool — uses Replit's built-in DATABASE_URL
+// PostgreSQL pool — uses Supabase database URL from config.json
+const dbUrl: string = appConfig.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "";
 export const db = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: process.env.DATABASE_URL?.includes("localhost") ? false : { rejectUnauthorized: false },
+  connectionString: dbUrl,
+  ssl: dbUrl.includes("localhost") ? false : { rejectUnauthorized: false },
   max: 10,
 });
 

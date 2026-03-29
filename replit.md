@@ -25,6 +25,8 @@ A cricket sports betting/gaming web app — Superman Toss Book.
 - `src/components/StatsSection.tsx` — Fetches real stats from Supabase (winners, paid out, biggest win, win rate)
 - `src/components/RecentWinners.tsx` — Ranked winner cards with profit display
 - `src/components/MatchCard.tsx` — Premium team cards with letter fallback, improved odds badges
+- `src/pages/Profile.tsx` — Profile page: avatar/username, settings toggles, security/sessions, change password dialog, logout
+- `src/components/BottomNav.tsx` — Fixed mobile bottom nav bar: HOME, BETS, PASSBOOK, PROFILE tabs (hidden on md+ screens)
 - `src/components/admin/` — Admin dashboard, match management, user management, bet tracking
 
 ## Features

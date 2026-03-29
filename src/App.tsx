@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import BottomNav from "@/components/BottomNav";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
 import Wallet from "./pages/Wallet";
@@ -12,6 +13,7 @@ import MyBets from "./pages/MyBets";
 import Leaderboard from "./pages/Leaderboard";
 import Results from "./pages/Results";
 import Rules from "./pages/Rules";
+import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
 import Login from "./pages/Login";
 import NotFound from "./pages/NotFound";
@@ -47,6 +49,7 @@ const App = () => (
             <Route path="/my-bets" element={<ProtectedRoute><MyBets /></ProtectedRoute>} />
             <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
 
             {/* Legacy register → login */}
@@ -54,6 +57,9 @@ const App = () => (
 
             <Route path="*" element={<NotFound />} />
           </Routes>
+
+          {/* Mobile bottom navigation */}
+          <BottomNav />
         </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>

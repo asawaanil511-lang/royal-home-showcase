@@ -377,7 +377,7 @@ const MyBets = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-background pb-24 md:pb-0">
         <Navbar />
         <div className="flex flex-col items-center justify-center py-32 gap-4">
           <Receipt className="h-16 w-16 text-primary" />
@@ -402,7 +402,7 @@ const MyBets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Navbar />
 
       <section className="py-10">

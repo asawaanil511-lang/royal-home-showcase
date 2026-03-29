@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Wallet as WalletIcon, ExternalLink, ArrowUpRight, TrendingUp, Trophy, MessageCircle } from "lucide-react";
+import { Wallet as WalletIcon, ExternalLink, ArrowUpRight, TrendingUp, Trophy, MessageCircle, Plus, ArrowDownLeft, Info } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -63,6 +64,24 @@ const AnimatedBalance = ({ value }: { value: number }) => {
 const Wallet = () => {
   const { user, profile } = useAuth();
   const [customAmount, setCustomAmount] = useState("");
+  const [exposure, setExposure] = useState(0);
+  const [activeMarkets, setActiveMarkets] = useState(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchExposure = async () => {
+      const { data } = await supabase
+        .from("bets")
+        .select("amount, status")
+        .eq("user_id", user.id)
+        .eq("status", "pending");
+      if (data) {
+        setExposure(data.reduce((sum, b) => sum + (b.amount || 0), 0));
+        setActiveMarkets(data.length);
+      }
+    };
+    fetchExposure();
+  }, [user]);
 
   if (!user) {
     return (
@@ -88,7 +107,7 @@ const Wallet = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Navbar />
 
       <section className="relative overflow-hidden py-10">
@@ -102,7 +121,7 @@ const Wallet = () => {
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-7 flex items-center gap-3"
+              className="mb-5 flex items-center gap-3"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 border border-primary/20">
                 <WalletIcon className="h-5 w-5 text-primary" />
@@ -113,39 +132,63 @@ const Wallet = () => {
               </div>
             </motion.div>
 
-            {/* Balance card */}
+            {/* === TOTAL BALANCE + EXPOSURE CARD (Screenshot 2 style) === */}
             <motion.div
               initial={{ opacity: 0, y: 20, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              transition={{ delay: 0.05 }}
-              className="relative rounded-3xl border border-primary/30 overflow-hidden mb-5 shadow-[0_0_40px_hsl(var(--primary)/0.1)]"
-              style={{ background: "linear-gradient(135deg, hsl(230 22% 10%), hsl(230 20% 13%))" }}
+              transition={{ delay: 0.04 }}
+              className="relative rounded-2xl border border-border/60 overflow-hidden mb-3"
+              style={{ background: "hsl(228 20% 9%)" }}
             >
-              {/* Top glow */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 h-40 w-72 rounded-full blur-3xl opacity-20"
-                style={{ background: "hsl(var(--primary))" }} />
-              {/* Grid pattern */}
-              <div className="absolute inset-0 opacity-[0.03]"
-                style={{ backgroundImage: "linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+              {/* Grid overlay */}
+              <div className="absolute inset-0 opacity-[0.025]"
+                style={{ backgroundImage: "linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
 
-              <div className="relative p-8">
-                <div className="flex items-start justify-between mb-6">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1 tracking-wide uppercase font-medium">Available Balance</p>
-                    <AnimatedBalance value={profile?.wallet_balance ?? 0} />
-                    <p className="text-xs text-muted-foreground mt-1.5">Virtual Coins</p>
-                  </div>
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/15 border border-primary/30">
-                    <WalletIcon className="h-5 w-5 text-primary" />
+              <div className="relative p-5">
+                {/* Top row — labels */}
+                <div className="flex items-start justify-between mb-1">
+                  <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Total Balance</p>
+                  <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Exposure</p>
+                </div>
+
+                {/* Amounts row */}
+                <div className="flex items-end justify-between mb-3">
+                  <AnimatedBalance value={profile?.wallet_balance ?? 0} />
+                  <div className="text-right">
+                    <span className={`text-2xl font-extrabold tabular-nums ${exposure > 0 ? "text-orange-400" : "text-orange-400/60"}`}>
+                      ₹{exposure.toLocaleString()}
+                    </span>
+                    {exposure > 0 && (
+                      <p className="text-[10px] text-orange-400/60 mt-0.5">locked in bets</p>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                    Active
+                {/* Markets info */}
+                <div className="flex items-center gap-1.5 mb-4">
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Active in <span className="font-bold text-foreground">{activeMarkets}</span> market{activeMarkets !== 1 ? "s" : ""}
                   </span>
-                  <span className="text-xs text-muted-foreground">@{profile?.username || "user"}</span>
+                </div>
+
+                {/* Deposit + Withdraw buttons */}
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => window.open(TELEGRAM_LINK, "_blank")}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-background transition-all active:scale-95 shadow-neon"
+                    style={{ background: "hsl(var(--primary))" }}
+                  >
+                    <Plus className="h-4 w-4" />
+                    Deposit
+                  </button>
+                  <button
+                    onClick={() => window.open(TELEGRAM_LINK, "_blank")}
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-primary border border-primary/30 bg-primary/8 transition-all hover:bg-primary/15 hover:border-primary/50 active:scale-95"
+                  >
+                    <ArrowDownLeft className="h-4 w-4" />
+                    Withdraw
+                  </button>
                 </div>
               </div>
             </motion.div>

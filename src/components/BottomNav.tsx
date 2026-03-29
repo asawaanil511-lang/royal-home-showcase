@@ -4,10 +4,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 
 const tabs = [
-  { label: "HOME",      href: "/",        icon: Home,    authRequired: true },
-  { label: "BETS",      href: "/my-bets", icon: Ticket,  authRequired: true },
-  { label: "PASSBOOK",  href: "/wallet",  icon: BookOpen, authRequired: true },
-  { label: "PROFILE",   href: "/profile", icon: User,    authRequired: true },
+  { label: "HOME",      href: "/",         icon: Home,    authRequired: true },
+  { label: "BETS",      href: "/matches",  icon: Ticket,  authRequired: true },
+  { label: "PASSBOOK",  href: "/wallet",   icon: BookOpen, authRequired: true },
+  { label: "PROFILE",   href: "/profile",  icon: User,    authRequired: true },
 ];
 
 const BottomNav = () => {

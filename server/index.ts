@@ -173,7 +173,11 @@ app.post("/api/demo-login", async (req, res) => {
           .eq("user_id", newUser.user.id);
       }
     } else {
-      // Reset demo wallet back to 5 coins each time they log in fresh
+      // Reset demo password + wallet every time so credentials are always fresh
+      await adminClient.auth.admin.updateUserById(existingProfile.user_id, {
+        password: DEMO_PASSWORD,
+        email: DEMO_EMAIL,
+      });
       await adminClient
         .from("profiles")
         .update({ wallet_balance: DEMO_WALLET, must_change_password: false })

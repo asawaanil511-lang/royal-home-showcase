@@ -76,13 +76,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (user) await fetchProfile(user.id);
   }, [user]);
 
+  const recordSession = async (accessToken: string) => {
+    try {
+      const ua = navigator.userAgent;
+      let browser = "Browser";
+      let os = "Unknown OS";
+      if (ua.includes("Chrome") && !ua.includes("Edg")) browser = "Chrome";
+      else if (ua.includes("Firefox")) browser = "Firefox";
+      else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+      else if (ua.includes("Edg")) browser = "Edge";
+      if (ua.includes("Android")) os = "Android";
+      else if (ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
+      else if (ua.includes("Windows")) os = "Windows";
+      else if (ua.includes("Mac")) os = "macOS";
+      else if (ua.includes("Linux")) os = "Linux";
+      const isMobile = /Android|iPhone|iPad/i.test(ua);
+      const sessionToken = accessToken.slice(0, 20);
+      await fetch("/api/sessions/record", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ browser, os, device_type: isMobile ? "Mobile" : "Desktop", session_token: sessionToken }),
+      });
+    } catch { }
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => fetchProfile(session.user.id), 0);
+          if (event === "SIGNED_IN" && session.access_token) {
+            recordSession(session.access_token);
+          }
         } else {
           setProfile(null);
           prevBalanceRef.current = null;

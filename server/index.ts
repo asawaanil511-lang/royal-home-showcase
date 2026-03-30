@@ -74,6 +74,16 @@ const setupTables = async () => {
         created_by UUID,
         created_at TIMESTAMPTZ DEFAULT now()
       );
+      CREATE TABLE IF NOT EXISTS public.user_sessions (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        user_id UUID NOT NULL,
+        browser TEXT,
+        os TEXT,
+        device_type TEXT,
+        session_token TEXT UNIQUE,
+        created_at TIMESTAMPTZ DEFAULT now(),
+        last_seen TIMESTAMPTZ DEFAULT now()
+      );
     `);
     console.log("Helper tables ready");
   } catch (err: any) {
@@ -390,6 +400,94 @@ const autoUpdateMatchStatuses = async () => {
 };
 autoUpdateMatchStatuses();
 setInterval(autoUpdateMatchStatuses, 30000);
+
+// ---- Helper: verify any authenticated user ----
+async function verifyUser(req: express.Request, res: express.Response): Promise<string | null> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return null; }
+  const token = authHeader.replace("Bearer ", "");
+  const adminClient = getAdminClient();
+  const { data: { user } } = await adminClient.auth.getUser(token);
+  if (!user) { res.status(401).json({ error: "Unauthorized" }); return null; }
+  return user.id;
+}
+
+// ---- Session record (called after login) ----
+app.post("/api/sessions/record", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+    const { browser, os, device_type, session_token } = req.body;
+    if (!session_token) return res.status(400).json({ error: "session_token required" });
+
+    await db.query(
+      `INSERT INTO public.user_sessions (user_id, browser, os, device_type, session_token, created_at, last_seen)
+       VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+       ON CONFLICT (session_token) DO UPDATE SET last_seen = NOW()`,
+      [userId, browser || "Unknown", os || "Unknown", device_type || "Desktop", session_token]
+    );
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Get all sessions for current user ----
+app.get("/api/sessions", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+    const currentToken = (req.headers.authorization || "").replace("Bearer ", "");
+    // hash the current token for comparison (first 20 chars used as identifier)
+    const currentTokenPrefix = currentToken.slice(0, 20);
+
+    const result = await db.query(
+      `SELECT id, browser, os, device_type, session_token, created_at, last_seen
+       FROM public.user_sessions WHERE user_id = $1 ORDER BY last_seen DESC`,
+      [userId]
+    );
+    const sessions = result.rows.map((row: any) => ({
+      ...row,
+      is_current: row.session_token === currentTokenPrefix,
+    }));
+    return res.json({ sessions });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Revoke a session ----
+app.delete("/api/sessions/:id", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+    const { id } = req.params;
+    await db.query(
+      `DELETE FROM public.user_sessions WHERE id = $1 AND user_id = $2`,
+      [id, userId]
+    );
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Revoke all other sessions ----
+app.delete("/api/sessions", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+    const currentToken = (req.headers.authorization || "").replace("Bearer ", "");
+    const currentTokenPrefix = currentToken.slice(0, 20);
+    await db.query(
+      `DELETE FROM public.user_sessions WHERE user_id = $1 AND session_token != $2`,
+      [userId, currentTokenPrefix]
+    );
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
 
 // ---- Health check ----
 app.get("/api/health", async (_req, res) => {

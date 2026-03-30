@@ -32,6 +32,7 @@ const Matches = () => {
     liveTime: m.live_time || null,
     closingTime: m.closing_time || null,
     winner: m.winner || null,
+    matchTitle: m.match_title || null,
   });
 
   const fetchMatches = async () => {

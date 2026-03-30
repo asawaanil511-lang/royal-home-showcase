@@ -19,6 +19,7 @@ export type Match = {
   liveTime?: string | null;
   closingTime?: string | null;
   winner?: string | null;
+  matchTitle?: string | null;
 };
 
 export const matches: Match[] = [

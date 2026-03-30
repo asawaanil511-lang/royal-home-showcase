@@ -27,6 +27,7 @@ type DBMatch = {
   live_time?: string | null;
   closing_time?: string | null;
   image_url?: string | null;
+  match_title?: string | null;
 };
 
 type MatchBetStats = {
@@ -37,7 +38,8 @@ type MatchBetStats = {
 const MIGRATION_SQL = `ALTER TABLE matches
 ADD COLUMN IF NOT EXISTS live_time TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS closing_time TIMESTAMPTZ,
-ADD COLUMN IF NOT EXISTS image_url TEXT;`;
+ADD COLUMN IF NOT EXISTS image_url TEXT,
+ADD COLUMN IF NOT EXISTS match_title TEXT;`;
 
 const AdminMatches = () => {
   const { toast } = useToast();
@@ -67,6 +69,7 @@ const AdminMatches = () => {
   const [imageUrl, setImageUrl] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [matchTitle, setMatchTitle] = useState("");
   const [saving, setSaving] = useState(false);
 
   const fetchMatches = async () => {
@@ -155,6 +158,7 @@ const AdminMatches = () => {
     if (liveTime) insertData.live_time = new Date(liveTime).toISOString();
     if (closingTime) insertData.closing_time = new Date(closingTime).toISOString();
     if (uploadedUrl) insertData.image_url = uploadedUrl;
+    if (matchTitle.trim()) insertData.match_title = matchTitle.trim();
 
     const { error } = await (supabase as any).from("matches").insert(insertData);
 
@@ -172,7 +176,7 @@ const AdminMatches = () => {
     setSaving(false);
     setShowForm(false);
     setTeamA(""); setTeamB(""); setOddsA("0.95"); setOddsB("0.95"); setMaxBet("10000");
-    setMatchDate(""); setLiveTime(""); setClosingTime(""); setImageUrl(""); setImageFile(null); setImagePreview(null);
+    setMatchDate(""); setLiveTime(""); setClosingTime(""); setImageUrl(""); setImageFile(null); setImagePreview(null); setMatchTitle("");
     toast({ title: "✅ Match created!" });
     fetchMatches();
   };
@@ -217,6 +221,7 @@ const AdminMatches = () => {
       live_time: m.live_time ? m.live_time.slice(0, 16) : "",
       closing_time: m.closing_time ? m.closing_time.slice(0, 16) : "",
       image_url: m.image_url || "",
+      match_title: m.match_title || "",
     });
   };
 
@@ -417,6 +422,17 @@ const AdminMatches = () => {
               <h3 className="text-lg font-bold text-foreground mb-4">Create New Match</h3>
 
               <div className="space-y-4">
+                {/* Match Title */}
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground mb-1 block">Match Title (shown on card)</label>
+                  <Input
+                    placeholder="e.g. Indian Premier League 2026"
+                    value={matchTitle}
+                    onChange={(e) => setMatchTitle(e.target.value)}
+                    className="bg-secondary border-border"
+                  />
+                </div>
+
                 {/* Teams */}
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
@@ -585,6 +601,10 @@ const AdminMatches = () => {
                     <div className="sm:col-span-2">
                       <label className="text-xs text-muted-foreground mb-1 block">Image URL</label>
                       <Input type="url" value={editData.image_url || ""} onChange={(e) => setEditData({ ...editData, image_url: e.target.value })} className="bg-secondary border-border" placeholder="https://..." />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <label className="text-xs text-muted-foreground mb-1 block">Match Title</label>
+                      <Input value={editData.match_title || ""} onChange={(e) => setEditData({ ...editData, match_title: e.target.value })} className="bg-secondary border-border" placeholder="e.g. Indian Premier League 2026" />
                     </div>
                   </div>
                   <div className="flex gap-2">

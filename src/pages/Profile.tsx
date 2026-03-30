@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import {
   Moon, Sun, Bell, BellOff, BookOpen, KeyRound, LogOut, ChevronRight,
   Monitor, Smartphone, Shield, User, Lock, Eye, EyeOff,
-  Edit3, CheckCircle, Ban
+  Edit3, CheckCircle, Ban, Trash2, RefreshCw, AlertTriangle
 } from "lucide-react";
 import { motion } from "framer-motion";
 import {
@@ -105,6 +105,60 @@ const Profile = () => {
   const [showNewPw, setShowNewPw] = useState(false);
   const [showConfirmPw, setShowConfirmPw] = useState(false);
   const [changingPw, setChangingPw] = useState(false);
+
+  type SessionRecord = {
+    id: string; browser: string; os: string; device_type: string;
+    session_token: string; created_at: string; last_seen: string; is_current: boolean;
+  };
+  const [sessions, setSessions] = useState<SessionRecord[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [revokingAll, setRevokingAll] = useState(false);
+
+  const fetchSessions = async () => {
+    if (!user) return;
+    setSessionsLoading(true);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const token = currentSession?.access_token;
+      if (!token) return;
+      const res = await fetch("/api/sessions", { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const data = await res.json();
+        setSessions(data.sessions || []);
+      }
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const revokeSession = async (id: string) => {
+    setRevokingId(id);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const token = currentSession?.access_token;
+      await fetch(`/api/sessions/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      setSessions((prev) => prev.filter((s) => s.id !== id));
+      toast({ title: "Session revoked" });
+    } finally {
+      setRevokingId(null);
+    }
+  };
+
+  const revokeAllOther = async () => {
+    setRevokingAll(true);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const token = currentSession?.access_token;
+      await fetch("/api/sessions", { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      setSessions((prev) => prev.filter((s) => s.is_current));
+      toast({ title: "All other sessions revoked" });
+    } finally {
+      setRevokingAll(false);
+    }
+  };
+
+  useEffect(() => { fetchSessions(); }, [user]);
 
   const deviceInfo = getBrowserInfo();
   const username = profile?.username || user?.email?.split("@")[0] || "User";
@@ -299,40 +353,118 @@ const Profile = () => {
           transition={{ delay: 0.14 }}
           className="mb-5"
         >
-          <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase px-1 mb-2">
-            Security &amp; Sessions
-          </p>
-          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden divide-y divide-border/40">
-            <div className="flex items-center gap-4 px-4 py-4 border-l-2 border-primary">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                {deviceInfo.isMobile
-                  ? <Smartphone className="h-5 w-5 text-muted-foreground" />
-                  : <Monitor className="h-5 w-5 text-muted-foreground" />
-                }
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <p className="text-sm font-semibold text-foreground">
-                    {deviceInfo.browser} on {deviceInfo.os}
-                  </p>
-                  <span className="text-[10px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
-                    THIS DEVICE
-                  </span>
-                </div>
-                <p className="text-xs text-emerald-400 mt-0.5">Active now</p>
-              </div>
-            </div>
+          <div className="flex items-center justify-between px-1 mb-2">
+            <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
+              Active Sessions
+            </p>
+            <button
+              onClick={fetchSessions}
+              disabled={sessionsLoading}
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <RefreshCw className={`h-3 w-3 ${sessionsLoading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
 
-            <div className="flex items-center gap-4 px-4 py-4">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Shield className="h-5 w-5 text-emerald-400" />
+          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden divide-y divide-border/40">
+            {/* Account secured row */}
+            <div className="flex items-center gap-4 px-4 py-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
+                <Shield className="h-4 w-4 text-emerald-400" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-foreground">Account Secured</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Password protected login</p>
+                <p className="text-xs text-muted-foreground mt-0.5">Password protected</p>
               </div>
               <CheckCircle className="h-4 w-4 text-emerald-400" />
             </div>
+
+            {/* Session list */}
+            {sessionsLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-xs text-muted-foreground">Loading sessions…</span>
+              </div>
+            ) : sessions.length === 0 ? (
+              <div className="px-4 py-5 text-center">
+                <p className="text-xs text-muted-foreground">No recorded sessions yet. Sessions are recorded when you log in.</p>
+              </div>
+            ) : (
+              sessions.map((s) => {
+                const isMob = s.device_type === "Mobile";
+                const lastSeen = new Date(s.last_seen);
+                const now = new Date();
+                const diffMs = now.getTime() - lastSeen.getTime();
+                const diffMin = Math.floor(diffMs / 60000);
+                const diffHr = Math.floor(diffMin / 60);
+                const lastSeenLabel = diffMin < 2
+                  ? "Active now"
+                  : diffMin < 60
+                  ? `${diffMin}m ago`
+                  : diffHr < 24
+                  ? `${diffHr}h ago`
+                  : lastSeen.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+
+                return (
+                  <div
+                    key={s.id}
+                    className={`flex items-center gap-3 px-4 py-3 ${s.is_current ? "border-l-2 border-primary" : ""}`}
+                  >
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary">
+                      {isMob
+                        ? <Smartphone className="h-4 w-4 text-muted-foreground" />
+                        : <Monitor className="h-4 w-4 text-muted-foreground" />
+                      }
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-sm font-semibold text-foreground truncate">
+                          {s.browser} on {s.os}
+                        </p>
+                        {s.is_current && (
+                          <span className="text-[9px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full shrink-0">
+                            THIS DEVICE
+                          </span>
+                        )}
+                      </div>
+                      <p className={`text-xs mt-0.5 ${diffMin < 2 ? "text-emerald-400" : "text-muted-foreground"}`}>
+                        {lastSeenLabel}
+                      </p>
+                    </div>
+                    {!s.is_current && (
+                      <button
+                        onClick={() => revokeSession(s.id)}
+                        disabled={revokingId === s.id}
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/15 transition-colors disabled:opacity-40"
+                        title="Revoke this session"
+                      >
+                        {revokingId === s.id
+                          ? <RefreshCw className="h-3 w-3 animate-spin" />
+                          : <Trash2 className="h-3 w-3" />
+                        }
+                      </button>
+                    )}
+                  </div>
+                );
+              })
+            )}
+
+            {/* Revoke all others */}
+            {sessions.filter((s) => !s.is_current).length > 0 && (
+              <div className="px-4 py-3">
+                <button
+                  onClick={revokeAllOther}
+                  disabled={revokingAll}
+                  className="flex items-center gap-2 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
+                >
+                  {revokingAll
+                    ? <><RefreshCw className="h-3 w-3 animate-spin" /> Revoking…</>
+                    : <><AlertTriangle className="h-3 w-3" /> Revoke all other sessions</>
+                  }
+                </button>
+              </div>
+            )}
           </div>
         </motion.div>
 

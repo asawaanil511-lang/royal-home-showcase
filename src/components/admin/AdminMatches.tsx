@@ -102,32 +102,34 @@ const AdminMatches = () => {
     if (!imageFile) return imageUrl || null;
     setImageUploading(true);
     try {
-      const ext = imageFile.name.split(".").pop();
-      const fileName = `match-${Date.now()}.${ext}`;
-      const { data, error } = await (supabase as any).storage
-        .from("match-images")
-        .upload(fileName, imageFile, { upsert: true });
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target?.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(imageFile);
+      });
 
-      if (error) {
-        // Try to create the bucket if it doesn't exist
-        await (supabase as any).storage.createBucket("match-images", { public: true });
-        const { data: data2, error: err2 } = await (supabase as any).storage
-          .from("match-images")
-          .upload(fileName, imageFile, { upsert: true });
-        if (err2) {
-          toast({ title: "Image upload failed", description: err2.message, variant: "destructive" });
-          setImageUploading(false);
-          return imageUrl || null;
-        }
-        const { data: urlData } = (supabase as any).storage.from("match-images").getPublicUrl(fileName);
-        setImageUploading(false);
-        return urlData.publicUrl;
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || "";
+
+      const response = await fetch("/api/upload-match-image", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ base64, mimeType: imageFile.type, fileName: imageFile.name }),
+      });
+
+      const result = await response.json();
+      setImageUploading(false);
+
+      if (!response.ok || result.error) {
+        toast({ title: "Image upload failed", description: result.error, variant: "destructive" });
+        return imageUrl || null;
       }
-      const { data: urlData } = (supabase as any).storage.from("match-images").getPublicUrl(fileName);
+
+      return result.url;
+    } catch (err: any) {
       setImageUploading(false);
-      return urlData.publicUrl;
-    } catch {
-      setImageUploading(false);
+      toast({ title: "Image upload failed", description: err.message, variant: "destructive" });
       return imageUrl || null;
     }
   };

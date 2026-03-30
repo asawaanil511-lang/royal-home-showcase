@@ -138,6 +138,7 @@ app.post("/api/admin-create-user", async (req, res) => {
 
     if (action === "delete") {
       if (!user_id) return res.status(400).json({ error: "user_id required" });
+      if (user_id === adminId) return res.status(403).json({ error: "Admins cannot delete their own account." });
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) return res.status(400).json({ error: error.message });
       return res.json({ success: true });
@@ -307,6 +308,48 @@ app.delete("/api/announcements/:id", async (req, res) => {
     const { id } = req.params;
     await db.query(`DELETE FROM public.announcements WHERE id = $1`, [id]);
     return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Upload match image (admin only) ----
+app.post("/api/upload-match-image", async (req, res) => {
+  try {
+    if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured." });
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+
+    const { base64, mimeType, fileName } = req.body;
+    if (!base64 || !mimeType || !fileName) {
+      return res.status(400).json({ error: "base64, mimeType and fileName required" });
+    }
+
+    const adminClient = getAdminClient();
+    const BUCKET = "match-images";
+
+    // Strip the data URL prefix if present
+    const raw = base64.includes(",") ? base64.split(",")[1] : base64;
+    const buffer = Buffer.from(raw, "base64");
+
+    // Try to ensure bucket exists
+    try {
+      await (adminClient as any).storage.createBucket(BUCKET, { public: true });
+    } catch {
+      // Bucket may already exist — continue
+    }
+
+    const safeName = `match-${Date.now()}-${fileName.replace(/[^a-z0-9.\-_]/gi, "_")}`;
+    const { error: uploadError } = await (adminClient as any).storage
+      .from(BUCKET)
+      .upload(safeName, buffer, { contentType: mimeType, upsert: true });
+
+    if (uploadError) {
+      return res.status(400).json({ error: uploadError.message });
+    }
+
+    const { data: urlData } = (adminClient as any).storage.from(BUCKET).getPublicUrl(safeName);
+    return res.json({ url: urlData.publicUrl });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

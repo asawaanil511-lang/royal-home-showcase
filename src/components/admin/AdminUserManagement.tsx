@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Trash2, KeyRound, Search, Loader2, Clock, ChevronDown } from "lucide-react";
@@ -86,6 +87,7 @@ const UserSearchDropdown = ({
 
 const AdminUserManagement = () => {
   const { toast } = useToast();
+  const { user: currentUser } = useAuth();
   const [users, setUsers] = useState<UserOption[]>([]);
   const [createUsername, setCreateUsername] = useState("");
   const [creating, setCreating] = useState(false);
@@ -128,6 +130,10 @@ const AdminUserManagement = () => {
 
   const handleDelete = async () => {
     if (!deleteUserId) { toast({ title: "Select a user", variant: "destructive" }); return; }
+    if (deleteUserId === currentUser?.id) {
+      toast({ title: "Cannot delete yourself", description: "Admins cannot delete their own account.", variant: "destructive" });
+      return;
+    }
     setDeleting(true);
     const res = await callAdminApi({ action: "delete", user_id: deleteUserId });
     setDeleting(false);
@@ -192,7 +198,7 @@ const AdminUserManagement = () => {
           </h3>
           <p className="text-xs text-muted-foreground mb-4">Permanently deletes the account and all data.</p>
           <div className="space-y-2.5">
-            <UserSearchDropdown users={users} value={deleteUserId}
+            <UserSearchDropdown users={users.filter(u => u.user_id !== currentUser?.id)} value={deleteUserId}
               onChange={(id, name) => { setDeleteUserId(id); setDeleteUsername(name); }}
               placeholder="Select user to delete…" />
             <AlertDialog>

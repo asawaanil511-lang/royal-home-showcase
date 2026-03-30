@@ -56,6 +56,26 @@ function useCountdown(target: string | null | undefined) {
   return remaining;
 }
 
+function formatIST(utcString: string): string {
+  const date = new Date(utcString);
+  const today = new Date();
+  const timeStr = date.toLocaleTimeString("en-IN", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  });
+  const todayIST = today.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+  const targetIST = date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+  if (todayIST !== targetIST) {
+    const dateStr = date.toLocaleDateString("en-IN", {
+      day: "numeric", month: "short", timeZone: "Asia/Kolkata",
+    });
+    return `${dateStr}, ${timeStr} IST`;
+  }
+  return `${timeStr} IST`;
+}
+
 function formatCountdown(ms: number): string {
   if (ms <= 0) return "Closed";
   const totalSec = Math.floor(ms / 1000);
@@ -377,6 +397,13 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
           <span className="flex items-center gap-1 font-bold text-red-400">
             <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
             Live
+          </span>
+        )}
+
+        {isUpcoming && match.closingTime && (
+          <span className="flex items-center gap-1 font-semibold text-amber-400 shrink-0">
+            <Timer className="h-3 w-3 shrink-0" />
+            Closes {formatIST(match.closingTime)}
           </span>
         )}
 

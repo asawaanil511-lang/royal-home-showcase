@@ -61,3 +61,4 @@ externalPort = 3002
 [userenv.shared]
 VITE_SUPABASE_URL = "https://xzgccthebdjchdumgrvv.supabase.co"
 VITE_SUPABASE_PROJECT_ID = "xzgccthebdjchdumgrvv"
+SUPABASE_URL = "https://xzgccthebdjchdumgrvv.supabase.co"

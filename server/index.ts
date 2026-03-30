@@ -5,8 +5,13 @@ import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
 import { createRequire } from "module";
 
-const requireModule = createRequire(import.meta.url);
-const appConfig = requireModule("../config.json");
+let appConfig: Record<string, string> = {};
+try {
+  const requireModule = createRequire(import.meta.url);
+  appConfig = requireModule("../config.json");
+} catch {
+  // config.json not present — fall back to environment variables
+}
 
 const { Pool } = pg;
 
@@ -15,13 +20,19 @@ app.use(cors());
 app.use(express.json());
 
 const supabaseUrl = "https://xzgccthebdjchdumgrvv.supabase.co";
-const serviceRoleKey = appConfig.SUPABASE_SERVICE_ROLE_KEY as string;
+const serviceRoleKey: string =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || appConfig.SUPABASE_SERVICE_ROLE_KEY || "";
 
 function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-const dbUrl: string = appConfig.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "";
+const dbUrl: string =
+  process.env.SUPABASE_DATABASE_URL ||
+  appConfig.SUPABASE_DATABASE_URL ||
+  process.env.DATABASE_URL ||
+  "";
+
 export const db = new Pool({
   connectionString: dbUrl,
   ssl: dbUrl.includes("localhost") ? false : { rejectUnauthorized: false },

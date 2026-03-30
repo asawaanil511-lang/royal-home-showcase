@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, MessageCircle, HelpCircle, Zap, Shield } from "lucide-react";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 
-const TELEGRAM_URL = "https://t.me/@Lawrenceboss";
+const TELEGRAM_URL = "https://t.me/Lawrenceboss";
 
 // Floating cricket particles for background
 const PARTICLES = Array.from({ length: 18 }, (_, i) => ({

@@ -195,7 +195,7 @@ const Navbar = () => {
                 <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
               </Button>
               <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon text-xs" asChild>
-                <a href="https://t.me/shrey14a" target="_blank" rel="noopener noreferrer">Register</a>
+                <a href="https://t.me/Lawrenceboss" target="_blank" rel="noopener noreferrer">Register</a>
               </Button>
             </>
           )}
@@ -319,7 +319,7 @@ const Navbar = () => {
                     </Link>
                   </Button>
                   <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold shadow-neon" asChild>
-                    <a href="https://t.me/@Lawrenceboss" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
+                    <a href="https://t.me/Lawrenceboss" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
                       Register
                     </a>
                   </Button>

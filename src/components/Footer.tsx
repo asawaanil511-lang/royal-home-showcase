@@ -37,7 +37,7 @@ const Footer = () => {
               The most exciting virtual cricket toss betting platform.
             </p>
             <a
-              href="https://t.me/@Lawrenceboss"
+              href="https://t.me/Lawrenceboss"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 hover:border-primary/40 transition-all"

@@ -9,7 +9,7 @@ import { Wallet as WalletIcon, ExternalLink, ArrowUpRight, TrendingUp, Trophy, M
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const TELEGRAM_LINK = "https://t.me/@Lawrenceboss";
+const TELEGRAM_LINK = "https://t.me/Lawrenceboss";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 

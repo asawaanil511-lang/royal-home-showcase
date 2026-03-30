@@ -1,6 +1,6 @@
 import { Match } from "@/data/matches";
 import { Button } from "@/components/ui/button";
-import { Clock, Lock, Zap, ChevronRight, Swords, Trophy, Timer } from "lucide-react";
+import { Bell, Clock, Lock, Timer, Trophy } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect } from "react";
 
@@ -9,35 +9,7 @@ type MatchCardProps = {
   onBet: (match: Match) => void;
 };
 
-// ─── helpers ───────────────────────────────────────────────────────────────
-
-const getAbbr = (name: string): string => {
-  const skip = new Set(["the", "of", "and", "women", "men", "a"]);
-  const words = name.split(/\s+/).filter((w) => w.length > 1 && !skip.has(w.toLowerCase()));
-  if (words.length === 0) return name.slice(0, 3).toUpperCase();
-  if (words.length === 1) return words[0].slice(0, 3).toUpperCase();
-  if (words.length >= 3) return words.map((w) => w[0]).join("").slice(0, 3).toUpperCase();
-  return (words[0].slice(0, 2) + words[1][0]).toUpperCase();
-};
-
-const GRADIENT_PAIRS = [
-  ["#00d4b4", "#0099ff"],
-  ["#f97316", "#ef4444"],
-  ["#a855f7", "#6366f1"],
-  ["#22c55e", "#14b8a6"],
-  ["#eab308", "#f97316"],
-  ["#ec4899", "#a855f7"],
-  ["#06b6d4", "#3b82f6"],
-  ["#84cc16", "#22c55e"],
-];
-
-const hashName = (name: string): number => {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = ((h << 5) - h + name.charCodeAt(i)) | 0;
-  return Math.abs(h) % GRADIENT_PAIRS.length;
-};
-
-// ─── Countdown hook ─────────────────────────────────────────────────────────
+// ─── Countdown hook ───────────────────────────────────────────────────────────
 
 function useCountdown(target: string | null | undefined) {
   const [remaining, setRemaining] = useState<number | null>(null);
@@ -56,155 +28,44 @@ function useCountdown(target: string | null | undefined) {
   return remaining;
 }
 
-function formatIST(utcString: string): string {
-  const date = new Date(utcString);
-  const today = new Date();
-  const timeStr = date.toLocaleTimeString("en-IN", {
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-    timeZone: "Asia/Kolkata",
-  });
-  const todayIST = today.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
-  const targetIST = date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
-  if (todayIST !== targetIST) {
-    const dateStr = date.toLocaleDateString("en-IN", {
-      day: "numeric", month: "short", timeZone: "Asia/Kolkata",
-    });
-    return `${dateStr}, ${timeStr} IST`;
-  }
-  return `${timeStr} IST`;
-}
-
 function formatCountdown(ms: number): string {
-  if (ms <= 0) return "Closed";
+  if (ms <= 0) return "00H 00M 00S";
   const totalSec = Math.floor(ms / 1000);
   const h = Math.floor(totalSec / 3600);
   const m = Math.floor((totalSec % 3600) / 60);
   const s = totalSec % 60;
-  if (h > 0) return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
-  if (m > 0) return `${m}m ${String(s).padStart(2, "0")}s`;
-  return `${s}s`;
+  return `${String(h).padStart(2, "0")}H ${String(m).padStart(2, "0")}M ${String(s).padStart(2, "0")}S`;
 }
 
-// ─── TeamAvatar ──────────────────────────────────────────────────────────────
+function formatEndTime(utcString: string): string {
+  const date = new Date(utcString);
+  const today = new Date();
+  const timeStr = date
+    .toLocaleTimeString("en-IN", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone: "Asia/Kolkata",
+    })
+    .toUpperCase()
+    .replace("AM", "AM")
+    .replace("PM", "PM");
 
-const TeamAvatar = ({
-  src, name, isLive, isWinner = false, isLoser = false,
-}: { src: string; name: string; isLive: boolean; isWinner?: boolean; isLoser?: boolean }) => {
-  const [error, setError] = useState(false);
-  const abbr = getAbbr(name);
-  const [c1, c2] = GRADIENT_PAIRS[hashName(name)];
+  const todayIST = today.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
+  const targetIST = date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
 
-  const ringColor = isWinner
-    ? "rgba(234,179,8,0.7)"
-    : isLive
-    ? "rgba(239,68,68,0.4)"
-    : "rgba(0,212,180,0.2)";
+  if (todayIST !== targetIST) {
+    const dateStr = date.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      timeZone: "Asia/Kolkata",
+    });
+    return `${dateStr}, ${timeStr}`;
+  }
+  return timeStr;
+}
 
-  const content =
-    error || !src || src === "/placeholder.svg" || src === "" ? (
-      <div
-        className="h-[72px] w-[72px] rounded-full flex items-center justify-center"
-        style={{
-          background: `linear-gradient(135deg, ${c1}28, ${c2}40)`,
-          border: `1.5px solid ${c1}50`,
-        }}
-      >
-        <span
-          className="text-lg font-black tracking-tight"
-          style={{
-            background: `linear-gradient(135deg, ${c1}, ${c2})`,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}
-        >
-          {abbr}
-        </span>
-      </div>
-    ) : (
-      <img
-        src={src}
-        alt={name}
-        onError={() => setError(true)}
-        className="h-[72px] w-[72px] rounded-full object-contain bg-secondary/50 p-1.5"
-      />
-    );
-
-  return (
-    <div className="relative flex shrink-0 items-center justify-center" style={{ width: 72, height: 72 }}>
-      {/* colour bloom */}
-      <div
-        className="absolute inset-0 rounded-full blur-2xl opacity-35"
-        style={{ background: `radial-gradient(circle, ${c1}, transparent 70%)` }}
-      />
-      {/* ring */}
-      <div
-        className="absolute inset-0 rounded-full transition-all duration-500"
-        style={{ boxShadow: `0 0 0 2px ${ringColor}, 0 0 ${isWinner ? "18px" : "10px"} ${ringColor}` }}
-      />
-      <div className="relative">{content}</div>
-      {/* winner crown */}
-      {isWinner && (
-        <motion.div
-          initial={{ scale: 0, y: 4 }}
-          animate={{ scale: 1, y: 0 }}
-          className="absolute -top-3 left-1/2 -translate-x-1/2"
-        >
-          <Trophy className="h-5 w-5 text-yellow-400 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]" />
-        </motion.div>
-      )}
-    </div>
-  );
-};
-
-// ─── OddsBadge ───────────────────────────────────────────────────────────────
-
-const OddsBadge = ({ value, isLive, isWinner }: { value: number; isLive: boolean; isWinner?: boolean }) => (
-  <span
-    className={`inline-flex items-center rounded-full px-3 py-0.5 text-xs font-extrabold tracking-wide border transition-all ${
-      isWinner
-        ? "bg-yellow-400/15 text-yellow-400 border-yellow-400/30"
-        : isLive
-        ? "bg-red-500/10 text-red-400 border-red-500/25"
-        : "bg-primary/10 text-primary border-primary/25"
-    }`}
-  >
-    {value}x
-  </span>
-);
-
-// ─── StatusBadge ─────────────────────────────────────────────────────────────
-
-const StatusBadge = ({
-  isLive, isUpcoming, isClosed,
-}: { isLive: boolean; isUpcoming: boolean; isClosed: boolean }) => {
-  if (isLive)
-    return (
-      <span className="flex items-center gap-1.5 rounded-full bg-red-600 px-3 py-1 text-[10px] font-black text-white shadow-[0_0_14px_rgba(239,68,68,0.6)] tracking-wider">
-        <span className="relative flex h-1.5 w-1.5">
-          <span className="absolute h-full w-full animate-ping rounded-full bg-white opacity-75" />
-          <span className="relative h-1.5 w-1.5 rounded-full bg-white" />
-        </span>
-        LIVE
-      </span>
-    );
-  if (isUpcoming)
-    return (
-      <span className="flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-bold text-primary tracking-wide">
-        <Clock className="h-3 w-3" /> UPCOMING
-      </span>
-    );
-  if (isClosed)
-    return (
-      <span className="flex items-center gap-1.5 rounded-full border border-white/10 bg-black/50 px-3 py-1 text-[10px] font-bold text-white/40 tracking-wide">
-        <Lock className="h-3 w-3" /> CLOSED
-      </span>
-    );
-  return null;
-};
-
-// ─── MatchCard ────────────────────────────────────────────────────────────────
+// ─── MatchCard ─────────────────────────────────────────────────────────────────
 
 const MatchCard = ({ match, onBet }: MatchCardProps) => {
   const isClosed = match.status === "closed";
@@ -212,161 +73,217 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
   const isUpcoming = match.status === "upcoming";
   const [imgError, setImgError] = useState(false);
 
-  const closingMs = useCountdown(isLive ? match.closingTime : null);
+  // Countdown runs for both live & upcoming (toward closing time)
+  const countdownTarget = !isClosed ? (match.closingTime ?? null) : null;
+  const closingMs = useCountdown(countdownTarget);
   const closingSoon = closingMs !== null && closingMs < 5 * 60 * 1000 && closingMs > 0;
 
-  const winnerSide = match.winner; // "A" | "B" | null
-  const winnerName = winnerSide === "A" ? match.teamA.name : winnerSide === "B" ? match.teamB.name : null;
+  const winnerSide = match.winner;
+  const winnerName =
+    winnerSide === "A" ? match.teamA.name : winnerSide === "B" ? match.teamB.name : null;
 
   const hasImage = !!match.imageUrl && !imgError;
 
+  const tossRate =
+    match.oddsA === match.oddsB
+      ? `${match.oddsA}x`
+      : `${match.oddsA}x / ${match.oddsB}x`;
+
+  const endTimeLabel = match.closingTime
+    ? formatEndTime(match.closingTime)
+    : match.time
+    ? match.time.toUpperCase()
+    : "—";
+
+  const accentColor = isLive ? "#ef4444" : "#00b4ff";
+  const borderColor = isLive
+    ? "rgba(239,68,68,0.22)"
+    : isUpcoming
+    ? "rgba(0,180,255,0.14)"
+    : "rgba(255,255,255,0.06)";
+
   return (
     <motion.div
-      whileHover={!isClosed ? { y: -5, scale: 1.008 } : {}}
+      whileHover={!isClosed ? { y: -4, scale: 1.006 } : {}}
       transition={{ type: "spring", stiffness: 300, damping: 22 }}
-      className={`group relative overflow-hidden rounded-2xl border bg-card shadow-card transition-shadow ${
-        isLive
-          ? "border-red-500/35 shadow-[0_0_36px_rgba(239,68,68,0.12)]"
-          : isUpcoming
-          ? "border-primary/22 hover:border-primary/45 hover:shadow-[0_0_28px_hsl(var(--primary)/0.12)]"
-          : "border-border/30 opacity-80"
-      }`}
+      className={`relative overflow-hidden rounded-2xl ${isClosed ? "opacity-70" : ""}`}
+      style={{
+        background: "hsl(225 22% 8%)",
+        border: `1px solid ${borderColor}`,
+        boxShadow: !isClosed
+          ? `0 0 32px ${accentColor}0d`
+          : "none",
+      }}
     >
-      {/* top accent bar */}
+      {/* top accent line */}
       <div
-        className={`h-[3px] w-full ${
-          isLive
-            ? "bg-gradient-to-r from-transparent via-red-500 to-transparent animate-pulse"
-            : isUpcoming
-            ? "bg-gradient-to-r from-transparent via-primary to-transparent"
-            : "bg-gradient-to-r from-transparent via-border/60 to-transparent"
-        }`}
+        className="h-[2px] w-full"
+        style={{
+          background: `linear-gradient(90deg, transparent, ${accentColor}99, transparent)`,
+        }}
       />
 
-      {/* ── Match image ──────────────────────────────────── */}
-      {hasImage ? (
-        <div className="relative overflow-hidden" style={{ height: 160 }}>
-          <img
-            src={match.imageUrl!}
-            alt="Match schedule"
-            className="absolute inset-0 h-full w-full object-cover object-center"
-            onError={() => setImgError(true)}
-          />
-          {/* subtle vignette — only edges, NOT full overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-card/70 via-transparent to-black/30" />
-          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-card/60" />
-
-          {/* status badge */}
-          <div className="absolute top-3 left-3">
-            <StatusBadge isLive={isLive} isUpcoming={isUpcoming} isClosed={isClosed} />
-          </div>
-
-          {/* date/time pill */}
-          {(match.date || match.time) && (
-            <div className="absolute top-3 right-3">
-              <span className="flex items-center gap-1 rounded-full bg-black/55 backdrop-blur-sm border border-white/10 px-2.5 py-1 text-[10px] font-semibold text-white/80">
-                <Clock className="h-3 w-3" />
-                {match.date} · {match.time}
-              </span>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* no image header */
-        <div
-          className={`flex items-center justify-between px-4 py-3 ${
-            isLive ? "bg-red-500/8" : isUpcoming ? "bg-primary/5" : "bg-secondary/20"
-          }`}
-        >
-          <StatusBadge isLive={isLive} isUpcoming={isUpcoming} isClosed={isClosed} />
-          {(match.date || match.time) && (
-            <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-              <Clock className="h-3 w-3" />
-              {match.date} · {match.time}
+      {/* ── Timer + Bell row ────────────────────────────────── */}
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5">
+        {closingMs !== null && closingMs > 0 ? (
+          <motion.span
+            key={closingSoon ? "urgent" : "normal"}
+            className="flex items-center gap-1.5 text-[13px] font-bold tracking-widest tabular-nums"
+            style={{ color: closingSoon ? "#ef4444" : "#e91e8c" }}
+            animate={closingSoon ? { opacity: [1, 0.5, 1] } : {}}
+            transition={{ duration: 1, repeat: Infinity }}
+          >
+            <Timer className="h-3.5 w-3.5 shrink-0" />
+            {formatCountdown(closingMs)}
+          </motion.span>
+        ) : isLive ? (
+          <span className="flex items-center gap-2 text-[13px] font-bold" style={{ color: "#ef4444" }}>
+            <span className="relative flex h-2 w-2">
+              <span className="absolute h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+              <span className="relative h-2 w-2 rounded-full bg-red-500" />
             </span>
-          )}
+            LIVE NOW
+          </span>
+        ) : isUpcoming ? (
+          <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: "#00b4ff" }}>
+            <Clock className="h-3.5 w-3.5" />
+            UPCOMING
+          </span>
+        ) : (
+          <span className="flex items-center gap-1.5 text-[13px] font-bold text-white/25">
+            <Lock className="h-3.5 w-3.5" />
+            CLOSED
+          </span>
+        )}
+
+        <button
+          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
+          style={{ color: "rgba(255,255,255,0.30)" }}
+        >
+          <Bell className="h-4 w-4" />
+        </button>
+      </div>
+
+      {/* ── Match image + label row ────────────────────────── */}
+      {hasImage && (
+        <div className="flex items-center gap-3 px-4 pb-3">
+          <div
+            className="relative shrink-0 overflow-hidden rounded-xl"
+            style={{ width: 76, height: 58 }}
+          >
+            <img
+              src={match.imageUrl!}
+              alt="Match"
+              onError={() => setImgError(true)}
+              className="h-full w-full object-cover"
+            />
+            <div
+              className="absolute inset-0 rounded-xl"
+              style={{ border: "1px solid rgba(255,255,255,0.10)" }}
+            />
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-extrabold text-white leading-snug tracking-wide truncate">
+              {match.date} · {match.time}
+            </p>
+            <p
+              className="mt-0.5 text-[11px] font-bold tracking-[0.18em]"
+              style={{ color: "#00b4ff" }}
+            >
+              CRICKET
+            </p>
+          </div>
         </div>
       )}
 
-      {/* ── Teams ─────────────────────────────────────────── */}
-      <div className="relative flex items-center justify-between gap-2 px-5 py-5">
-        {/* ambient glow */}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: isLive
-              ? "radial-gradient(ellipse at 50% 50%, rgba(239,68,68,0.05) 0%, transparent 70%)"
-              : "radial-gradient(ellipse at 50% 50%, hsl(var(--primary)/0.04) 0%, transparent 70%)",
-          }}
-        />
-
+      {/* ── Team pills ─────────────────────────────────────── */}
+      <div className="space-y-2 px-4 pb-3">
         {/* Team A */}
-        <div className={`flex flex-1 flex-col items-center gap-2 transition-opacity ${winnerSide === "B" ? "opacity-35" : ""}`}>
-          <TeamAvatar
-            src={match.teamA.logo}
-            name={match.teamA.name}
-            isLive={isLive}
-            isWinner={winnerSide === "A"}
-            isLoser={winnerSide === "B"}
-          />
-          <p className="text-center text-xs font-bold text-foreground leading-tight max-w-[90px]">
+        <div
+          className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-opacity duration-300 ${
+            winnerSide === "B" ? "opacity-25" : ""
+          }`}
+          style={{
+            background:
+              winnerSide === "A"
+                ? "rgba(234,179,8,0.11)"
+                : "rgba(255,255,255,0.045)",
+            border:
+              winnerSide === "A"
+                ? "1px solid rgba(234,179,8,0.25)"
+                : "1px solid transparent",
+          }}
+        >
+          <span className="text-sm font-extrabold tracking-widest text-white uppercase leading-none">
             {match.teamA.name}
-          </p>
-          <OddsBadge value={match.oddsA} isLive={isLive} isWinner={winnerSide === "A"} />
-        </div>
-
-        {/* VS / Result divider */}
-        <div className="flex shrink-0 flex-col items-center gap-1.5">
-          {winnerSide ? (
-            <div className="flex flex-col items-center gap-1">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full border border-yellow-500/25 bg-yellow-500/10">
-                <Trophy className="h-5 w-5 text-yellow-400" />
-              </div>
-              <span className="text-[9px] font-black tracking-widest text-yellow-400/60">WON</span>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center gap-1.5">
-              <div
-                className={`flex h-11 w-11 items-center justify-center rounded-full border ${
-                  isLive ? "border-red-500/20 bg-red-500/8" : "border-primary/15 bg-primary/5"
-                }`}
-              >
-                <Swords className={`h-5 w-5 ${isLive ? "text-red-400/60" : "text-primary/45"}`} />
-              </div>
-              <span className="text-[9px] font-black tracking-widest text-muted-foreground/40">VS</span>
-            </div>
+          </span>
+          {winnerSide === "A" && (
+            <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
           )}
         </div>
 
+        {/* VS divider */}
+        <div className="flex justify-center py-0.5">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-full"
+            style={{
+              border: "1.5px solid rgba(0,180,255,0.35)",
+              background: "rgba(0,180,255,0.05)",
+            }}
+          >
+            <span
+              className="text-[11px] font-bold"
+              style={{ color: "rgba(0,180,255,0.75)" }}
+            >
+              vs
+            </span>
+          </div>
+        </div>
+
         {/* Team B */}
-        <div className={`flex flex-1 flex-col items-center gap-2 transition-opacity ${winnerSide === "A" ? "opacity-35" : ""}`}>
-          <TeamAvatar
-            src={match.teamB.logo}
-            name={match.teamB.name}
-            isLive={isLive}
-            isWinner={winnerSide === "B"}
-            isLoser={winnerSide === "A"}
-          />
-          <p className="text-center text-xs font-bold text-foreground leading-tight max-w-[90px]">
+        <div
+          className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-opacity duration-300 ${
+            winnerSide === "A" ? "opacity-25" : ""
+          }`}
+          style={{
+            background:
+              winnerSide === "B"
+                ? "rgba(234,179,8,0.11)"
+                : "rgba(255,255,255,0.045)",
+            border:
+              winnerSide === "B"
+                ? "1px solid rgba(234,179,8,0.25)"
+                : "1px solid transparent",
+          }}
+        >
+          <span className="text-sm font-extrabold tracking-widest text-white uppercase leading-none">
             {match.teamB.name}
-          </p>
-          <OddsBadge value={match.oddsB} isLive={isLive} isWinner={winnerSide === "B"} />
+          </span>
+          {winnerSide === "B" && (
+            <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
+          )}
         </div>
       </div>
 
-      {/* ── Winner result banner ──────────────────────────── */}
+      {/* ── Winner banner ──────────────────────────────────── */}
       <AnimatePresence>
         {winnerName && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="mx-4 mb-3 overflow-hidden"
+            className="overflow-hidden px-4 pb-3"
           >
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-yellow-500/30 bg-gradient-to-r from-yellow-500/10 via-amber-500/8 to-yellow-500/10 px-4 py-2.5">
-              <Trophy className="h-4 w-4 text-yellow-400 shrink-0" />
+            <div
+              className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5"
+              style={{
+                background: "rgba(234,179,8,0.09)",
+                border: "1px solid rgba(234,179,8,0.22)",
+              }}
+            >
+              <Trophy className="h-4 w-4 shrink-0 text-yellow-400" />
               <p className="text-xs font-extrabold text-yellow-300 tracking-wide">
-                <span className="text-yellow-500/70 font-medium mr-1">Won the toss:</span>
+                <span className="text-yellow-500/55 font-medium mr-1">Won the toss:</span>
                 {winnerName}
               </p>
             </div>
@@ -374,63 +291,69 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
         )}
       </AnimatePresence>
 
-      {/* ── Info strip ────────────────────────────────────── */}
-      <div className="mx-4 mb-3 flex items-center justify-between rounded-xl border border-border/25 bg-secondary/25 px-3 py-2 text-xs gap-2">
-        <span className="text-muted-foreground shrink-0">
-          Max: <span className="font-bold text-primary">₹{match.maxBet.toLocaleString()}</span>
-        </span>
-
-        {/* countdown timer for live matches */}
-        {isLive && match.closingTime && closingMs !== null && (
-          <motion.span
-            key={closingMs !== null && closingMs < 60000 ? "urgent" : "normal"}
-            className={`flex items-center gap-1 font-bold tabular-nums ${
-              closingSoon ? "text-red-400 animate-pulse" : "text-amber-400"
-            }`}
+      {/* ── Info grid: ENDTIME + TOSS RATE ─────────────────── */}
+      <div className="grid grid-cols-2 gap-2 px-4 pb-3">
+        <div
+          className="rounded-xl px-3.5 py-3"
+          style={{ background: "rgba(255,255,255,0.038)" }}
+        >
+          <p
+            className="text-[9px] font-semibold tracking-[0.2em] mb-1.5"
+            style={{ color: "rgba(255,255,255,0.30)" }}
           >
-            <Timer className="h-3 w-3 shrink-0" />
-            {closingMs === 0 ? "Closing…" : formatCountdown(closingMs)}
-          </motion.span>
-        )}
+            ENDTIME
+          </p>
+          <p className="text-sm font-bold tabular-nums" style={{ color: "#00b4ff" }}>
+            {endTimeLabel}
+          </p>
+        </div>
 
-        {isLive && !match.closingTime && (
-          <span className="flex items-center gap-1 font-bold text-red-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-400 animate-pulse" />
-            Live
-          </span>
-        )}
-
-        {isUpcoming && match.closingTime && (
-          <span className="flex items-center gap-1 font-semibold text-amber-400 shrink-0">
-            <Timer className="h-3 w-3 shrink-0" />
-            Closes {formatIST(match.closingTime)}
-          </span>
-        )}
-
-        {isClosed && !winnerName && (
-          <span className="text-muted-foreground/60 font-medium">Settled</span>
-        )}
+        <div
+          className="rounded-xl px-3.5 py-3"
+          style={{ background: "rgba(255,255,255,0.038)" }}
+        >
+          <p
+            className="text-[9px] font-semibold tracking-[0.2em] mb-1.5"
+            style={{ color: "rgba(255,255,255,0.30)" }}
+          >
+            TOSS RATE
+          </p>
+          <p className="text-sm font-bold" style={{ color: "#00b4ff" }}>
+            {tossRate}
+          </p>
+        </div>
       </div>
 
-      {/* ── CTA ───────────────────────────────────────────── */}
+      {/* ── CTA button ─────────────────────────────────────── */}
       <div className="px-4 pb-4">
         <Button
-          className={`w-full font-bold h-11 text-sm gap-2 transition-all ${
+          className="w-full h-12 text-sm font-extrabold tracking-[0.15em] transition-all"
+          style={
             isClosed
-              ? "bg-secondary/40 text-muted-foreground cursor-not-allowed border border-border/30"
-              : isLive
-              ? "bg-gradient-to-r from-red-600 to-rose-500 text-white shadow-[0_4px_20px_rgba(239,68,68,0.35)] hover:shadow-[0_4px_32px_rgba(239,68,68,0.55)] hover:scale-[1.01]"
-              : "gradient-neon-primary text-primary-foreground shadow-neon hover:opacity-95 hover:shadow-[0_4px_32px_hsl(var(--primary)/0.5)] hover:scale-[1.01]"
-          }`}
+              ? {
+                  background: "rgba(255,255,255,0.05)",
+                  color: "rgba(255,255,255,0.20)",
+                  border: "1px solid rgba(255,255,255,0.08)",
+                  cursor: "not-allowed",
+                  boxShadow: "none",
+                }
+              : {
+                  background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)",
+                  color: "#fff",
+                  border: "none",
+                  boxShadow: "0 4px 24px rgba(0,180,255,0.30)",
+                }
+          }
           disabled={isClosed}
           onClick={() => onBet(match)}
         >
           {isClosed ? (
-            <><Lock className="h-4 w-4" /> Betting Closed</>
-          ) : isLive ? (
-            <><Zap className="h-4 w-4" /> Bet Live Now</>
+            <>
+              <Lock className="mr-2 h-4 w-4" />
+              BETTING CLOSED
+            </>
           ) : (
-            <>Place Bet <ChevronRight className="h-4 w-4" /></>
+            "BET ON TOSS"
           )}
         </Button>
       </div>

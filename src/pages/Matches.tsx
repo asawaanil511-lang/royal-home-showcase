@@ -31,6 +31,7 @@ const Matches = () => {
     imageUrl: m.image_url || null,
     liveTime: m.live_time || null,
     closingTime: m.closing_time || null,
+    winner: m.winner || null,
   });
 
   const fetchMatches = async () => {

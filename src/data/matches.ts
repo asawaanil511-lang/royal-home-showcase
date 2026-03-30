@@ -18,6 +18,7 @@ export type Match = {
   imageUrl?: string | null;
   liveTime?: string | null;
   closingTime?: string | null;
+  winner?: string | null;
 };
 
 export const matches: Match[] = [

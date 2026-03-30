@@ -1,7 +1,12 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, Trophy, Coins, TrendingUp, Activity, Clock, ArrowUpRight, ArrowDownRight, RefreshCw, BarChart3 } from "lucide-react";
+import { Users, Trophy, Coins, TrendingUp, Activity, Clock, ArrowUpRight, ArrowDownRight, RefreshCw, BarChart3, Trash2, AlertTriangle } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useToast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { format, subDays, startOfDay } from "date-fns";
@@ -38,6 +43,9 @@ const AdminDashboard = () => {
   const [dailyVolume, setDailyVolume] = useState<DailyVolume[]>([]);
   const [lastRefresh, setLastRefresh] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const { toast } = useToast();
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -129,6 +137,22 @@ const AdminDashboard = () => {
     return () => clearInterval(interval);
   }, [load]);
 
+  const handleResetStats = async () => {
+    setResetting(true);
+    try {
+      await (supabase as any).from("bets").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await (supabase as any).from("matches").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      await (supabase as any).from("wallets").delete().neq("id", 0);
+      toast({ title: "✅ Stats Reset", description: "All bets and matches cleared. Wallet ledger reset." });
+      await load();
+    } catch (e: any) {
+      toast({ title: "Reset failed", description: e?.message, variant: "destructive" });
+    } finally {
+      setResetting(false);
+      setShowResetDialog(false);
+    }
+  };
+
   const mainCards = [
     { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-primary", bg: "bg-primary/10", border: "border-primary/20" },
     { label: "Total Matches", value: stats.totalMatches, icon: Trophy, color: "text-amber-400", bg: "bg-amber-400/10", border: "border-amber-400/20" },
@@ -148,6 +172,31 @@ const AdminDashboard = () => {
 
   return (
     <div className="space-y-6">
+      <AlertDialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-red-400" /> Reset All Stats?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground">
+              This will permanently delete <strong className="text-foreground">all bets, all matches, and the wallet ledger</strong>. User accounts and balances will remain.
+              <br /><br />
+              <span className="text-red-400 font-semibold">This action cannot be undone.</span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleResetStats}
+              disabled={resetting}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {resetting ? "Resetting…" : "Yes, Reset Everything"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Header row */}
       <div className="flex items-center justify-between">
         <div>
@@ -156,14 +205,23 @@ const AdminDashboard = () => {
             Last updated {lastRefresh.toLocaleTimeString()} · auto-refreshes every 30s
           </p>
         </div>
-        <button
-          onClick={load}
-          disabled={refreshing}
-          className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
-        >
-          <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
-          Refresh
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setShowResetDialog(true)}
+            className="flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-500/8 px-4 py-2 text-xs font-semibold text-red-400 hover:bg-red-500/15 hover:border-red-500/50 transition-all"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Reset Stats
+          </button>
+          <button
+            onClick={load}
+            disabled={refreshing}
+            className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? "animate-spin" : ""}`} />
+            Refresh
+          </button>
+        </div>
       </div>
 
       {/* Main stat cards */}

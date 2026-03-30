@@ -48,6 +48,7 @@ const AdminMatches = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<DBMatch>>({});
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [dateFilter, setDateFilter] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: string; matchId: string; label: string } | null>(null);
   const [showMigrationPanel, setShowMigrationPanel] = useState(false);
@@ -297,7 +298,11 @@ const AdminMatches = () => {
     return <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cls}`}>{status.toUpperCase()}</span>;
   };
 
-  const filteredMatches = statusFilter === "all" ? matches : matches.filter(m => m.status === statusFilter);
+  const filteredMatches = matches.filter((m) => {
+    const statusOk = statusFilter === "all" || m.status === statusFilter;
+    const dateOk = !dateFilter || m.match_date.slice(0, 10) === dateFilter;
+    return statusOk && dateOk;
+  });
   const statusTabs = ["all", "upcoming", "live", "closed", "cancelled"];
 
   return (
@@ -344,16 +349,43 @@ const AdminMatches = () => {
 
       {/* Filters + Create */}
       <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
-        <div className="flex flex-wrap gap-2">
-          {statusTabs.map((t) => (
-            <button key={t} onClick={() => setStatusFilter(t)}
-              className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
-                statusFilter === t ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
-              }`}>
-              {t.charAt(0).toUpperCase() + t.slice(1)}
-              {t !== "all" && <span className="ml-1 opacity-60">({matches.filter(m => m.status === t).length})</span>}
-            </button>
-          ))}
+        <div className="flex flex-col gap-2 flex-1">
+          <div className="flex flex-wrap gap-2">
+            {statusTabs.map((t) => (
+              <button key={t} onClick={() => setStatusFilter(t)}
+                className={`text-xs font-semibold px-3 py-1.5 rounded-full transition-colors ${
+                  statusFilter === t ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}>
+                {t.charAt(0).toUpperCase() + t.slice(1)}
+                {t !== "all" && <span className="ml-1 opacity-60">({matches.filter(m => m.status === t).length})</span>}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-3 py-2">
+              <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground font-medium">Date:</span>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="bg-transparent text-xs text-foreground outline-none cursor-pointer"
+              />
+            </div>
+            {dateFilter && (
+              <button
+                onClick={() => setDateFilter("")}
+                className="text-xs text-muted-foreground hover:text-foreground px-2 py-1.5 rounded-lg border border-border/50 bg-secondary/50 transition-colors"
+              >
+                Clear
+              </button>
+            )}
+            {dateFilter && (
+              <span className="text-xs text-primary font-semibold">
+                {filteredMatches.length} match{filteredMatches.length !== 1 ? "es" : ""} on {new Date(dateFilter + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+              </span>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <Button

@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 
 const tabs = [
   { label: "MATCHES",  href: "/matches",  icon: Swords,   authRequired: true },
-  { label: "BETS",     href: "/mybets",   icon: Ticket,   authRequired: true },
+  { label: "BETS",     href: "/my-bets",  icon: Ticket,   authRequired: true },
   { label: "PASSBOOK", href: "/wallet",   icon: BookOpen, authRequired: true },
   { label: "PROFILE",  href: "/profile",  icon: User,     authRequired: true },
 ];
@@ -29,7 +29,7 @@ const BottomNav = () => {
             const isActive =
               location.pathname === tab.href ||
               (tab.href === "/matches" && (location.pathname === "/" || location.pathname === "/matches")) ||
-              (tab.href === "/mybets" && location.pathname === "/mybets") ||
+              (tab.href === "/my-bets" && location.pathname === "/my-bets") ||
               (tab.href === "/wallet" && location.pathname === "/wallet");
 
             return (

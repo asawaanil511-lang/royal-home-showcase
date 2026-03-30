@@ -10,7 +10,11 @@ echo "Building server..."
   --platform=node \
   --format=cjs \
   --outfile=dist/index.cjs \
-  --external:fsevents
+  --external:fsevents \
+  --external:pg \
+  --external:pg-native \
+  --external:bufferutil \
+  --external:utf-8-validate
 
 echo "Build complete!"
-ls -lh dist/index.cjs dist/index.html
+ls -lh dist/index.cjs 2>/dev/null && ls -lh dist/index.html 2>/dev/null || ls dist/

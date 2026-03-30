@@ -1,14 +1,16 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
+import { readFileSync, existsSync } from "fs";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
-import { createRequire } from "module";
 
 let appConfig: Record<string, string> = {};
 try {
-  const requireModule = createRequire(import.meta.url);
-  appConfig = requireModule("../config.json");
+  const configPath = path.join(process.cwd(), "config.json");
+  if (existsSync(configPath)) {
+    appConfig = JSON.parse(readFileSync(configPath, "utf8"));
+  }
 } catch {
   // config.json not present — fall back to environment variables
 }

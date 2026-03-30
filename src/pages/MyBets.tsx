@@ -12,7 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
-import supermanLogo from "@/assets/superman-logo.jpg";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 
 type BetWithMatch = {
   id: string;
@@ -53,9 +53,9 @@ const WinCard = ({ bet }: { bet: BetWithMatch }) => {
       </div>
       <div className="relative">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src={supermanLogo} alt="Superman Toss Book" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
+          <img src={lawrenceLogo} alt="Lawrence Toss Book" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
           <div className="text-left">
-            <p className="text-xs font-bold text-primary tracking-widest uppercase">Superman Toss Book</p>
+            <p className="text-xs font-bold text-primary tracking-widest uppercase">Lawrence Toss Book</p>
             <p className="text-[10px] text-gray-400">Official Win Certificate</p>
           </div>
         </div>
@@ -77,7 +77,7 @@ const WinCard = ({ bet }: { bet: BetWithMatch }) => {
         <p className="text-gray-500 text-xs border-t border-white/10 pt-3 mt-2">
           at {bet.odds}x odds • {new Date(bet.created_at).toLocaleString("en-IN")}
         </p>
-        <p className="text-gray-600 text-[10px] mt-1">superman-toss-book.com</p>
+        <p className="text-gray-600 text-[10px] mt-1">lawrence-toss-book.com</p>
       </div>
     </div>
   );
@@ -360,11 +360,11 @@ const MyBets = () => {
 
       if (navigator.share) {
         const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], "superman-toss-win.png", { type: "image/png" });
-        await navigator.share({ title: "I won on Superman Toss Book! 🏆", files: [file] });
+        const file = new File([blob], "lawrence-toss-win.png", { type: "image/png" });
+        await navigator.share({ title: "I won on Lawrence Toss Book! 🏆", files: [file] });
       } else {
         const link = document.createElement("a");
-        link.download = "superman-toss-win.png";
+        link.download = "lawrence-toss-win.png";
         link.href = dataUrl;
         link.click();
         toast({ title: "Screenshot saved!", description: "Win card downloaded." });

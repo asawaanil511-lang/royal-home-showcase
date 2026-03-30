@@ -1,20 +1,22 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { createRequire } from "module";
+import { readFileSync, existsSync } from "fs";
 
 let config: Record<string, string> = {};
 try {
-  const require = createRequire(import.meta.url);
-  config = require("./config.json");
+  const configPath = path.join(process.cwd(), "config.json");
+  if (existsSync(configPath)) {
+    config = JSON.parse(readFileSync(configPath, "utf8"));
+  }
 } catch {
-  // config.json not present — env vars will be used at runtime
+  // config.json not present — env vars used
 }
 
 const supabaseAnonKey =
   process.env.VITE_SUPABASE_ANON_KEY || config.VITE_SUPABASE_ANON_KEY || "";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   server: {
     host: "0.0.0.0",
     port: 5000,

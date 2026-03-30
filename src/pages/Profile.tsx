@@ -136,7 +136,7 @@ const Profile = () => {
         // Send a welcome notification
         setTimeout(() => {
           sendNotification(
-            "Superman Toss Book 🏏",
+            "Lawrence Toss Book 🏏",
             "Notifications are now active! You'll be alerted when your bets are settled."
           );
         }, 500);

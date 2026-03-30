@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import supermanLogo from "@/assets/superman-logo.jpg";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
 
@@ -24,12 +24,12 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-start gap-3">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src={supermanLogo}
-                alt="Superman Toss Book"
+                src={lawrenceLogo}
+                alt="Lawrence Toss Book"
                 className="h-9 w-9 rounded-full object-cover border border-primary/30 group-hover:border-primary/60 transition-colors shadow-[0_0_10px_hsl(var(--primary)/0.15)]"
               />
               <div>
-                <span className="text-base font-extrabold text-foreground">SUPERMAN</span>
+                <span className="text-base font-extrabold text-foreground">LAWRENCE</span>
                 <span className="text-base font-extrabold text-primary ml-1.5">TOSS BOOK</span>
               </div>
             </Link>
@@ -37,7 +37,7 @@ const Footer = () => {
               The most exciting virtual cricket toss betting platform.
             </p>
             <a
-              href="https://t.me/shrey14a"
+              href="https://t.me/@Lawrenceboss"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 hover:border-primary/40 transition-all"
@@ -70,7 +70,7 @@ const Footer = () => {
               <Shield className="h-3.5 w-3.5" />
               Secure Platform
             </div>
-            <p className="text-xs text-muted-foreground">© 2026 Superman Toss Book.</p>
+            <p className="text-xs text-muted-foreground">© 2026 Lawrence Toss Book.</p>
             <p className="text-xs text-muted-foreground/60">All rights reserved.</p>
           </div>
         </div>

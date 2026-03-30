@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Play, LogIn, Zap, Trophy, Shield, BookOpen, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import supermanLogo from "@/assets/superman-logo.jpg";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 
 const stats = [
   { icon: Trophy,     label: "Live Matches",      value: "Daily",   color: "text-primary",      bg: "bg-primary/10" },
@@ -53,8 +53,8 @@ const HeroSection = () => {
               transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
             />
             <img
-              src={supermanLogo}
-              alt="Superman Toss Book"
+              src={lawrenceLogo}
+              alt="Lawrence Toss Book"
               className="relative h-24 w-24 rounded-full object-cover border-2 border-primary/60 shadow-[0_0_40px_hsl(var(--primary)/0.5)]"
             />
           </div>

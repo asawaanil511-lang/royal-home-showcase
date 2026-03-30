@@ -9,7 +9,7 @@ import { Wallet as WalletIcon, ExternalLink, ArrowUpRight, TrendingUp, Trophy, M
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const TELEGRAM_LINK = "https://t.me/shrey14a";
+const TELEGRAM_LINK = "https://t.me/@Lawrenceboss";
 
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
@@ -247,7 +247,7 @@ const Wallet = () => {
               <div className="mt-4 flex items-center gap-2 rounded-xl border border-border/40 bg-secondary/30 px-4 py-3">
                 <MessageCircle className="h-4 w-4 text-primary shrink-0" />
                 <p className="text-xs text-muted-foreground">
-                  Contact <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">@shrey14a</a> on Telegram after payment to get your coins credited.
+                  Contact <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="text-primary font-semibold hover:underline">@Lawrenceboss</a> on Telegram after payment to get your coins credited.
                 </p>
               </div>
             </motion.div>

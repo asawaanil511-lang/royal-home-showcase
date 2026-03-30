@@ -1,13 +1,13 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Ticket, BookOpen, User } from "lucide-react";
+import { Swords, Ticket, BookOpen, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 
 const tabs = [
-  { label: "HOME",      href: "/",         icon: Home,    authRequired: true },
-  { label: "BETS",      href: "/matches",  icon: Ticket,  authRequired: true },
-  { label: "PASSBOOK",  href: "/wallet",   icon: BookOpen, authRequired: true },
-  { label: "PROFILE",   href: "/profile",  icon: User,    authRequired: true },
+  { label: "MATCHES",  href: "/matches",  icon: Swords,   authRequired: true },
+  { label: "BETS",     href: "/mybets",   icon: Ticket,   authRequired: true },
+  { label: "PASSBOOK", href: "/wallet",   icon: BookOpen, authRequired: true },
+  { label: "PROFILE",  href: "/profile",  icon: User,     authRequired: true },
 ];
 
 const BottomNav = () => {
@@ -26,7 +26,10 @@ const BottomNav = () => {
         <div className="flex items-center justify-around">
           {tabs.map((tab) => {
             const IconComp = tab.icon;
-            const isActive = location.pathname === tab.href ||
+            const isActive =
+              location.pathname === tab.href ||
+              (tab.href === "/matches" && (location.pathname === "/" || location.pathname === "/matches")) ||
+              (tab.href === "/mybets" && location.pathname === "/mybets") ||
               (tab.href === "/wallet" && location.pathname === "/wallet");
 
             return (

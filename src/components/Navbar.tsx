@@ -5,7 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import supermanLogo from "@/assets/superman-logo.jpg";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 const navLinks = [
@@ -102,19 +102,19 @@ const Navbar = () => {
         <div className="flex items-center gap-5">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <motion.img
-              src={supermanLogo}
-              alt="Superman Toss Book"
+              src={lawrenceLogo}
+              alt="Lawrence Toss Book"
               className="h-9 w-9 rounded-full object-cover border border-primary/30 group-hover:border-primary/70 transition-colors shadow-[0_0_10px_hsl(var(--primary)/0.2)]"
               whileHover={{ scale: 1.1, rotate: 5 }}
               transition={{ type: "spring", stiffness: 400 }}
             />
             <div className="hidden sm:block leading-tight">
               <div>
-                <span className="text-sm font-extrabold tracking-tight text-foreground">SUPERMAN</span>
+                <span className="text-sm font-extrabold tracking-tight text-foreground">LAWRENCE</span>
                 <span className="text-sm font-extrabold tracking-tight text-primary ml-1.5">TOSS BOOK</span>
               </div>
             </div>
-            <span className="text-sm font-extrabold tracking-tight text-primary sm:hidden">STB</span>
+            <span className="text-sm font-extrabold tracking-tight text-primary sm:hidden">LTB</span>
           </Link>
 
           <div className="hidden items-center gap-0.5 md:flex">
@@ -319,7 +319,7 @@ const Navbar = () => {
                     </Link>
                   </Button>
                   <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold shadow-neon" asChild>
-                    <a href="https://t.me/shrey14a" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
+                    <a href="https://t.me/@Lawrenceboss" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
                       Register
                     </a>
                   </Button>

@@ -57,8 +57,8 @@ const AdminMatches = () => {
   // Create form state
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
-  const [oddsA, setOddsA] = useState("0.95");
-  const [oddsB, setOddsB] = useState("0.95");
+  const [oddsA, setOddsA] = useState("1.90");
+  const [oddsB, setOddsB] = useState("1.90");
   const [maxBet, setMaxBet] = useState("10000");
   const [matchDate, setMatchDate] = useState("");
   const [liveTime, setLiveTime] = useState("");
@@ -635,8 +635,11 @@ const AdminMatches = () => {
                         </Button>
                       </>
                     )}
-                    {m.status === "live" && !m.winner && (
+                    {(m.status === "live" || m.status === "closed") && !m.winner && (
                       <>
+                        {m.status === "closed" && (
+                          <span className="text-[10px] text-amber-400 font-semibold w-full">⏰ Betting closed — settle the result:</span>
+                        )}
                         <Button size="sm" variant="outline" className="text-xs border-primary/30 text-primary"
                           onClick={() => setConfirmAction({ type: "winA", matchId: m.id, label: `Settle: ${m.team_a_name} wins? This will pay out all winning bets.` })}>
                           <CheckCircle className="h-3 w-3 mr-1" /> {m.team_a_name} Wins

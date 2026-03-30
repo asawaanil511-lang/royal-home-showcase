@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import supermanLogo from "@/assets/superman-logo.jpg";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, MessageCircle, HelpCircle, Zap, Shield } from "lucide-react";
 import { motion, useAnimation, AnimatePresence } from "framer-motion";
 
-const TELEGRAM_URL = "https://t.me/shrey14a";
+const TELEGRAM_URL = "https://t.me/@Lawrenceboss";
 
 // Floating cricket particles for background
 const PARTICLES = Array.from({ length: 18 }, (_, i) => ({
@@ -229,8 +229,8 @@ const Login = () => {
               />
               <motion.img
                 animate={logoControls}
-                src={supermanLogo}
-                alt="STB"
+                src={lawrenceLogo}
+                alt="LTB"
                 className="relative h-20 w-20 rounded-full object-cover"
                 style={{ border: "2.5px solid hsl(160 100% 45% / 0.5)" }}
               />
@@ -247,7 +247,7 @@ const Login = () => {
                 className="text-3xl font-extrabold tracking-tight leading-none mb-1"
                 style={{ fontFamily: "Rajdhani, sans-serif", color: "hsl(210 40% 95%)" }}
               >
-                SUPERMAN{" "}
+                LAWRENCE{" "}
                 <span
                   style={{
                     background: "linear-gradient(135deg, hsl(160 100% 45%), hsl(185 100% 50%))",
@@ -504,7 +504,7 @@ const Login = () => {
           className="text-center text-[10px] mt-4 tracking-widest font-medium"
           style={{ color: "hsl(220 15% 28%)" }}
         >
-          SUPERMAN TOSS BOOK © 2026 · PLAY RESPONSIBLY
+          LAWRENCE TOSS BOOK © 2026 · PLAY RESPONSIBLY
         </motion.p>
       </motion.div>
     </div>

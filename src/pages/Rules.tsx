@@ -7,7 +7,7 @@ import {
   Star, Info, ChevronDown, BadgeAlert, ShieldCheck, Banknote, Gavel,
   MessageCircle, Trophy, Zap, ArrowRight
 } from "lucide-react";
-import supermanLogo from "@/assets/superman-logo.jpg";
+import lawrenceLogo from "@/assets/lawrence-logo.jpg";
 
 type Variant = "success" | "danger" | "warning" | "info" | "love";
 
@@ -285,7 +285,7 @@ const Rules = () => {
             {/* Logo ring */}
             <div className="relative inline-block mb-5">
               <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30 animate-spin" style={{ animationDuration: "12s" }} />
-              <img src={supermanLogo} alt="Superman Toss Book"
+              <img src={lawrenceLogo} alt="Lawrence Toss Book"
                 className="h-16 w-16 rounded-full object-cover border-2 border-primary/50 relative z-10" />
             </div>
           </motion.div>

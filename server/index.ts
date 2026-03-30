@@ -21,7 +21,6 @@ function getAdminClient() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
-// PostgreSQL pool — uses Supabase database URL from config.json
 const dbUrl: string = appConfig.SUPABASE_DATABASE_URL || process.env.DATABASE_URL || "";
 export const db = new Pool({
   connectionString: dbUrl,
@@ -33,32 +32,66 @@ db.connect()
   .then((client) => {
     console.log("PostgreSQL connected");
     client.release();
+    setupTables();
   })
   .catch((err) => {
     console.warn("PostgreSQL connection warning:", err.message);
   });
 
+// ---- Auto-create helper tables ----
+const setupTables = async () => {
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS public.wallet_transactions (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        user_id UUID NOT NULL,
+        admin_user_id UUID,
+        action TEXT NOT NULL,
+        amount NUMERIC NOT NULL,
+        balance_before NUMERIC NOT NULL,
+        balance_after NUMERIC NOT NULL,
+        note TEXT,
+        created_at TIMESTAMPTZ DEFAULT now()
+      );
+      CREATE TABLE IF NOT EXISTS public.announcements (
+        id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        message TEXT NOT NULL,
+        type TEXT DEFAULT 'info',
+        is_active BOOLEAN DEFAULT true,
+        created_by UUID,
+        created_at TIMESTAMPTZ DEFAULT now()
+      );
+    `);
+    console.log("Helper tables ready");
+  } catch (err: any) {
+    console.warn("Table setup warning:", err.message);
+  }
+};
+
+// ---- Helper: verify admin ----
+async function verifyAdmin(req: express.Request, res: express.Response): Promise<string | null> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return null; }
+  const token = authHeader.replace("Bearer ", "");
+  const adminClient = getAdminClient();
+  const { data: { user: caller } } = await adminClient.auth.getUser(token);
+  if (!caller) { res.status(401).json({ error: "Unauthorized" }); return null; }
+  const { data: roleData } = await adminClient.from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
+  if (!roleData) { res.status(403).json({ error: "Admin only" }); return null; }
+  return caller.id;
+}
+
 // ---- login-by-username ----
 app.post("/api/login-by-username", async (req, res) => {
   try {
-    if (!serviceRoleKey) {
-      return res.status(500).json({ error: "Server not configured. SUPABASE_SERVICE_ROLE_KEY is missing." });
-    }
+    if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured." });
     const adminClient = getAdminClient();
     const { username } = req.body;
     if (!username) return res.status(400).json({ error: "Username required" });
-
-    const { data: profile } = await adminClient
-      .from("profiles")
-      .select("user_id")
-      .eq("username", username)
-      .maybeSingle();
-
+    const { data: profile } = await adminClient.from("profiles").select("user_id").eq("username", username).maybeSingle();
     if (!profile) return res.status(404).json({ error: "Invalid username" });
-
     const { data: { user } } = await adminClient.auth.admin.getUserById(profile.user_id);
     if (!user?.email) return res.status(404).json({ error: "User not found" });
-
     return res.json({ email: user.email });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
@@ -68,52 +101,26 @@ app.post("/api/login-by-username", async (req, res) => {
 // ---- admin-create-user ----
 app.post("/api/admin-create-user", async (req, res) => {
   try {
-    if (!serviceRoleKey) {
-      return res.status(500).json({ error: "Server not configured. SUPABASE_SERVICE_ROLE_KEY is missing." });
-    }
-    const adminClient = getAdminClient();
-
-    // Verify caller is admin
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user: caller } } = await adminClient.auth.getUser(token);
-    if (!caller) return res.status(401).json({ error: "Unauthorized" });
-
-    const { data: roleData } = await adminClient
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", caller.id)
-      .eq("role", "admin")
-      .maybeSingle();
-    if (!roleData) return res.status(403).json({ error: "Admin only" });
+    if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured." });
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
 
     const { action, username, password, user_id } = req.body;
+    const adminClient = getAdminClient();
     const DEFAULT_PASSWORD = "Abcd@1234";
 
     if (action === "create") {
       if (!username) return res.status(400).json({ error: "Username required" });
       const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@superman.local`;
-
       const { data: newUser, error } = await adminClient.auth.admin.createUser({
-        email,
-        password: DEFAULT_PASSWORD,
-        email_confirm: true,
+        email, password: DEFAULT_PASSWORD, email_confirm: true,
         user_metadata: { username, display_name: username },
       });
       if (error) return res.status(400).json({ error: error.message });
-
       if (newUser.user) {
         await adminClient.from("profiles").update({ must_change_password: true }).eq("user_id", newUser.user.id);
       }
-
-      return res.json({
-        success: true,
-        user_id: newUser.user?.id,
-        username,
-        email,
-        default_password: DEFAULT_PASSWORD,
-      });
+      return res.json({ success: true, user_id: newUser.user?.id, username, email, default_password: DEFAULT_PASSWORD });
     }
 
     if (action === "delete") {
@@ -138,7 +145,60 @@ app.post("/api/admin-create-user", async (req, res) => {
   }
 });
 
-// ---- Demo login — auto-creates demo user if needed ----
+// ---- Admin wallet update + transaction log ----
+app.post("/api/admin-wallet", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+
+    const { user_id, action, amount, note } = req.body;
+    if (!user_id || !action || amount === undefined) {
+      return res.status(400).json({ error: "user_id, action and amount required" });
+    }
+
+    const adminClient = getAdminClient();
+    const { data: profile } = await adminClient.from("profiles").select("wallet_balance").eq("user_id", user_id).single();
+    if (!profile) return res.status(404).json({ error: "User not found" });
+
+    const currentBalance = Number(profile.wallet_balance);
+    let newBalance: number;
+    if (action === "set") newBalance = Number(amount);
+    else if (action === "add") newBalance = currentBalance + Number(amount);
+    else if (action === "deduct") newBalance = Math.max(0, currentBalance - Number(amount));
+    else return res.status(400).json({ error: "Invalid action" });
+
+    const { error: updateError } = await adminClient.from("profiles").update({ wallet_balance: newBalance }).eq("user_id", user_id);
+    if (updateError) return res.status(400).json({ error: updateError.message });
+
+    await db.query(
+      `INSERT INTO public.wallet_transactions (user_id, admin_user_id, action, amount, balance_before, balance_after, note)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [user_id, adminId, action, Number(amount), currentBalance, newBalance, note || null]
+    );
+
+    return res.json({ success: true, balance_before: currentBalance, balance_after: newBalance });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Wallet transaction history ----
+app.get("/api/wallet-history/:userId", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { userId } = req.params;
+    const result = await db.query(
+      `SELECT * FROM public.wallet_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
+      [userId]
+    );
+    return res.json({ transactions: result.rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Demo login ----
 app.post("/api/demo-login", async (req, res) => {
   try {
     if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured" });
@@ -148,49 +208,98 @@ app.post("/api/demo-login", async (req, res) => {
     const DEMO_PASSWORD = "Demo@1234";
     const DEMO_WALLET = 5;
 
-    // Check if demo profile already exists
-    const { data: existingProfile } = await adminClient
-      .from("profiles")
-      .select("user_id")
-      .eq("username", DEMO_USERNAME)
-      .maybeSingle();
-
+    const { data: existingProfile } = await adminClient.from("profiles").select("user_id").eq("username", DEMO_USERNAME).maybeSingle();
     if (!existingProfile) {
-      // Create fresh demo user
       const { data: newUser, error: createErr } = await adminClient.auth.admin.createUser({
-        email: DEMO_EMAIL,
-        password: DEMO_PASSWORD,
-        email_confirm: true,
+        email: DEMO_EMAIL, password: DEMO_PASSWORD, email_confirm: true,
         user_metadata: { username: DEMO_USERNAME, display_name: "Demo User 🎮" },
       });
       if (createErr) return res.status(400).json({ error: createErr.message });
-
       if (newUser.user) {
-        // Set wallet to 5 coins, no forced password change
-        await adminClient
-          .from("profiles")
-          .update({ wallet_balance: DEMO_WALLET, must_change_password: false })
-          .eq("user_id", newUser.user.id);
+        await adminClient.from("profiles").update({ wallet_balance: DEMO_WALLET, must_change_password: false }).eq("user_id", newUser.user.id);
       }
     } else {
-      // Reset demo password + wallet every time so credentials are always fresh
-      await adminClient.auth.admin.updateUserById(existingProfile.user_id, {
-        password: DEMO_PASSWORD,
-        email: DEMO_EMAIL,
-      });
-      await adminClient
-        .from("profiles")
-        .update({ wallet_balance: DEMO_WALLET, must_change_password: false })
-        .eq("user_id", existingProfile.user_id);
+      await adminClient.auth.admin.updateUserById(existingProfile.user_id, { password: DEMO_PASSWORD, email: DEMO_EMAIL });
+      await adminClient.from("profiles").update({ wallet_balance: DEMO_WALLET, must_change_password: false }).eq("user_id", existingProfile.user_id);
     }
-
     return res.json({ email: DEMO_EMAIL, password: DEMO_PASSWORD });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// ---- Run DB migration (add new columns to matches) ----
+// ---- Announcements (public read) ----
+app.get("/api/announcements", async (_req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT * FROM public.announcements WHERE is_active = true ORDER BY created_at DESC LIMIT 5`
+    );
+    return res.json({ announcements: result.rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Announcements admin (all) ----
+app.get("/api/announcements/all", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const result = await db.query(`SELECT * FROM public.announcements ORDER BY created_at DESC`);
+    return res.json({ announcements: result.rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Create announcement ----
+app.post("/api/announcements", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { message, type } = req.body;
+    if (!message) return res.status(400).json({ error: "Message required" });
+    const result = await db.query(
+      `INSERT INTO public.announcements (message, type, is_active, created_by) VALUES ($1, $2, true, $3) RETURNING *`,
+      [message, type || "info", adminId]
+    );
+    return res.json({ announcement: result.rows[0] });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Toggle announcement ----
+app.patch("/api/announcements/:id", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { id } = req.params;
+    const { is_active } = req.body;
+    const result = await db.query(
+      `UPDATE public.announcements SET is_active = $1 WHERE id = $2 RETURNING *`,
+      [is_active, id]
+    );
+    return res.json({ announcement: result.rows[0] });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Delete announcement ----
+app.delete("/api/announcements/:id", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { id } = req.params;
+    await db.query(`DELETE FROM public.announcements WHERE id = $1`, [id]);
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- DB migration ----
 const MIGRATION_SQL = `
   ALTER TABLE matches
   ADD COLUMN IF NOT EXISTS live_time TIMESTAMPTZ,
@@ -200,70 +309,33 @@ const MIGRATION_SQL = `
 
 app.post("/api/migrate", async (req, res) => {
   try {
-    if (!serviceRoleKey) return res.status(500).json({ error: "SUPABASE_SERVICE_ROLE_KEY missing" });
-
-    // Verify admin caller
-    const authHeader = req.headers.authorization;
-    if (!authHeader) return res.status(401).json({ error: "Unauthorized" });
-    const token = authHeader.replace("Bearer ", "");
-    const adminClient = getAdminClient();
-    const { data: { user: caller } } = await adminClient.auth.getUser(token);
-    if (!caller) return res.status(401).json({ error: "Unauthorized" });
-
-    const { data: roleData } = await adminClient
-      .from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
-    if (!roleData) return res.status(403).json({ error: "Admin only" });
-
-    // Try calling Supabase SQL via management API or pg pool
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
     try {
-      // Attempt via pg pool (Replit DB for health, Supabase for actual data)
       await db.query(MIGRATION_SQL);
-      return res.json({ success: true, message: "Migration applied to Replit DB" });
+      return res.json({ success: true, message: "Migration applied" });
     } catch (pgErr: any) {
-      // Return the SQL for manual application
-      return res.json({
-        success: false,
-        manual: true,
-        sql: MIGRATION_SQL.trim(),
-        message: "Please run the SQL in Supabase Dashboard → SQL Editor",
-      });
+      return res.json({ success: false, manual: true, sql: MIGRATION_SQL.trim(), message: "Run SQL manually in Supabase Dashboard" });
     }
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
 });
 
-// ---- Auto-update match statuses based on live_time / closing_time ----
+// ---- Auto-update match statuses ----
 const autoUpdateMatchStatuses = async () => {
   if (!serviceRoleKey) return;
   const adminClient = getAdminClient();
   const now = new Date().toISOString();
   try {
-    // upcoming → live when live_time has passed
-    await (adminClient as any)
-      .from("matches")
-      .update({ status: "live" })
-      .lte("live_time", now)
-      .eq("status", "upcoming")
-      .not("live_time", "is", null);
-
-    // live/upcoming → closed when closing_time has passed
-    await (adminClient as any)
-      .from("matches")
-      .update({ status: "closed" })
-      .lte("closing_time", now)
-      .in("status", ["live", "upcoming"])
-      .not("closing_time", "is", null);
-  } catch {
-    // Column may not exist yet — silent
-  }
+    await (adminClient as any).from("matches").update({ status: "live" }).lte("live_time", now).eq("status", "upcoming").not("live_time", "is", null);
+    await (adminClient as any).from("matches").update({ status: "closed" }).lte("closing_time", now).in("status", ["live", "upcoming"]).not("closing_time", "is", null);
+  } catch { }
 };
-
-// Run every 30 seconds
 autoUpdateMatchStatuses();
 setInterval(autoUpdateMatchStatuses, 30000);
 
-// ---- health check ----
+// ---- Health check ----
 app.get("/api/health", async (_req, res) => {
   try {
     const result = await db.query("SELECT NOW() as time");
@@ -273,7 +345,6 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-// In production, serve the built frontend static files
 if (process.env.NODE_ENV === "production") {
   const distPath = path.resolve(process.cwd(), "dist");
   app.use(express.static(distPath, { index: "index.html" }));

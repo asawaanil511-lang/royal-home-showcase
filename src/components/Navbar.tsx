@@ -6,6 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import supermanLogo from "@/assets/superman-logo.jpg";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 const navLinks = [
   { label: "Home",        href: "/",            icon: Home },
@@ -91,6 +92,7 @@ const Navbar = () => {
   const balance = profile?.wallet_balance ?? 0;
 
   return (
+    <>
     <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/92 backdrop-blur-xl">
       {/* Top gradient line */}
       <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
@@ -328,6 +330,8 @@ const Navbar = () => {
         )}
       </AnimatePresence>
     </nav>
+    <AnnouncementBanner />
+    </>
   );
 };
 

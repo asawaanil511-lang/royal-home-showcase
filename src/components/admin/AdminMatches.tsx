@@ -29,7 +29,10 @@ type DBMatch = {
   image_url?: string | null;
 };
 
-type MatchBetStats = { total: number; volume: number; teamA: number; teamB: number };
+type MatchBetStats = {
+  total: number; volume: number; teamA: number; teamB: number;
+  volumeA: number; volumeB: number; payoutA: number; payoutB: number;
+};
 
 const MIGRATION_SQL = `ALTER TABLE matches
 ADD COLUMN IF NOT EXISTS live_time TIMESTAMPTZ,
@@ -68,16 +71,16 @@ const AdminMatches = () => {
   const fetchMatches = async () => {
     const [{ data: matchesData }, { data: betsData }] = await Promise.all([
       (supabase as any).from("matches").select("*").order("match_date", { ascending: false }),
-      (supabase as any).from("bets").select("match_id, amount, team_picked, result"),
+      (supabase as any).from("bets").select("match_id, amount, team_picked, result, potential_win"),
     ]);
     setMatches((matchesData as DBMatch[]) || []);
     const statsMap = new Map<string, MatchBetStats>();
     (betsData || []).forEach((b: any) => {
-      const existing = statsMap.get(b.match_id) || { total: 0, volume: 0, teamA: 0, teamB: 0 };
+      const existing = statsMap.get(b.match_id) || { total: 0, volume: 0, teamA: 0, teamB: 0, volumeA: 0, volumeB: 0, payoutA: 0, payoutB: 0 };
       existing.total += 1;
       existing.volume += Number(b.amount || 0);
-      if (b.team_picked === "A") existing.teamA += 1;
-      else existing.teamB += 1;
+      if (b.team_picked === "A") { existing.teamA += 1; existing.volumeA += Number(b.amount || 0); existing.payoutA += Number(b.potential_win || 0); }
+      else { existing.teamB += 1; existing.volumeB += Number(b.amount || 0); existing.payoutB += Number(b.potential_win || 0); }
       statsMap.set(b.match_id, existing);
     });
     setBetStats(statsMap);
@@ -650,7 +653,7 @@ const AdminMatches = () => {
                     )}
                   </div>
 
-                  {/* Expanded details */}
+                  {/* Expanded P&L details */}
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
@@ -659,23 +662,34 @@ const AdminMatches = () => {
                         exit={{ opacity: 0, height: 0 }}
                         className="mt-3 pt-3 border-t border-border/30 overflow-hidden"
                       >
-                        <div className="grid grid-cols-2 gap-3 text-xs">
-                          <div className="rounded-lg bg-secondary/50 p-3">
-                            <p className="text-muted-foreground mb-1">Team A Bets</p>
-                            <p className="text-foreground font-bold text-lg">{bs.teamA}</p>
+                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Match P&L Breakdown</p>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs mb-3">
+                          <div className="rounded-lg bg-secondary/50 border border-border/30 p-3">
+                            <p className="text-muted-foreground mb-1 text-[10px]">{m.team_a_name} Bets</p>
+                            <p className="text-foreground font-bold text-base">{bs.teamA}</p>
+                            <p className="text-primary text-[10px] mt-0.5">₹{bs.volumeA.toLocaleString()} staked</p>
                           </div>
-                          <div className="rounded-lg bg-secondary/50 p-3">
-                            <p className="text-muted-foreground mb-1">Team B Bets</p>
-                            <p className="text-foreground font-bold text-lg">{bs.teamB}</p>
+                          <div className="rounded-lg bg-secondary/50 border border-border/30 p-3">
+                            <p className="text-muted-foreground mb-1 text-[10px]">{m.team_b_name} Bets</p>
+                            <p className="text-foreground font-bold text-base">{bs.teamB}</p>
+                            <p className="text-accent text-[10px] mt-0.5">₹{bs.volumeB.toLocaleString()} staked</p>
                           </div>
-                          <div className="rounded-lg bg-secondary/50 p-3">
-                            <p className="text-muted-foreground mb-1">Total Volume</p>
-                            <p className="text-primary font-bold text-lg">₹{bs.volume.toLocaleString()}</p>
+                          <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3">
+                            <p className="text-muted-foreground mb-1 text-[10px]">If {m.team_a_name} Wins</p>
+                            <p className="text-emerald-400 font-bold text-base">₹{Math.round(bs.volume - bs.payoutA).toLocaleString()}</p>
+                            <p className="text-muted-foreground text-[10px] mt-0.5">house profit</p>
                           </div>
-                          <div className="rounded-lg bg-secondary/50 p-3">
-                            <p className="text-muted-foreground mb-1">Match ID</p>
-                            <p className="text-foreground font-mono text-[10px] break-all">{m.id}</p>
+                          <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 p-3">
+                            <p className="text-muted-foreground mb-1 text-[10px]">If {m.team_b_name} Wins</p>
+                            <p className="text-blue-400 font-bold text-base">₹{Math.round(bs.volume - bs.payoutB).toLocaleString()}</p>
+                            <p className="text-muted-foreground text-[10px] mt-0.5">house profit</p>
                           </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-[10px] text-muted-foreground">
+                          <span className="rounded-full bg-secondary/60 px-2.5 py-1">Total staked: <span className="text-primary font-bold">₹{bs.volume.toLocaleString()}</span></span>
+                          <span className="rounded-full bg-secondary/60 px-2.5 py-1">Payout if A wins: <span className="text-foreground font-bold">₹{Math.round(bs.payoutA).toLocaleString()}</span></span>
+                          <span className="rounded-full bg-secondary/60 px-2.5 py-1">Payout if B wins: <span className="text-foreground font-bold">₹{Math.round(bs.payoutB).toLocaleString()}</span></span>
+                          <span className="rounded-full bg-secondary/60 font-mono px-2.5 py-1 truncate max-w-full">ID: {m.id.slice(0, 16)}…</span>
                         </div>
                       </motion.div>
                     )}

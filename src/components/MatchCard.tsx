@@ -147,7 +147,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
     ? "rgba(239,68,68,0.22)"
     : isUpcoming
     ? "rgba(0,180,255,0.14)"
-    : "rgba(255,255,255,0.06)";
+    : "hsl(var(--border))";
 
   return (
     <>
@@ -156,7 +156,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
         transition={{ type: "spring", stiffness: 300, damping: 22 }}
         className={`relative overflow-hidden rounded-2xl ${isClosed ? "opacity-70" : ""}`}
         style={{
-          background: "hsl(225 22% 8%)",
+          background: "hsl(var(--card))",
           border: `1px solid ${borderColor}`,
           boxShadow: !isClosed ? `0 0 32px ${accentColor}0d` : "none",
         }}
@@ -196,15 +196,14 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
               UPCOMING
             </span>
           ) : (
-            <span className="flex items-center gap-1.5 text-[13px] font-bold text-white/25">
+            <span className="flex items-center gap-1.5 text-[13px] font-bold text-muted-foreground/50">
               <Lock className="h-3.5 w-3.5" />
               CLOSED
             </span>
           )}
 
           <button
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-white/10"
-            style={{ color: "rgba(255,255,255,0.30)" }}
+            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-secondary text-muted-foreground"
           >
             <Bell className="h-4 w-4" />
           </button>
@@ -214,8 +213,7 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
         {match.matchTitle && (
           <div className="px-4 pb-2.5">
             <p
-              className="text-sm font-extrabold tracking-wide leading-snug"
-              style={{ color: "rgba(255,255,255,0.85)" }}
+              className="text-sm font-extrabold tracking-wide leading-snug text-foreground"
             >
               {match.matchTitle}
             </p>
@@ -260,17 +258,11 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
               winnerSide === "B" ? "opacity-25" : ""
             }`}
             style={{
-              background:
-                winnerSide === "A"
-                  ? "rgba(234,179,8,0.11)"
-                  : "rgba(255,255,255,0.045)",
-              border:
-                winnerSide === "A"
-                  ? "1px solid rgba(234,179,8,0.25)"
-                  : "1px solid transparent",
+              background: winnerSide === "A" ? "rgba(234,179,8,0.11)" : "hsl(var(--secondary))",
+              border: winnerSide === "A" ? "1px solid rgba(234,179,8,0.25)" : "1px solid hsl(var(--border)/0.5)",
             }}
           >
-            <span className="text-sm font-extrabold tracking-widest text-white uppercase leading-none">
+            <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none">
               {match.teamA.name}
             </span>
             {winnerSide === "A" && (
@@ -302,17 +294,11 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
               winnerSide === "A" ? "opacity-25" : ""
             }`}
             style={{
-              background:
-                winnerSide === "B"
-                  ? "rgba(234,179,8,0.11)"
-                  : "rgba(255,255,255,0.045)",
-              border:
-                winnerSide === "B"
-                  ? "1px solid rgba(234,179,8,0.25)"
-                  : "1px solid transparent",
+              background: winnerSide === "B" ? "rgba(234,179,8,0.11)" : "hsl(var(--secondary))",
+              border: winnerSide === "B" ? "1px solid rgba(234,179,8,0.25)" : "1px solid hsl(var(--border)/0.5)",
             }}
           >
-            <span className="text-sm font-extrabold tracking-widest text-white uppercase leading-none">
+            <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none">
               {match.teamB.name}
             </span>
             {winnerSide === "B" && (
@@ -338,8 +324,8 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
                 }}
               >
                 <Trophy className="h-4 w-4 shrink-0 text-yellow-400" />
-                <p className="text-xs font-extrabold text-yellow-300 tracking-wide">
-                  <span className="text-yellow-500/55 font-medium mr-1">Won the toss:</span>
+                <p className="text-xs font-extrabold text-yellow-600 dark:text-yellow-300 tracking-wide">
+                  <span className="text-yellow-600/55 font-medium mr-1">Won the toss:</span>
                   {winnerName}
                 </p>
               </div>
@@ -349,32 +335,20 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
 
         {/* ── Info grid: ENDTIME + TOSS RATE ─────────────────── */}
         <div className="grid grid-cols-2 gap-2 px-4 pb-3">
-          <div
-            className="rounded-xl px-3.5 py-3"
-            style={{ background: "rgba(255,255,255,0.038)" }}
-          >
-            <p
-              className="text-[9px] font-semibold tracking-[0.2em] mb-1.5"
-              style={{ color: "rgba(255,255,255,0.30)" }}
-            >
+          <div className="rounded-xl px-3.5 py-3 bg-secondary border border-border/40">
+            <p className="text-[9px] font-semibold tracking-[0.2em] mb-1.5 text-muted-foreground">
               ENDTIME
             </p>
-            <p className="text-sm font-bold tabular-nums" style={{ color: "#00b4ff" }}>
+            <p className="text-sm font-bold tabular-nums text-primary">
               {endTimeLabel}
             </p>
           </div>
 
-          <div
-            className="rounded-xl px-3.5 py-3"
-            style={{ background: "rgba(255,255,255,0.038)" }}
-          >
-            <p
-              className="text-[9px] font-semibold tracking-[0.2em] mb-1.5"
-              style={{ color: "rgba(255,255,255,0.30)" }}
-            >
+          <div className="rounded-xl px-3.5 py-3 bg-secondary border border-border/40">
+            <p className="text-[9px] font-semibold tracking-[0.2em] mb-1.5 text-muted-foreground">
               TOSS RATE
             </p>
-            <p className="text-sm font-bold" style={{ color: "#00b4ff" }}>
+            <p className="text-sm font-bold text-primary">
               {tossRate}
             </p>
           </div>
@@ -387,9 +361,9 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             style={
               isClosed
                 ? {
-                    background: "rgba(255,255,255,0.05)",
-                    color: "rgba(255,255,255,0.20)",
-                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "hsl(var(--secondary))",
+                    color: "hsl(var(--muted-foreground)/0.5)",
+                    border: "1px solid hsl(var(--border))",
                     cursor: "not-allowed",
                     boxShadow: "none",
                   }

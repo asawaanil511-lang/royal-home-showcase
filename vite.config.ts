@@ -16,6 +16,9 @@ try {
 const supabaseAnonKey =
   process.env.VITE_SUPABASE_ANON_KEY || config.VITE_SUPABASE_ANON_KEY || "";
 
+const apiUrl =
+  process.env.VITE_API_URL || config.VITE_API_URL || "";
+
 export default defineConfig(() => ({
   server: {
     host: "0.0.0.0",
@@ -34,11 +37,13 @@ export default defineConfig(() => ({
     ),
     "import.meta.env.VITE_SUPABASE_ANON_KEY": JSON.stringify(supabaseAnonKey),
     "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabaseAnonKey),
+    "import.meta.env.VITE_API_URL": JSON.stringify(apiUrl),
   },
   plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@assets": path.resolve(__dirname, "./attached_assets"),
     },
   },
 }));

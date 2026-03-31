@@ -7,7 +7,7 @@ import {
   Star, Info, ChevronDown, BadgeAlert, ShieldCheck, Banknote, Gavel,
   MessageCircle, Trophy, Zap, ArrowRight
 } from "lucide-react";
-import lawrenceLogo from "@/assets/lawrence-logo.jpg";
+import betwicLogo from "@/assets/betwic-logo.jpg";
 
 type Variant = "success" | "danger" | "warning" | "info" | "love";
 
@@ -210,7 +210,7 @@ const SectionCard = ({ section, isOpen, onToggle, delay }: {
       {/* Section header — clickable */}
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-white/3 transition-colors text-left"
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-secondary/60 transition-colors text-left"
       >
         <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border ${section.bgColor}`}>
           <IconComp className={`h-5 w-5 ${section.iconColor}`} />
@@ -285,7 +285,7 @@ const Rules = () => {
             {/* Logo ring */}
             <div className="relative inline-block mb-5">
               <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30 animate-spin" style={{ animationDuration: "12s" }} />
-              <img src={lawrenceLogo} alt="Lawrence Toss Book"
+              <img src={betwicLogo} alt="Betwic Toss Book"
                 className="h-16 w-16 rounded-full object-cover border-2 border-primary/50 relative z-10" />
             </div>
           </motion.div>

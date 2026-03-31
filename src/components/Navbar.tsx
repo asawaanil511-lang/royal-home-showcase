@@ -5,8 +5,10 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import lawrenceLogo from "@/assets/lawrence-logo.jpg";
+import betwicLogo from "@/assets/betwic-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
+
+const TELEGRAM_URL = "https://t.me/Lawrenceboss";
 
 const navLinks = [
   { label: "Home",        href: "/",            icon: Home },
@@ -37,9 +39,9 @@ const WalletShowcase = ({ balance }: { balance: number }) => {
   return (
     <Link
       to="/wallet"
-      className="relative flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 transition-all hover:bg-primary/20 hover:border-primary/60 hover:shadow-[0_0_16px_hsl(var(--primary)/0.4)] group"
+      className="relative flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 transition-all hover:bg-primary/20 hover:border-primary/60 hover:shadow-[0_0_16px_hsl(var(--primary)/0.3)] group"
     >
-      <span className="absolute inset-0 rounded-full animate-ping opacity-20 bg-primary pointer-events-none" style={{ animationDuration: "3s" }} />
+      <span className="absolute inset-0 rounded-full animate-ping opacity-10 bg-primary pointer-events-none" style={{ animationDuration: "3s" }} />
       <motion.div animate={controls} className="relative">
         <motion.div
           animate={{ rotate: [0, -12, 12, -8, 8, 0], y: [0, -2, 2, -1, 1, 0] }}
@@ -65,7 +67,7 @@ const WalletShowcase = ({ balance }: { balance: number }) => {
         animate={{ rotate: 360 }}
         transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
       >
-        <Coins className="h-3 w-3 text-yellow-400" />
+        <Coins className="h-3 w-3 text-yellow-500" />
       </motion.span>
     </Link>
   );
@@ -84,7 +86,6 @@ const Navbar = () => {
       .then(({ data }: any) => setIsAdmin(!!data));
   }, [user]);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMobileOpen(false);
   }, [location.pathname]);
@@ -93,47 +94,48 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className="sticky top-0 z-50 border-b border-border/40 bg-background/92 backdrop-blur-xl">
-      {/* Top gradient line */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-xl shadow-sm">
+      <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
       <div className="container mx-auto flex h-16 items-center justify-between px-4">
         {/* Left: Logo + Nav Links */}
         <div className="flex items-center gap-5">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <motion.img
-              src={lawrenceLogo}
-              alt="Lawrence Toss Book"
-              className="h-9 w-9 rounded-full object-cover border border-primary/30 group-hover:border-primary/70 transition-colors shadow-[0_0_10px_hsl(var(--primary)/0.2)]"
-              whileHover={{ scale: 1.1, rotate: 5 }}
+              src={betwicLogo}
+              alt="Betwic Toss Book"
+              className="h-9 w-9 rounded-full object-cover border-2 border-primary/30 group-hover:border-primary/70 transition-colors shadow-sm"
+              whileHover={{ scale: 1.08, rotate: 4 }}
               transition={{ type: "spring", stiffness: 400 }}
             />
             <div className="hidden sm:block leading-tight">
               <div>
-                <span className="text-sm font-extrabold tracking-tight text-foreground">LAWRENCE</span>
+                <span className="text-sm font-extrabold tracking-tight text-foreground">BETWIC</span>
                 <span className="text-sm font-extrabold tracking-tight text-primary ml-1.5">TOSS BOOK</span>
               </div>
+              <p className="text-[9px] text-muted-foreground tracking-widest font-medium">ESTD 2019</p>
             </div>
-            <span className="text-sm font-extrabold tracking-tight text-primary sm:hidden">LTB</span>
+            <span className="text-sm font-extrabold tracking-tight text-primary sm:hidden">BTB</span>
           </Link>
 
           <div className="hidden items-center gap-0.5 md:flex">
             {navLinks.map((link) => {
               const IconComp = link.icon;
+              const active = location.pathname === link.href;
               return (
                 <Link
                   key={link.label}
                   to={link.href}
                   className={`relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${
-                    location.pathname === link.href
+                    active
                       ? "text-primary"
-                      : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+                      : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}
                 >
-                  {location.pathname === link.href && (
+                  {active && (
                     <motion.span
                       layoutId="nav-pill"
-                      className="absolute inset-0 rounded-lg bg-primary/10"
+                      className="absolute inset-0 rounded-lg bg-primary/10 border border-primary/20"
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
@@ -149,14 +151,14 @@ const Navbar = () => {
         <div className="flex items-center gap-2">
           {user ? (
             <>
-              <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-accent/20 bg-accent/5 px-3 py-1.5">
-                <User className="h-3.5 w-3.5 text-accent" />
-                <span className="text-xs font-semibold text-accent">
+              <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-border bg-secondary px-3 py-1.5">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-xs font-semibold text-foreground">
                   {showUsername ? (profile?.username || "user") : "••••••"}
                 </span>
                 <button
                   onClick={() => setShowUsername(!showUsername)}
-                  className="ml-0.5 text-muted-foreground hover:text-accent transition-colors"
+                  className="ml-0.5 text-muted-foreground hover:text-foreground transition-colors"
                 >
                   {showUsername ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
                 </button>
@@ -166,7 +168,7 @@ const Navbar = () => {
 
               <Link
                 to="/my-bets"
-                className="hidden text-sm font-medium text-muted-foreground hover:text-foreground transition-colors md:flex items-center gap-1.5 rounded-lg px-3 py-2 hover:bg-secondary/80"
+                className="hidden text-sm font-medium text-muted-foreground hover:text-foreground transition-colors md:flex items-center gap-1.5 rounded-lg px-3 py-2 hover:bg-secondary"
               >
                 <FileText className="h-3.5 w-3.5" />
                 My Bets
@@ -175,7 +177,7 @@ const Navbar = () => {
               {isAdmin && (
                 <Link
                   to="/admin"
-                  className="flex items-center gap-1 rounded-full border border-accent/30 bg-accent/10 px-3 py-1.5 text-sm font-semibold text-accent transition-colors hover:bg-accent/20"
+                  className="flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30 dark:hover:bg-amber-500/20"
                 >
                   <Shield className="h-4 w-4" /> Admin
                 </Link>
@@ -191,11 +193,11 @@ const Navbar = () => {
             </>
           ) : (
             <>
-              <Button variant="outline" size="sm" className="hidden sm:inline-flex border-primary/30 text-primary hover:bg-primary/10 gap-1.5" asChild>
+              <Button variant="outline" size="sm" className="hidden sm:inline-flex border-primary/40 text-primary hover:bg-primary/10 gap-1.5" asChild>
                 <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
               </Button>
               <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon text-xs" asChild>
-                <a href="https://t.me/Lawrenceboss" target="_blank" rel="noopener noreferrer">Register</a>
+                <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">Register</a>
               </Button>
             </>
           )}
@@ -227,10 +229,9 @@ const Navbar = () => {
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="border-t border-border/40 bg-background/98 backdrop-blur-xl md:hidden overflow-hidden"
+            className="border-t border-border bg-background md:hidden overflow-hidden"
           >
             <div className="px-4 pt-3 pb-5">
-              {/* Nav links with icons */}
               <div className="flex flex-col gap-0.5 mb-4">
                 {navLinks.map((link) => {
                   const IconComp = link.icon;
@@ -268,28 +269,25 @@ const Navbar = () => {
                 )}
               </div>
 
-              {/* Divider */}
-              <div className="h-px bg-border/50 mb-4" />
+              <div className="h-px bg-border mb-4" />
 
               {user ? (
                 <div className="space-y-3">
-                  {/* User info */}
-                  <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card px-4 py-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 border border-accent/20">
-                      <User className="h-4 w-4 text-accent" />
+                  <div className="flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-sm">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary border border-border">
+                      <User className="h-4 w-4 text-muted-foreground" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-xs text-muted-foreground">Logged in as</p>
-                      <p className="text-sm font-bold text-accent truncate">
+                      <p className="text-sm font-bold text-foreground truncate">
                         {showUsername ? (profile?.username || "user") : "••••••••"}
                       </p>
                     </div>
-                    <button onClick={() => setShowUsername(!showUsername)} className="text-muted-foreground hover:text-accent transition-colors">
+                    <button onClick={() => setShowUsername(!showUsername)} className="text-muted-foreground hover:text-foreground transition-colors">
                       {showUsername ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
 
-                  {/* Wallet + Logout row */}
                   <div className="flex items-center gap-2">
                     <Link
                       to="/wallet"
@@ -313,13 +311,13 @@ const Navbar = () => {
                 </div>
               ) : (
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1 border-primary/30 text-primary hover:bg-primary/10 gap-1.5" asChild>
+                  <Button variant="outline" size="sm" className="flex-1 border-primary/40 text-primary hover:bg-primary/10 gap-1.5" asChild>
                     <Link to="/login" onClick={() => setMobileOpen(false)}>
                       <LogIn className="h-4 w-4" /> Login
                     </Link>
                   </Button>
-                  <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold shadow-neon" asChild>
-                    <a href="https://t.me/Lawrenceboss" target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
+                  <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold" asChild>
+                    <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
                       Register
                     </a>
                   </Button>

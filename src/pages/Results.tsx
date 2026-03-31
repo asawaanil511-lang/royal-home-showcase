@@ -60,25 +60,25 @@ const TeamPill = ({ name, isWinner, side }: { name: string; isWinner: boolean; s
       <div
         className="relative flex h-14 w-14 items-center justify-center rounded-full text-sm font-black transition-all"
         style={{
-          background: isWinner ? `linear-gradient(135deg, ${c1}25, ${c2}20)` : "rgba(255,255,255,0.03)",
-          border: isWinner ? `2px solid ${c1}60` : "2px solid rgba(255,255,255,0.08)",
+          background: isWinner ? `linear-gradient(135deg, ${c1}25, ${c2}20)` : "hsl(var(--secondary))",
+          border: isWinner ? `2px solid ${c1}60` : "2px solid hsl(var(--border))",
           boxShadow: isWinner ? `0 0 20px ${c1}30` : "none",
         }}
       >
         {isWinner && (
           <div className="absolute inset-0 rounded-full opacity-20 blur-lg" style={{ background: `radial-gradient(circle, ${c1}, transparent 70%)` }} />
         )}
-        <span className="relative font-black text-xs tracking-tight" style={{
-          background: isWinner ? `linear-gradient(135deg, ${c1}, ${c2})` : "none",
-          WebkitBackgroundClip: isWinner ? "text" : "unset",
-          WebkitTextFillColor: isWinner ? "transparent" : "rgba(255,255,255,0.4)",
-        }}>
+        <span className="relative font-black text-xs tracking-tight" style={
+          isWinner
+            ? { background: `linear-gradient(135deg, ${c1}, ${c2})`, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }
+            : {}
+        }>
           {abbr}
         </span>
       </div>
-      <p className={`text-xs font-bold text-center leading-tight max-w-[80px] ${isWinner ? "text-white" : "text-white/40"}`}>{name}</p>
+      <p className={`text-xs font-bold text-center leading-tight max-w-[80px] ${isWinner ? "text-foreground" : "text-muted-foreground"}`}>{name}</p>
       {isWinner && (
-        <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
+        <span className="inline-flex items-center gap-0.5 text-[10px] font-extrabold text-amber-600 dark:text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
           <Trophy className="h-2.5 w-2.5" /> WINNER
         </span>
       )}
@@ -289,12 +289,11 @@ const Results = () => {
                       {/* Teams VS display */}
                       {!isCancelled ? (
                         <div
-                          className="rounded-2xl p-4 mb-4 flex items-center justify-between gap-4"
-                          style={{ background: "linear-gradient(135deg, hsl(225 22% 8%) 0%, hsl(230 25% 10%) 100%)" }}
+                          className="rounded-2xl p-4 mb-4 flex items-center justify-between gap-4 bg-secondary border border-border/50"
                         >
                           <TeamPill name={m.team_a_name} isWinner={m.winner === "A"} side="left" />
                           <div className="flex flex-col items-center gap-1 shrink-0">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-white/10 bg-white/5 text-xs font-bold text-white/30">VS</div>
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-background text-xs font-bold text-muted-foreground">VS</div>
                             <div className="flex flex-col items-center text-[10px] text-muted-foreground">
                               <span>{m.odds_a}x</span>
                               <span className="text-muted-foreground/40">/</span>

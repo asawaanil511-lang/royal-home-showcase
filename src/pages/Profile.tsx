@@ -62,7 +62,7 @@ const SettingRow = ({
   href?: string; locked?: boolean;
 }) => {
   const inner = (
-    <div className={`flex items-center gap-4 px-4 py-4 transition-colors hover:bg-white/3 ${locked ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+    <div className={`flex items-center gap-4 px-4 py-4 transition-colors hover:bg-secondary/60 ${locked ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
       <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${iconBg}`}>
         {locked ? <Ban className="h-5 w-5 text-muted-foreground" /> : <IconComp className={`h-5 w-5 ${iconColor}`} />}
       </div>
@@ -190,7 +190,7 @@ const Profile = () => {
         // Send a welcome notification
         setTimeout(() => {
           sendNotification(
-            "Lawrence Toss Book 🏏",
+            "Betwic Toss Book 🏏",
             "Notifications are now active! You'll be alerted when your bets are settled."
           );
         }, 500);

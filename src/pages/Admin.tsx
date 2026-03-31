@@ -70,7 +70,7 @@ const Admin = () => {
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-foreground tracking-tight">Admin Panel</h1>
-              <p className="text-xs text-muted-foreground">Lawrence Toss Book — Management</p>
+              <p className="text-xs text-muted-foreground">Betwic Toss Book — Management</p>
             </div>
           </div>
 

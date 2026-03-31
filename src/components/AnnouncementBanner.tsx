@@ -5,10 +5,10 @@ import { X, Info, AlertTriangle, Trophy, Zap, Megaphone } from "lucide-react";
 type Announcement = { id: string; message: string; type: string; created_at: string };
 
 const TYPE_CONFIG: Record<string, { icon: any; bg: string; border: string; text: string; accent: string }> = {
-  info: { icon: Info, bg: "bg-blue-500/10", border: "border-blue-500/25", text: "text-blue-300", accent: "bg-blue-500" },
-  warning: { icon: AlertTriangle, bg: "bg-amber-500/10", border: "border-amber-500/25", text: "text-amber-300", accent: "bg-amber-500" },
-  success: { icon: Trophy, bg: "bg-emerald-500/10", border: "border-emerald-500/25", text: "text-emerald-300", accent: "bg-emerald-500" },
-  promo: { icon: Zap, bg: "bg-purple-500/10", border: "border-purple-500/25", text: "text-purple-300", accent: "bg-purple-500" },
+  info:    { icon: Info,          bg: "bg-blue-500/10",    border: "border-blue-500/25",    text: "text-blue-700 dark:text-blue-300",    accent: "bg-blue-500"    },
+  warning: { icon: AlertTriangle, bg: "bg-amber-500/10",   border: "border-amber-500/25",   text: "text-amber-700 dark:text-amber-300",  accent: "bg-amber-500"   },
+  success: { icon: Trophy,        bg: "bg-emerald-500/10", border: "border-emerald-500/25", text: "text-emerald-700 dark:text-emerald-300", accent: "bg-emerald-500" },
+  promo:   { icon: Zap,           bg: "bg-purple-500/10",  border: "border-purple-500/25",  text: "text-purple-700 dark:text-purple-300", accent: "bg-purple-500"  },
 };
 
 const AnnouncementBanner = () => {
@@ -68,13 +68,13 @@ const AnnouncementBanner = () => {
             <div className="flex items-center gap-1.5 shrink-0">
               {visible.map((_, i) => (
                 <button key={i} onClick={() => setCurrent(i)}
-                  className={`h-1.5 rounded-full transition-all ${i === current % visible.length ? `w-4 ${cfg.accent}` : "w-1.5 bg-white/20"}`} />
+                  className={`h-1.5 rounded-full transition-all ${i === current % visible.length ? `w-4 ${cfg.accent}` : "w-1.5 bg-border"}`} />
               ))}
             </div>
           )}
 
           <button onClick={() => setDismissed(prev => new Set([...prev, ann.id]))}
-            className="shrink-0 rounded-full p-1 text-white/40 hover:text-white/80 hover:bg-white/10 transition-colors">
+            className="shrink-0 rounded-full p-1 text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors">
             <X className="h-3.5 w-3.5" />
           </button>
         </div>

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Lock, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck, Eye, EyeOff } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +21,9 @@ const ChangePasswordDialog = ({ open, userId }: ChangePasswordDialogProps) => {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -45,20 +48,34 @@ const ChangePasswordDialog = ({ open, userId }: ChangePasswordDialogProps) => {
     setLoading(true);
 
     try {
-      // Update password
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) {
-        toast({ title: "Failed to change password", description: error.message, variant: "destructive" });
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      if (!token) {
+        toast({ title: "Session expired. Please login again.", variant: "destructive" });
         setLoading(false);
         return;
       }
 
-      // Clear must_change_password flag
-      await (supabase as any).from("profiles").update({ must_change_password: false }).eq("user_id", userId);
+      const res = await fetch("/api/change-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ new_password: newPassword }),
+      });
 
-      toast({ title: "Password changed! 🔒", description: "Please login with your new password." });
+      const data = await res.json();
 
-      // Sign out and redirect to login
+      if (!res.ok || data.error) {
+        toast({ title: "Failed to change password", description: data.error, variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+
+      toast({ title: "Password changed!", description: "Please login with your new password." });
+
       setTimeout(async () => {
         await supabase.auth.signOut();
         window.location.href = "/login";
@@ -84,32 +101,44 @@ const ChangePasswordDialog = ({ open, userId }: ChangePasswordDialogProps) => {
           <div className="relative">
             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              type="password"
+              type={showCurrent ? "text" : "password"}
               placeholder="Current Password"
               value={currentPassword}
               onChange={(e) => setCurrentPassword(e.target.value)}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            <button type="button" onClick={() => setShowCurrent(!showCurrent)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
+              {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              type="password"
+              type={showNew ? "text" : "password"}
               placeholder="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            <button type="button" onClick={() => setShowNew(!showNew)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
+              {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           <div className="relative">
             <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
             <Input
-              type="password"
+              type={showConfirm ? "text" : "password"}
               placeholder="Confirm New Password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="pl-10"
+              className="pl-10 pr-10"
             />
+            <button type="button" onClick={() => setShowConfirm(!showConfirm)}
+              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
+              {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
           </div>
           <Button
             onClick={handleChange}

@@ -497,6 +497,162 @@ app.delete("/api/sessions", async (req, res) => {
   }
 });
 
+// ---- Admin: cancel match + atomically refund all pending bets ----
+app.post("/api/admin/cancel-match", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+
+    // Verify admin
+    const { data: profile } = await adminClient.from("profiles").select("role").eq("user_id", userId).single();
+    if (!profile || profile.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+
+    const { match_id } = req.body;
+    if (!match_id) return res.status(400).json({ error: "match_id required" });
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Mark match as cancelled
+      await client.query(
+        `UPDATE public.matches SET status = 'cancelled', winner = NULL WHERE id = $1`,
+        [match_id]
+      );
+
+      // Get all pending bets for this match
+      const betsResult = await client.query(
+        `UPDATE public.bets SET result = 'cancelled', settled_at = NOW()
+         WHERE match_id = $1 AND result = 'pending'
+         RETURNING user_id, amount`,
+        [match_id]
+      );
+
+      // Refund each user atomically
+      for (const row of betsResult.rows) {
+        await client.query(
+          `UPDATE public.profiles SET wallet_balance = wallet_balance + $1 WHERE user_id = $2`,
+          [Number(row.amount), row.user_id]
+        );
+      }
+
+      await client.query("COMMIT");
+      return res.json({ success: true, refunded: betsResult.rowCount });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Admin: settle match winner + atomically pay out winning bets ----
+app.post("/api/admin/settle-match", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+
+    const { data: profile } = await adminClient.from("profiles").select("role").eq("user_id", userId).single();
+    if (!profile || profile.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+
+    const { match_id, winner } = req.body;
+    if (!match_id || !winner) return res.status(400).json({ error: "match_id and winner required" });
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Update match
+      await client.query(
+        `UPDATE public.matches SET winner = $1, status = 'closed' WHERE id = $2`,
+        [winner, match_id]
+      );
+
+      // Settle all pending bets
+      const betsResult = await client.query(
+        `UPDATE public.bets
+         SET result = CASE WHEN team_picked = $1 THEN 'won' ELSE 'lost' END,
+             settled_at = NOW()
+         WHERE match_id = $2 AND result = 'pending'
+         RETURNING user_id, team_picked, potential_win`,
+        [winner, match_id]
+      );
+
+      // Pay out winners atomically
+      for (const row of betsResult.rows) {
+        if (row.team_picked === winner) {
+          await client.query(
+            `UPDATE public.profiles SET wallet_balance = wallet_balance + $1 WHERE user_id = $2`,
+            [Number(row.potential_win), row.user_id]
+          );
+        }
+      }
+
+      await client.query("COMMIT");
+      return res.json({ success: true, settled: betsResult.rowCount });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Cancel bet (atomic: cancel + refund in one transaction) ----
+app.post("/api/cancel-bet", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+
+    const { bet_id } = req.body;
+    if (!bet_id) return res.status(400).json({ error: "bet_id required" });
+
+    // Use a PostgreSQL transaction so cancel + refund are atomic
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Only cancel if the bet is still pending AND belongs to this user
+      const cancelResult = await client.query(
+        `UPDATE public.bets
+         SET result = 'cancelled', settled_at = NOW()
+         WHERE id = $1 AND user_id = $2 AND result = 'pending'
+         RETURNING amount`,
+        [bet_id, userId]
+      );
+
+      if (cancelResult.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Bet is already settled or cannot be cancelled" });
+      }
+
+      const refundAmount = Number(cancelResult.rows[0].amount);
+
+      // Atomically add refund — no race condition possible
+      await client.query(
+        `UPDATE public.profiles SET wallet_balance = wallet_balance + $1 WHERE user_id = $2`,
+        [refundAmount, userId]
+      );
+
+      await client.query("COMMIT");
+      return res.json({ success: true, refunded: refundAmount });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Change password (server-side, avoids JWT sub claim issues) ----
 app.post("/api/change-password", async (req, res) => {
   try {

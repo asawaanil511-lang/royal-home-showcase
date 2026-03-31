@@ -52,15 +52,17 @@ A cricket sports betting/gaming web app — Superman Toss Book.
 
 Tables: `profiles`, `matches`, `bets`, `user_roles`, `coin_flips`
 
-## Secrets (Replit Secrets)
+## Configuration (config.json)
 
-- `SUPABASE_SERVICE_ROLE_KEY` — Admin Supabase key (server-only, never exposed to frontend)
-- `VITE_SUPABASE_ANON_KEY` — Public Supabase key (frontend)
+All secrets and API keys are stored in `config.json` at the project root (not gitignored):
 
-## Env Vars (Replit shared)
+- `SUPABASE_SERVICE_ROLE_KEY` — Admin Supabase key (server-only)
+- `VITE_SUPABASE_ANON_KEY` — Public Supabase anon key (frontend)
+- `SUPABASE_DATABASE_URL` — Direct Supabase PostgreSQL connection URL
+- `SUPABASE_ACCESS_TOKEN` — Supabase management token
+- `SESSION_SECRET` — Express session secret
 
-- `VITE_SUPABASE_URL` — `https://xzgccthebdjchdumgrvv.supabase.co`
-- `VITE_SUPABASE_PROJECT_ID` — `xzgccthebdjchdumgrvv`
+Server reads config.json via `readFileSync` at startup. Vite reads it at build time for `VITE_SUPABASE_ANON_KEY`.
 
 ## Dev Workflow
 

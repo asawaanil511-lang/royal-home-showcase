@@ -21,9 +21,15 @@ type WalletTx = {
   balance_after: number; note: string | null; created_at: string;
 };
 
-async function getToken() {
+async function getToken(): Promise<string> {
   const { data: { session } } = await supabase.auth.getSession();
-  return session?.access_token || "";
+  const expiresAt = session?.expires_at ?? 0;
+  const nowSec = Math.floor(Date.now() / 1000);
+  if (!session || expiresAt - nowSec < 60) {
+    const { data } = await supabase.auth.refreshSession();
+    return data.session?.access_token ?? "";
+  }
+  return session.access_token ?? "";
 }
 
 const AdminUsers = () => {

@@ -141,7 +141,15 @@ app.post("/api/admin-create-user", async (req, res) => {
       });
       if (error) return res.status(400).json({ error: error.message });
       if (newUser.user) {
-        await adminClient.from("profiles").update({ must_change_password: true }).eq("user_id", newUser.user.id);
+        // Wait briefly for the DB trigger to create the profile row, then upsert to guarantee username is set
+        await new Promise(r => setTimeout(r, 800));
+        await adminClient.from("profiles").upsert({
+          user_id: newUser.user.id,
+          username,
+          display_name: username,
+          must_change_password: true,
+          wallet_balance: 0,
+        }, { onConflict: "user_id" });
       }
       return res.json({ success: true, user_id: newUser.user?.id, username, email, default_password: DEFAULT_PASSWORD });
     }
@@ -483,6 +491,25 @@ app.delete("/api/sessions", async (req, res) => {
       `DELETE FROM public.user_sessions WHERE user_id = $1 AND session_token != $2`,
       [userId, currentTokenPrefix]
     );
+    return res.json({ success: true });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Change password (server-side, avoids JWT sub claim issues) ----
+app.post("/api/change-password", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+    const { new_password } = req.body;
+    if (!new_password || new_password.length < 6) {
+      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    }
+    const adminClient = getAdminClient();
+    const { error } = await adminClient.auth.admin.updateUserById(userId, { password: new_password });
+    if (error) return res.status(400).json({ error: error.message });
+    await adminClient.from("profiles").update({ must_change_password: false }).eq("user_id", userId);
     return res.json({ success: true });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });

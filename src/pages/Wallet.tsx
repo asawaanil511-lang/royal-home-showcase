@@ -109,9 +109,8 @@ const Wallet = () => {
     );
   }
 
-  const customAmtLabel = customAmount && Number(customAmount) > 0
-    ? `₹${Number(customAmount).toLocaleString()}`
-    : "custom amount";
+  const customAmtNum = customAmount && Number(customAmount) > 0 ? Number(customAmount) : 0;
+  const customAmtLabel = customAmtNum > 0 ? `Rs.${customAmtNum}` : "custom amount";
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
@@ -248,7 +247,7 @@ const Wallet = () => {
                     <div key={amt} className="flex flex-col gap-1">
                       <p className="text-[10px] font-bold text-center text-muted-foreground">{label}</p>
                       <a
-                        href={tgLink(`Refill ${fullLabel}`)}
+                        href={tgLink(`Refill Rs.${amt}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-white transition-all active:scale-95"

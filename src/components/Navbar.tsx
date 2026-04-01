@@ -115,7 +115,11 @@ const Navbar = () => {
               </div>
               <p className="text-[9px] text-muted-foreground tracking-widest font-medium">ESTD 2019</p>
             </div>
-            <span className="text-sm font-extrabold tracking-tight text-primary sm:hidden">BTB</span>
+            <div className="flex flex-col sm:hidden leading-tight">
+              <div>
+                <span className="text-base font-black tracking-tight text-foreground">BET</span><span className="text-base font-black tracking-tight text-primary">WIC</span>
+              </div>
+            </div>
           </Link>
 
           <div className="hidden items-center gap-0.5 md:flex">

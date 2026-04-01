@@ -89,7 +89,7 @@ const AdminMatches = () => {
     ]);
     setMatches((matchesData as DBMatch[]) || []);
     const statsMap = new Map<string, MatchBetStats>();
-    (betsData || []).forEach((b: any) => {
+    (betsData || []).filter((b: any) => b.result !== "cancelled").forEach((b: any) => {
       const e = statsMap.get(b.match_id) || { total: 0, volume: 0, teamA: 0, teamB: 0, volumeA: 0, volumeB: 0, payoutA: 0, payoutB: 0 };
       e.total += 1;
       e.volume += Number(b.amount || 0);

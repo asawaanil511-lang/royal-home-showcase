@@ -8,7 +8,7 @@ import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import betwicLogo from "@/assets/betwic-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 
-const TELEGRAM_URL = "https://t.me/Lawrenceboss";
+const TELEGRAM_URL = "https://t.me/Bittubhaji";
 
 const navLinks = [
   { label: "Home",        href: "/",            icon: Home },

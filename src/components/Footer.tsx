@@ -3,7 +3,7 @@ import betwicLogo from "@/assets/betwic-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
 
-const TELEGRAM_URL = "https://t.me/Lawrenceboss";
+const TELEGRAM_URL = "https://t.me/Bittubhaji";
 
 const footerLinks = [
   { label: "Matches",     href: "/matches",     icon: Swords },

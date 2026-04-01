@@ -155,7 +155,7 @@ const sections: Section[] = [
       },
       {
         icon: MessageCircle,
-        text: "We also provide Match IDs for session match and casino bets. Contact @Ironmanids.",
+        text: "We also provide Match IDs for session match and casino bets. Contact @Bittubhaji.",
         variant: "love",
         badge: "❤️",
       },

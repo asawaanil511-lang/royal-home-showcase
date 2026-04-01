@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 
-const TELEGRAM_LINK = "https://t.me/Lawrenceboss";
+const TELEGRAM_LINK = "https://t.me/Bittubhaji";
 
 const Register = () => {
   useEffect(() => {

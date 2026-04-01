@@ -9,7 +9,7 @@
     "client": "vite",
     "build": "vite build",
     "build:dev": "vite build --mode development",
-    "build:server": "esbuild server/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:fsevents --external:pg --external:pg-native --external:bufferutil --external:utf-8-validate",
+    "build:server": "npx esbuild server/index.ts --bundle --platform=node --format=cjs --outfile=dist/index.cjs --external:fsevents --external:pg --external:pg-native --external:bufferutil --external:utf-8-validate",
     "build:all": "npm run build && npm run build:server",
     "start": "node dist/index.cjs",
     "lint": "eslint .",

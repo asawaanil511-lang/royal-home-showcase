@@ -9,8 +9,11 @@ import { Wallet as WalletIcon, ArrowUpRight, Trophy, Plus, ArrowDownLeft, Info }
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const TELEGRAM_LINK = "https://t.me/Bittubhaji";
+const TG_USERNAME = "Bittubhaji";
 const WA_NUMBER = "917668700467";
+
+const tgLink = (text: string) =>
+  `https://t.me/${TG_USERNAME}?text=${encodeURIComponent(text)}`;
 
 const waLink = (text: string) =>
   `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
@@ -174,7 +177,7 @@ const Wallet = () => {
                 <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Deposit via</p>
                 <div className="flex gap-2 mb-3">
                   <a
-                    href={TELEGRAM_LINK}
+                    href={tgLink("Deposit/Refill")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
@@ -196,15 +199,28 @@ const Wallet = () => {
                 </div>
 
                 {/* Withdraw */}
-                <a
-                  href={waLink("WITHDRAWAL FORM")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-primary border border-primary/30 bg-primary/10 transition-all hover:bg-primary/20 hover:border-primary/50 active:scale-95"
-                >
-                  <ArrowDownLeft className="h-4 w-4" />
-                  Withdraw
-                </a>
+                <div className="flex gap-2">
+                  <a
+                    href={tgLink("WITHDRAWAL FORM")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
+                    style={{ background: "linear-gradient(135deg, #229ED9, #1a85bb)" }}
+                  >
+                    <TelegramIcon className="h-4 w-4" />
+                    Withdraw via TG
+                  </a>
+                  <a
+                    href={waLink("WITHDRAWAL FORM")}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
+                    style={{ background: "linear-gradient(135deg, #25D366, #1da851)" }}
+                  >
+                    <WhatsAppIcon className="h-4 w-4" />
+                    Withdraw via WA
+                  </a>
+                </div>
               </div>
             </motion.div>
 
@@ -232,7 +248,7 @@ const Wallet = () => {
                     <div key={amt} className="flex flex-col gap-1">
                       <p className="text-[10px] font-bold text-center text-muted-foreground">{label}</p>
                       <a
-                        href={TELEGRAM_LINK}
+                        href={tgLink(`Refill ${fullLabel}`)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-white transition-all active:scale-95"
@@ -274,7 +290,7 @@ const Wallet = () => {
                 </div>
                 <div className="flex gap-2">
                   <a
-                    href={TELEGRAM_LINK}
+                    href={tgLink(`Refill ${customAmtLabel}`)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95 ${!customAmount || Number(customAmount) <= 0 ? "opacity-50 pointer-events-none" : ""}`}
@@ -301,7 +317,7 @@ const Wallet = () => {
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   After payment, contact{" "}
-                  <a href={TELEGRAM_LINK} target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-semibold hover:underline">@Bittubhaji</a>{" "}
+                  <a href={tgLink("Hi")} target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-semibold hover:underline">@Bittubhaji</a>{" "}
                   on Telegram or WhatsApp at{" "}
                   <a href={waLink("Hi")} target="_blank" rel="noopener noreferrer" className="text-[#25D366] font-semibold hover:underline">+91 76687 00467</a>{" "}
                   to get your coins credited.

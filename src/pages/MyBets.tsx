@@ -427,7 +427,7 @@ const MyBets = () => {
               <p className="text-sm text-zinc-500">Place a bet from the dashboard.</p>
             </div>
             <Button className="bg-sky-500 hover:bg-sky-400 text-white font-bold px-8 rounded-full mt-2" asChild>
-              <Link to="/">Go to dashboard</Link>
+              <Link to="/matches">Go to dashboard</Link>
             </Button>
           </div>
         )}

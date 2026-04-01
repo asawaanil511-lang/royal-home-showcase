@@ -35,9 +35,18 @@ const dbUrl: string =
   process.env.DATABASE_URL ||
   "";
 
+function getSslConfig(url: string) {
+  if (!url || url.includes("localhost") || url.includes("127.0.0.1")) return false;
+  // Supabase pooler requires rejectUnauthorized: false due to their certificate chain
+  if (url.includes(".supabase.com") || url.includes(".pooler.supabase")) {
+    return { rejectUnauthorized: false };
+  }
+  return true;
+}
+
 export const db = new Pool({
   connectionString: dbUrl,
-  ssl: dbUrl.includes("localhost") ? false : { rejectUnauthorized: false },
+  ssl: getSslConfig(dbUrl),
   max: 10,
 });
 
@@ -104,13 +113,25 @@ async function verifyAdmin(req: express.Request, res: express.Response): Promise
   return caller.id;
 }
 
+// ---- Input validation helpers ----
+function isValidUsername(u: unknown): u is string {
+  return typeof u === "string" && /^[a-zA-Z0-9_]{1,50}$/.test(u.trim());
+}
+function isValidUUID(id: unknown): id is string {
+  return typeof id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+}
+function isValidAmount(a: unknown): a is number {
+  const n = Number(a);
+  return !isNaN(n) && n >= 0 && n <= 10_000_000;
+}
+
 // ---- login-by-username ----
 app.post("/api/login-by-username", async (req, res) => {
   try {
     if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured." });
     const adminClient = getAdminClient();
     const { username } = req.body;
-    if (!username) return res.status(400).json({ error: "Username required" });
+    if (!isValidUsername(username)) return res.status(400).json({ error: "Invalid username" });
     const { data: profile } = await adminClient.from("profiles").select("user_id").eq("username", username).maybeSingle();
     if (!profile) return res.status(404).json({ error: "Invalid username" });
     const { data: { user } } = await adminClient.auth.admin.getUserById(profile.user_id);
@@ -133,7 +154,7 @@ app.post("/api/admin-create-user", async (req, res) => {
     const DEFAULT_PASSWORD = "Abcd@1234";
 
     if (action === "create") {
-      if (!username) return res.status(400).json({ error: "Username required" });
+      if (!isValidUsername(username)) return res.status(400).json({ error: "Invalid username (letters, numbers, underscores only, max 50)" });
       const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@superman.local`;
       const { data: newUser, error } = await adminClient.auth.admin.createUser({
         email, password: DEFAULT_PASSWORD, email_confirm: true,
@@ -156,7 +177,7 @@ app.post("/api/admin-create-user", async (req, res) => {
     }
 
     if (action === "delete") {
-      if (!user_id) return res.status(400).json({ error: "user_id required" });
+      if (!isValidUUID(user_id)) return res.status(400).json({ error: "Invalid user_id" });
       if (user_id === adminId) return res.status(403).json({ error: "Admins cannot delete their own account." });
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) return res.status(400).json({ error: error.message });
@@ -164,7 +185,7 @@ app.post("/api/admin-create-user", async (req, res) => {
     }
 
     if (action === "reset_password") {
-      if (!user_id) return res.status(400).json({ error: "user_id required" });
+      if (!isValidUUID(user_id)) return res.status(400).json({ error: "Invalid user_id" });
       const usePassword = password || DEFAULT_PASSWORD;
       const { error } = await adminClient.auth.admin.updateUserById(user_id, { password: usePassword });
       if (error) return res.status(400).json({ error: error.message });
@@ -185,8 +206,14 @@ app.post("/api/admin-wallet", async (req, res) => {
     if (!adminId) return;
 
     const { user_id, action, amount, note } = req.body;
-    if (!user_id || !action || amount === undefined) {
+    if (!isValidUUID(user_id) || !action || amount === undefined) {
       return res.status(400).json({ error: "user_id, action and amount required" });
+    }
+    if (!isValidAmount(amount)) {
+      return res.status(400).json({ error: "Invalid amount (must be 0–10,000,000)" });
+    }
+    if (note && (typeof note !== "string" || note.length > 500)) {
+      return res.status(400).json({ error: "Note too long (max 500 chars)" });
     }
 
     const adminClient = getAdminClient();
@@ -505,7 +532,7 @@ app.post("/api/admin/cancel-match", async (req, res) => {
     if (!adminId) return;
 
     const { match_id } = req.body;
-    if (!match_id) return res.status(400).json({ error: "match_id required" });
+    if (!isValidUUID(match_id)) return res.status(400).json({ error: "Invalid match_id" });
 
     const client = await db.connect();
     try {
@@ -553,7 +580,8 @@ app.post("/api/admin/settle-match", async (req, res) => {
     if (!adminId) return;
 
     const { match_id, winner } = req.body;
-    if (!match_id || !winner) return res.status(400).json({ error: "match_id and winner required" });
+    if (!isValidUUID(match_id) || !winner) return res.status(400).json({ error: "match_id and winner required" });
+    if (!["A", "B"].includes(winner)) return res.status(400).json({ error: "winner must be A or B" });
 
     const client = await db.connect();
     try {
@@ -653,8 +681,8 @@ app.post("/api/change-password", async (req, res) => {
     const userId = await verifyUser(req, res);
     if (!userId) return;
     const { new_password } = req.body;
-    if (!new_password || new_password.length < 6) {
-      return res.status(400).json({ error: "Password must be at least 6 characters" });
+    if (!new_password || typeof new_password !== "string" || new_password.length < 8 || new_password.length > 128) {
+      return res.status(400).json({ error: "Password must be 8–128 characters" });
     }
     const adminClient = getAdminClient();
     const { error } = await adminClient.auth.admin.updateUserById(userId, { password: new_password });

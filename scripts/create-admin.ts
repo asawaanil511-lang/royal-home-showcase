@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import readline from "readline";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -13,8 +14,10 @@ try {
   }
 } catch {}
 
-const supabaseUrl: string = config.SUPABASE_URL || process.env.SUPABASE_URL || "";
-const serviceRoleKey: string = config.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const supabaseUrl: string =
+  process.env.SUPABASE_URL || config.SUPABASE_URL || "https://xzgccthebdjchdumgrvv.supabase.co";
+const serviceRoleKey: string =
+  process.env.SUPABASE_SERVICE_ROLE_KEY || config.SUPABASE_SERVICE_ROLE_KEY || "";
 
 if (!supabaseUrl || !serviceRoleKey) {
   console.error("Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY");
@@ -23,10 +26,28 @@ if (!supabaseUrl || !serviceRoleKey) {
 
 const supabase = createClient(supabaseUrl, serviceRoleKey);
 
+function prompt(question: string): Promise<string> {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.trim());
+    });
+  });
+}
+
 async function createAdmin() {
-  const username = "admin";
-  const password = "LAWRENCEBOSS";
-  const email = "admin@superman.local";
+  const username = process.env.ADMIN_USERNAME || "admin";
+  const email = `${username}@superman.local`;
+
+  const password =
+    process.env.ADMIN_PASSWORD ||
+    (await prompt("Enter admin password (min 8 chars): "));
+
+  if (!password || password.length < 8) {
+    console.error("Password must be at least 8 characters.");
+    process.exit(1);
+  }
 
   console.log("Checking for existing admin user...");
   const { data: existingProfile } = await supabase
@@ -54,7 +75,6 @@ async function createAdmin() {
     userId = newUser.user!.id;
   }
 
-  // Assign admin role (upsert to avoid duplicate errors)
   const { error: roleError } = await supabase
     .from("user_roles")
     .upsert({ user_id: userId, role: "admin" }, { onConflict: "user_id,role" });
@@ -64,12 +84,10 @@ async function createAdmin() {
     process.exit(1);
   }
 
-  // Ensure must_change_password is false for admin
   await supabase.from("profiles").update({ must_change_password: false }).eq("user_id", userId);
 
-  console.log("✅ Admin user ready!");
-  console.log(`   Username : admin`);
-  console.log(`   Password : LAWRENCEBOSS`);
+  console.log("Admin user ready!");
+  console.log(`   Username : ${username}`);
   console.log(`   Email    : ${email}`);
   console.log(`   User ID  : ${userId}`);
 }

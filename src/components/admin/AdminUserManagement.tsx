@@ -4,8 +4,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { UserPlus, Trash2, KeyRound, Search, Loader2, Clock, ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { UserPlus, Trash2, KeyRound, Search, Loader2, Clock, ChevronDown, Copy, Check } from "lucide-react";
+import { AnimatePresence } from "framer-motion";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -25,7 +25,20 @@ async function callAdminApi(body: object) {
   return { data, error: response.ok ? null : { message: data.error || "Request failed" } };
 }
 
-const DEFAULT_PASSWORD = "Abcd@1234";
+const CopyButton = ({ text }: { text: string }) => {
+  const [copied, setCopied] = useState(false);
+  const copy = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button onClick={copy} className="ml-1.5 text-muted-foreground hover:text-primary transition-colors" title="Copy">
+      {copied ? <Check className="h-3 w-3 text-emerald-500" /> : <Copy className="h-3 w-3" />}
+    </button>
+  );
+};
 
 const UserSearchDropdown = ({
   users, value, onChange, placeholder,
@@ -50,8 +63,7 @@ const UserSearchDropdown = ({
       </button>
       <AnimatePresence>
         {open && (
-          <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
-            className="absolute top-full mt-1.5 left-0 right-0 z-50 rounded-xl border border-border/50 bg-card shadow-xl overflow-hidden">
+          <div className="absolute top-full mt-1.5 left-0 right-0 z-50 rounded-xl border border-border/50 bg-card shadow-xl overflow-hidden">
             <div className="p-2 border-b border-border/30">
               <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -78,7 +90,7 @@ const UserSearchDropdown = ({
                 ))
               )}
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>
@@ -98,6 +110,8 @@ const AdminUserManagement = () => {
   const [resetUsername, setResetUsername] = useState("");
   const [resetting, setResetting] = useState(false);
   const [recentActions, setRecentActions] = useState<{ action: string; detail: string; time: string }[]>([]);
+  const [lastCreatedPwd, setLastCreatedPwd] = useState<string | null>(null);
+  const [lastResetPwd, setLastResetPwd] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from("profiles").select("user_id, username, display_name").order("created_at", { ascending: false })
@@ -114,16 +128,23 @@ const AdminUserManagement = () => {
   };
 
   const handleCreate = async () => {
-    if (!createUsername) { toast({ title: "Username required", variant: "destructive" }); return; }
+    if (!createUsername.trim()) { toast({ title: "Username required", variant: "destructive" }); return; }
+    if (!/^[a-zA-Z0-9_]{3,30}$/.test(createUsername.trim())) {
+      toast({ title: "Invalid username", description: "Use only letters, numbers, underscores (3–30 chars)", variant: "destructive" });
+      return;
+    }
     setCreating(true);
-    const res = await callAdminApi({ action: "create", username: createUsername });
+    setLastCreatedPwd(null);
+    const res = await callAdminApi({ action: "create", username: createUsername.trim() });
     setCreating(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "✅ User created!", description: `${createUsername} — default password: ${DEFAULT_PASSWORD}` });
-    addAction("Created", `${createUsername} (pwd: ${DEFAULT_PASSWORD})`);
+    const pwd = res.data?.default_password as string | undefined;
+    if (pwd) setLastCreatedPwd(pwd);
+    toast({ title: "User created!", description: `${createUsername} — check password below` });
+    addAction("Created", createUsername.trim());
     setCreateUsername("");
     refreshUsers();
   };
@@ -141,7 +162,7 @@ const AdminUserManagement = () => {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "🗑️ User deleted" });
+    toast({ title: "User deleted" });
     addAction("Deleted", deleteUsername || deleteUserId.slice(0, 8));
     setDeleteUserId(""); setDeleteUsername("");
     refreshUsers();
@@ -150,13 +171,16 @@ const AdminUserManagement = () => {
   const handleReset = async () => {
     if (!resetUserId) { toast({ title: "Select a user", variant: "destructive" }); return; }
     setResetting(true);
+    setLastResetPwd(null);
     const res = await callAdminApi({ action: "reset_password", user_id: resetUserId });
     setResetting(false);
     if (res.error || res.data?.error) {
       toast({ title: "Failed", description: res.data?.error || res.error?.message, variant: "destructive" });
       return;
     }
-    toast({ title: "🔑 Password reset!", description: `New password: ${DEFAULT_PASSWORD}` });
+    const pwd = res.data?.default_password as string | undefined;
+    if (pwd) setLastResetPwd(pwd);
+    toast({ title: "Password reset — check password below" });
     addAction("Reset Password", resetUsername || resetUserId.slice(0, 8));
     setResetUserId(""); setResetUsername("");
   };
@@ -165,17 +189,14 @@ const AdminUserManagement = () => {
     <div className="space-y-5">
       <div className="grid gap-5 lg:grid-cols-3">
         {/* Create User */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-emerald-500/20 bg-card/60 p-5">
+        <div className="rounded-2xl border border-emerald-500/20 bg-card/60 p-5">
           <h3 className="flex items-center gap-2 text-sm font-bold text-foreground mb-1">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 border border-emerald-500/20">
               <UserPlus className="h-4 w-4 text-emerald-400" />
             </div>
             Create User
           </h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Default password: <span className="font-mono text-primary">{DEFAULT_PASSWORD}</span>
-          </p>
+          <p className="text-xs text-muted-foreground mb-4">A secure default password is set automatically.</p>
           <div className="space-y-2.5">
             <Input placeholder="Username" value={createUsername} onChange={(e) => setCreateUsername(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
@@ -184,12 +205,18 @@ const AdminUserManagement = () => {
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               Create User
             </Button>
+            {lastCreatedPwd && (
+              <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">Password:</span>
+                <span className="font-mono font-bold text-emerald-400">{lastCreatedPwd}</span>
+                <CopyButton text={lastCreatedPwd} />
+              </div>
+            )}
           </div>
-        </motion.div>
+        </div>
 
         {/* Delete User */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.07 }}
-          className="rounded-2xl border border-red-500/20 bg-card/60 p-5">
+        <div className="rounded-2xl border border-red-500/20 bg-card/60 p-5">
           <h3 className="flex items-center gap-2 text-sm font-bold text-foreground mb-1">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 border border-red-500/20">
               <Trash2 className="h-4 w-4 text-red-400" />
@@ -224,20 +251,17 @@ const AdminUserManagement = () => {
               </AlertDialogContent>
             </AlertDialog>
           </div>
-        </motion.div>
+        </div>
 
         {/* Reset Password */}
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.14 }}
-          className="rounded-2xl border border-amber-500/20 bg-card/60 p-5">
+        <div className="rounded-2xl border border-amber-500/20 bg-card/60 p-5">
           <h3 className="flex items-center gap-2 text-sm font-bold text-foreground mb-1">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 border border-amber-500/20">
               <KeyRound className="h-4 w-4 text-amber-400" />
             </div>
             Reset Password
           </h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Resets to: <span className="font-mono text-primary">{DEFAULT_PASSWORD}</span>
-          </p>
+          <p className="text-xs text-muted-foreground mb-4">Resets to a secure default — shown once after reset.</p>
           <div className="space-y-2.5">
             <UserSearchDropdown users={users} value={resetUserId}
               onChange={(id, name) => { setResetUserId(id); setResetUsername(name); }}
@@ -247,29 +271,33 @@ const AdminUserManagement = () => {
               {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
               Reset {resetUsername || "Password"}
             </Button>
+            {lastResetPwd && (
+              <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/25 px-3 py-2 text-xs">
+                <span className="text-muted-foreground">New pwd:</span>
+                <span className="font-mono font-bold text-amber-400">{lastResetPwd}</span>
+                <CopyButton text={lastResetPwd} />
+              </div>
+            )}
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* Recent Actions Log */}
       <AnimatePresence>
         {recentActions.length > 0 && (
-          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
-            className="overflow-hidden">
-            <div className="rounded-2xl border border-border/40 bg-card/60 p-5">
-              <h3 className="flex items-center gap-2 text-sm font-bold text-muted-foreground mb-3">
-                <Clock className="h-4 w-4" /> Session Log
-              </h3>
-              <div className="space-y-1.5">
-                {recentActions.map((a, i) => (
-                  <div key={i} className="flex items-center justify-between text-xs rounded-lg bg-secondary/30 px-3 py-2">
-                    <span className="text-foreground">{a.action}: <span className="text-primary font-medium">{a.detail}</span></span>
-                    <span className="text-muted-foreground">{a.time}</span>
-                  </div>
-                ))}
-              </div>
+          <div className="rounded-2xl border border-border/40 bg-card/60 p-5">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-muted-foreground mb-3">
+              <Clock className="h-4 w-4" /> Session Log
+            </h3>
+            <div className="space-y-1.5">
+              {recentActions.map((a, i) => (
+                <div key={i} className="flex items-center justify-between text-xs rounded-lg bg-secondary/30 px-3 py-2">
+                  <span className="text-foreground">{a.action}: <span className="text-primary font-medium">{a.detail}</span></span>
+                  <span className="text-muted-foreground">{a.time}</span>
+                </div>
+              ))}
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

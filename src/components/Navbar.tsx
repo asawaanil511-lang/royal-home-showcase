@@ -41,14 +41,8 @@ const WalletShowcase = ({ balance }: { balance: number }) => {
       to="/wallet"
       className="relative flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 transition-all hover:bg-primary/20 hover:border-primary/60 hover:shadow-[0_0_16px_hsl(var(--primary)/0.3)] group"
     >
-      <span className="absolute inset-0 rounded-full animate-ping opacity-10 bg-primary pointer-events-none" style={{ animationDuration: "3s" }} />
       <motion.div animate={controls} className="relative">
-        <motion.div
-          animate={{ rotate: [0, -12, 12, -8, 8, 0], y: [0, -2, 2, -1, 1, 0] }}
-          transition={{ duration: 3, repeat: Infinity, repeatDelay: 2, ease: "easeInOut" }}
-        >
-          <Wallet className="h-4 w-4 text-primary" />
-        </motion.div>
+        <Wallet className="h-4 w-4 text-primary" />
       </motion.div>
       <AnimatePresence mode="wait">
         <motion.span
@@ -62,13 +56,9 @@ const WalletShowcase = ({ balance }: { balance: number }) => {
           ₹{balance.toLocaleString()}
         </motion.span>
       </AnimatePresence>
-      <motion.span
-        className="absolute -top-1 -right-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-      >
+      <span className="absolute -top-1 -right-1 text-[10px] opacity-0 group-hover:opacity-100 transition-opacity">
         <Coins className="h-3 w-3 text-yellow-500" />
-      </motion.span>
+      </span>
     </Link>
   );
 };

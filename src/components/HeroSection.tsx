@@ -34,21 +34,17 @@ const HeroSection = () => {
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5, type: "spring", stiffness: 200 }}
+          transition={{ duration: 0.4, type: "spring", stiffness: 220 }}
           className="mb-7 flex justify-center"
         >
           <div className="relative">
-            <motion.div
-              className="absolute inset-0 rounded-full blur-2xl opacity-30"
+            <div
+              className="absolute inset-0 rounded-full blur-2xl opacity-20"
               style={{ background: "hsl(var(--primary))" }}
-              animate={{ scale: [1, 1.25, 1], opacity: [0.2, 0.4, 0.2] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: "easeInOut" }}
             />
-            <motion.div
+            <div
               className="absolute rounded-full border-2 border-dashed border-primary/20"
               style={{ inset: -10 }}
-              animate={{ rotate: 360 }}
-              transition={{ duration: 18, repeat: Infinity, ease: "linear" }}
             />
             <img
               src={betwicLogo}
@@ -59,19 +55,17 @@ const HeroSection = () => {
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
         >
-          <motion.div
+          <div
             className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-4 py-1.5 text-sm font-semibold text-primary"
-            animate={{ boxShadow: ["0 0 0 0 hsl(var(--primary)/0.2)", "0 0 0 8px hsl(var(--primary)/0)", "0 0 0 0 hsl(var(--primary)/0)"] }}
-            transition={{ duration: 2.5, repeat: Infinity }}
           >
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
             Live Betting Platform
             <Zap className="h-3.5 w-3.5 text-amber-500" />
-          </motion.div>
+          </div>
 
           <h1 className="mb-4 text-4xl font-extrabold leading-tight text-foreground md:text-6xl tracking-tight">
             Play. Win.{" "}
@@ -132,9 +126,8 @@ const HeroSection = () => {
               key={s.label}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.65 + i * 0.08 }}
-              whileHover={{ y: -3, scale: 1.03 }}
-              className={`flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 shadow-sm cursor-default transition-all hover:border-primary/30 hover:shadow-md`}
+              transition={{ delay: 0.5 + i * 0.07 }}
+              className={`flex flex-col items-center gap-2 rounded-2xl border border-border bg-card p-4 shadow-sm cursor-default transition-all hover:border-primary/30 hover:shadow-md hover:-translate-y-1`}
             >
               <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${s.bg}`}>
                 <s.icon className={`h-4 w-4 ${s.color}`} />

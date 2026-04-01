@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import betwicLogo from "@/assets/betwic-logo.jpg";
 import cricketGround from "@assets/images_1774996491972.jpeg";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, HelpCircle, Zap, Shield } from "lucide-react";
-import { motion, useAnimation, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const TelegramIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -33,20 +33,8 @@ const Login = () => {
     matches: Math.floor(Math.random() * 8) + 2,
     players: Math.floor(Math.random() * 200) + 50,
   });
-  const logoControls = useAnimation();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const location = useLocation();
-
-  useEffect(() => {
-    const loop = async () => {
-      while (true) {
-        await logoControls.start({ rotate: [0, 5, -5, 0], scale: [1, 1.05, 1], transition: { duration: 3 } });
-        await new Promise((r) => setTimeout(r, 4000));
-      }
-    };
-    loop();
-  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,7 +145,8 @@ const Login = () => {
                 transition={{ duration: 2.5, repeat: Infinity }}
               />
               <motion.img
-                animate={logoControls}
+                animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.04, 1] }}
+                transition={{ duration: 3, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
                 src={betwicLogo}
                 alt="Betwic Toss Book"
                 className="relative h-16 w-16 rounded-full object-cover border-2 border-primary/50 shadow-lg"

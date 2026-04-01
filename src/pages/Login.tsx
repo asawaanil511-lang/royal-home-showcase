@@ -318,6 +318,23 @@ const Login = () => {
                 <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
                 Contact on WhatsApp
               </a>
+
+              {/* Withdrawal Proof */}
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground">PROOF</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <a
+                href="https://t.me/BETWIC_ONLINE_HUBE"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold text-white transition-all active:scale-95"
+                style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+              >
+                <TelegramIcon className="h-3.5 w-3.5 shrink-0" />
+                WITHDRAWAL PROOF
+              </a>
             </div>
           </div>
         </div>

@@ -712,6 +712,11 @@ app.post("/api/change-password", async (req, res) => {
   }
 });
 
+// ---- Root ----
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", message: "Betwic API is running. Use /api/health to check DB." });
+});
+
 // ---- Health check ----
 app.get("/api/health", async (_req, res) => {
   try {

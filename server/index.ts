@@ -501,12 +501,8 @@ app.delete("/api/sessions", async (req, res) => {
 // ---- Admin: cancel match + atomically refund all pending bets ----
 app.post("/api/admin/cancel-match", async (req, res) => {
   try {
-    const userId = await verifyUser(req, res);
-    if (!userId) return;
-
-    // Verify admin
-    const { data: profile } = await adminClient.from("profiles").select("role").eq("user_id", userId).single();
-    if (!profile || profile.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
 
     const { match_id } = req.body;
     if (!match_id) return res.status(400).json({ error: "match_id required" });
@@ -553,11 +549,8 @@ app.post("/api/admin/cancel-match", async (req, res) => {
 // ---- Admin: settle match winner + atomically pay out winning bets ----
 app.post("/api/admin/settle-match", async (req, res) => {
   try {
-    const userId = await verifyUser(req, res);
-    if (!userId) return;
-
-    const { data: profile } = await adminClient.from("profiles").select("role").eq("user_id", userId).single();
-    if (!profile || profile.role !== "admin") return res.status(403).json({ error: "Forbidden" });
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
 
     const { match_id, winner } = req.body;
     if (!match_id || !winner) return res.status(400).json({ error: "match_id and winner required" });

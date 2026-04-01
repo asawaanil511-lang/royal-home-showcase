@@ -94,7 +94,7 @@ const Login = () => {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 py-10 overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-8 overflow-hidden">
       {/* ── Cricket ground background ── */}
       <div className="absolute inset-0">
         <img
@@ -102,9 +102,9 @@ const Login = () => {
           alt="Cricket Ground"
           className="h-full w-full object-cover object-center"
         />
-        {/* Layered overlay for readability */}
-        <div className="absolute inset-0 bg-black/55" />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/60" />
+        {/* Light overlay — ground stays clearly visible */}
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-black/25" />
       </div>
 
       {/* ── Main card ── */}
@@ -112,34 +112,34 @@ const Login = () => {
         initial={{ opacity: 0, y: 40, scale: 0.96 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-        className="relative w-full max-w-sm z-10"
+        className="relative w-full max-w-xs z-10"
       >
-        <div className="rounded-3xl border border-white/20 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-2xl p-7 shadow-2xl">
+        <div className="rounded-3xl border border-white/25 bg-white/88 dark:bg-zinc-900/90 backdrop-blur-2xl p-5 shadow-2xl">
 
           {/* ── Logo + Brand ── */}
-          <div className="flex flex-col items-center mb-6">
+          <div className="flex flex-col items-center mb-4">
             {/* Live badge */}
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="mb-4 flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-bold tracking-widest text-primary"
+              className="mb-3 flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-bold tracking-widest text-primary"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
               {liveStats.matches} LIVE · {liveStats.players} PLAYERS ONLINE
             </motion.div>
 
             {/* Logo */}
-            <div className="relative mb-4">
+            <div className="relative mb-3">
               <motion.div
                 className="absolute rounded-full border-2 border-dashed border-primary/30"
-                style={{ inset: -8 }}
+                style={{ inset: -6 }}
                 animate={{ rotate: 360 }}
                 transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
               />
               <motion.div
                 className="absolute rounded-full bg-primary/10"
-                style={{ inset: -4 }}
+                style={{ inset: -3 }}
                 animate={{ scale: [1, 1.2, 1], opacity: [0.4, 0, 0.4] }}
                 transition={{ duration: 2.5, repeat: Infinity }}
               />
@@ -147,7 +147,7 @@ const Login = () => {
                 animate={logoControls}
                 src={betwicLogo}
                 alt="Betwic Toss Book"
-                className="relative h-20 w-20 rounded-full object-cover border-2 border-primary/50 shadow-lg"
+                className="relative h-16 w-16 rounded-full object-cover border-2 border-primary/50 shadow-lg"
               />
             </div>
 
@@ -169,7 +169,7 @@ const Login = () => {
           </div>
 
           {/* ── Divider ── */}
-          <div className="flex items-center gap-3 mb-5">
+          <div className="flex items-center gap-3 mb-4">
             <div className="flex-1 h-px bg-border" />
             <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground">SIGN IN</span>
             <div className="flex-1 h-px bg-border" />

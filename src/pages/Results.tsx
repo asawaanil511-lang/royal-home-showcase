@@ -96,7 +96,7 @@ const Results = () => {
   useEffect(() => {
     const fetchResults = async () => {
       const [{ data: matchData }, { data: betsData }] = await Promise.all([
-        (supabase as any).from("matches").select("*").in("status", ["closed", "cancelled"]).order("match_date", { ascending: false }),
+        (supabase as any).from("matches").select("*").in("status", ["closed", "cancelled"]).order("closing_time", { ascending: false, nullsFirst: false }),
         (supabase as any).from("bets").select("match_id, amount, team_picked"),
       ]);
       setMatches((matchData as ClosedMatch[]) || []);

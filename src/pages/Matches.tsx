@@ -69,9 +69,23 @@ const Matches = () => {
     };
   }, []);
 
-  const filtered = matches.filter((m) =>
-    tab === "live" ? m.status === "live" || m.status === "upcoming" : m.status === "closed"
-  );
+  const filtered = matches
+    .filter((m) =>
+      tab === "live" ? m.status === "live" || m.status === "upcoming" : m.status === "closed"
+    )
+    .sort((a, b) => {
+      if (tab === "live") {
+        // Soonest closing time first; no closing_time goes to bottom
+        const aTime = a.closingTime ? new Date(a.closingTime).getTime() : Infinity;
+        const bTime = b.closingTime ? new Date(b.closingTime).getTime() : Infinity;
+        if (aTime !== bTime) return aTime - bTime;
+        // Fallback: live status before upcoming
+        const statusOrder: Record<string, number> = { live: 0, upcoming: 1 };
+        return (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
+      }
+      // Closed tab: newest match_date first (already ordered from DB)
+      return 0;
+    });
 
   const handleBet = (match: Match) => {
     setBetMatch(match);

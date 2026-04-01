@@ -8,7 +8,7 @@ import {
   Plus, CheckCircle, Trash2, X, Edit2, Save, AlertTriangle,
   Eye, EyeOff, Clock, Image as ImageIcon, Database, Copy, Upload,
   Loader2, Trophy, TrendingUp, Users as UsersIcon, ChevronDown, ChevronUp,
-  Zap, Calendar, BarChart2,
+  Zap, Calendar, BarChart2, CheckSquare, Square,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -79,6 +79,8 @@ const AdminMatches = () => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [matchTitle, setMatchTitle] = useState("");
   const [saving, setSaving] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   const fetchMatches = async () => {
     const [{ data: matchesData }, { data: betsData }] = await Promise.all([
@@ -256,6 +258,7 @@ const AdminMatches = () => {
       }
     }
     toast({ title: "Match settled!" });
+    await autoCleanupClosedMatches();
     fetchMatches();
   };
 
@@ -272,13 +275,57 @@ const AdminMatches = () => {
       }
     }
     toast({ title: "Match cancelled. Bets refunded." });
+    await autoCleanupClosedMatches();
     fetchMatches();
   };
 
   const handleDelete = async (id: string) => {
     await (supabase as any).from("matches").delete().eq("id", id);
+    setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
     toast({ title: "Match deleted" });
     fetchMatches();
+  };
+
+  // Auto-delete oldest closed/cancelled matches, keeping max 10
+  const autoCleanupClosedMatches = async () => {
+    const { data: closedMatches } = await (supabase as any)
+      .from("matches")
+      .select("id, match_date")
+      .in("status", ["closed", "cancelled"])
+      .order("match_date", { ascending: false });
+    if (closedMatches && closedMatches.length > 10) {
+      const toDelete = (closedMatches as any[]).slice(10);
+      const idsToDelete = toDelete.map((m: any) => m.id);
+      await (supabase as any).from("matches").delete().in("id", idsToDelete);
+      toast({ title: `Auto-cleaned: removed ${idsToDelete.length} old match${idsToDelete.length > 1 ? "es" : ""} (kept 10 latest)` });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDeleting(true);
+    const ids = Array.from(selectedIds);
+    await (supabase as any).from("matches").delete().in("id", ids);
+    setSelectedIds(new Set());
+    toast({ title: `Deleted ${ids.length} match${ids.length > 1 ? "es" : ""}` });
+    setBulkDeleting(false);
+    fetchMatches();
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id); else n.add(id);
+      return n;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === filteredMatches.length && filteredMatches.length > 0) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(filteredMatches.map((m) => m.id)));
+    }
   };
 
   const executeConfirmAction = () => {
@@ -288,6 +335,7 @@ const AdminMatches = () => {
     else if (type === "winB") handleSetWinner(matchId, "B");
     else if (type === "cancel") handleCancel(matchId);
     else if (type === "delete") handleDelete(matchId);
+    else if (type === "bulkDelete") handleBulkDelete();
     setConfirmAction(null);
   };
 
@@ -369,7 +417,19 @@ const AdminMatches = () => {
           </div>
         </div>
 
-        <div className="flex gap-2 shrink-0">
+        <div className="flex gap-2 shrink-0 flex-wrap">
+          {selectedIds.size > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-destructive/40 text-destructive hover:bg-destructive/10 gap-1.5"
+              onClick={() => setConfirmAction({ type: "bulkDelete", matchId: "", label: `Permanently delete ${selectedIds.size} selected match${selectedIds.size > 1 ? "es" : ""}? This cannot be undone.` })}
+              disabled={bulkDeleting}
+            >
+              {bulkDeleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+              Delete {selectedIds.size} Selected
+            </Button>
+          )}
           <Button variant="outline" size="sm" className="border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 gap-1.5" onClick={() => setShowMigrationPanel(!showMigrationPanel)}>
             <Database className="h-4 w-4" /> DB Setup
           </Button>
@@ -492,15 +552,41 @@ const AdminMatches = () => {
 
       {/* Match List */}
       <div className="space-y-3">
+        {/* Select-all row */}
+        {filteredMatches.length > 0 && (
+          <div className="flex items-center gap-3 px-1 pb-1">
+            <button
+              onClick={toggleSelectAll}
+              className="flex items-center gap-2 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+            >
+              {selectedIds.size === filteredMatches.length && filteredMatches.length > 0
+                ? <CheckSquare className="h-4 w-4 text-primary" />
+                : <Square className="h-4 w-4" />
+              }
+              {selectedIds.size === filteredMatches.length && filteredMatches.length > 0
+                ? "Deselect all"
+                : `Select all (${filteredMatches.length})`
+              }
+            </button>
+            {selectedIds.size > 0 && (
+              <span className="text-xs text-primary font-semibold">{selectedIds.size} selected</span>
+            )}
+          </div>
+        )}
+
         {filteredMatches.map((m, i) => {
           const bs = betStats.get(m.id) || { total: 0, volume: 0, teamA: 0, teamB: 0, volumeA: 0, volumeB: 0, payoutA: 0, payoutB: 0 };
           const isExpanded = expandedId === m.id;
           const cfg = STATUS_CONFIG[m.status] || STATUS_CONFIG.upcoming;
           const totalPct = bs.total > 0 ? (bs.teamA / bs.total) * 100 : 50;
 
+          const isSelected = selectedIds.has(m.id);
+
           return (
             <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
-              className="rounded-2xl border border-border/50 bg-card overflow-hidden shadow-card">
+              className={`rounded-2xl border bg-card overflow-hidden shadow-card transition-all ${
+                isSelected ? "border-primary/50 ring-1 ring-primary/20" : "border-border/50"
+              }`}>
 
               {editingId === m.id ? (
                 <div className="p-5 space-y-3">
@@ -538,6 +624,17 @@ const AdminMatches = () => {
                   <div className="p-4">
                     {/* Header row */}
                     <div className="flex items-start justify-between gap-3 mb-3">
+                      {/* Checkbox */}
+                      <button
+                        onClick={() => toggleSelect(m.id)}
+                        className="mt-0.5 shrink-0 text-muted-foreground hover:text-primary transition-colors"
+                        title="Select match"
+                      >
+                        {isSelected
+                          ? <CheckSquare className="h-4 w-4 text-primary" />
+                          : <Square className="h-4 w-4" />
+                        }
+                      </button>
                       <div className="flex-1 min-w-0">
                         {m.match_title && <p className="text-[10px] font-bold text-primary/80 uppercase tracking-widest mb-0.5 truncate">{m.match_title}</p>}
                         <p className="font-extrabold text-foreground text-base leading-tight truncate">{m.team_a_name} vs {m.team_b_name}</p>

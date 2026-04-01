@@ -30,7 +30,7 @@ export default defineConfig(({ mode }) => {
   // In production build (Vercel): use the Render backend URL
   const API_URL =
     API_URL_OVERRIDE ||
-    (mode === "production" ? "https://betwic-api.onrender.com" : "");
+    (mode === "production" ? "https://api.betwictossbook.com" : "");
 
   return {
     server: {

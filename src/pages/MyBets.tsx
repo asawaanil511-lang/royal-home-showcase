@@ -320,7 +320,7 @@ const MyBets = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-zinc-950 pb-24 md:pb-0">
+      <div className="min-h-screen bg-background dark:bg-zinc-950 pb-24 md:pb-0">
         <Navbar />
         <div className="flex flex-col items-center justify-center py-32 gap-4">
           <Trophy className="h-16 w-16 text-zinc-600" strokeWidth={1.5} />
@@ -356,7 +356,7 @@ const MyBets = () => {
   });
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24 md:pb-0">
+    <div className="min-h-screen bg-background dark:bg-zinc-950 pb-24 md:pb-0">
       <Navbar />
 
       <div className="container mx-auto px-4 py-5 max-w-lg">

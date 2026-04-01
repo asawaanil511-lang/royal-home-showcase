@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useRef, useCallback, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 
 type Profile = {
   id: string;
@@ -92,7 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       else if (ua.includes("Linux")) os = "Linux";
       const isMobile = /Android|iPhone|iPad/i.test(ua);
       const sessionToken = accessToken.slice(0, 20);
-      await fetch("/api/sessions/record", {
+      await fetch(apiUrl("/api/sessions/record"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
         body: JSON.stringify({ browser, os, device_type: isMobile ? "Mobile" : "Desktop", session_token: sessionToken }),

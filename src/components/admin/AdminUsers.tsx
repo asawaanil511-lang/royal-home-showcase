@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -65,7 +66,7 @@ const AdminUsers = () => {
 
     setWalletSaving(true);
     const token = await getToken();
-    const res = await fetch("/api/admin-wallet", {
+    const res = await fetch(apiUrl("/api/admin-wallet"), {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ user_id: walletAction.userId, action: walletAction.type, amount: val, note: walletNote || null }),
@@ -96,7 +97,7 @@ const AdminUsers = () => {
       setUserBets((bets || []).map((b: any) => ({ ...b, matchName: matchMap.get(b.match_id) || b.match_id.slice(0, 8) })));
     } else {
       const token = await getToken();
-      const res = await fetch(`/api/wallet-history/${userId}`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl(`/api/wallet-history/${userId}`), { headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       setWalletHistory(data.transactions || []);
     }

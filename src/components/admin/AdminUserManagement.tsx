@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { Input } from "@/components/ui/input";
@@ -16,7 +17,7 @@ type UserOption = { user_id: string; username: string | null; display_name: stri
 async function callAdminApi(body: object) {
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token || "";
-  const response = await fetch("/api/admin-create-user", {
+  const response = await fetch(apiUrl("/api/admin-create-user"), {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
     body: JSON.stringify(body),

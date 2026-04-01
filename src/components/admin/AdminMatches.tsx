@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -123,7 +124,7 @@ const AdminMatches = () => {
       });
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || "";
-      const response = await fetch("/api/upload-match-image", {
+      const response = await fetch(apiUrl("/api/upload-match-image"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ base64, mimeType: imageFile.type, fileName: imageFile.name }),
@@ -186,7 +187,7 @@ const AdminMatches = () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
-      const res = await fetch("/api/migrate", {
+      const res = await fetch(apiUrl("/api/migrate"), {
         method: "POST",
         headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       });

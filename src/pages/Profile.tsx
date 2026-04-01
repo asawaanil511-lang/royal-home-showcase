@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiUrl } from "@/lib/api";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -122,7 +123,7 @@ const Profile = () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
       if (!token) return;
-      const res = await fetch("/api/sessions", { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl("/api/sessions"), { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const data = await res.json();
         setSessions(data.sessions || []);
@@ -137,7 +138,7 @@ const Profile = () => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
-      await fetch(`/api/sessions/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      await fetch(apiUrl(`/api/sessions/${id}`), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setSessions((prev) => prev.filter((s) => s.id !== id));
       toast({ title: "Session revoked" });
     } finally {
@@ -150,7 +151,7 @@ const Profile = () => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
-      await fetch("/api/sessions", { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      await fetch(apiUrl("/api/sessions"), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setSessions((prev) => prev.filter((s) => s.is_current));
       toast({ title: "All other sessions revoked" });
     } finally {

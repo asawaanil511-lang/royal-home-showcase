@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +58,7 @@ const ChangePasswordDialog = ({ open, userId }: ChangePasswordDialogProps) => {
         return;
       }
 
-      const res = await fetch("/api/change-password", {
+      const res = await fetch(apiUrl("/api/change-password"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

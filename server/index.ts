@@ -18,8 +18,26 @@ try {
 const { Pool } = pg;
 
 const app = express();
-app.use(cors());
-app.use(express.json());
+
+// CORS — allow frontend origin(s) defined in env, or all in dev
+const rawOrigins = process.env.CORS_ORIGINS || appConfig.CORS_ORIGINS || "";
+const allowedOrigins = rawOrigins
+  ? rawOrigins.split(",").map((o) => o.trim()).filter(Boolean)
+  : [];
+
+app.use(
+  cors({
+    origin: allowedOrigins.length === 0
+      ? true  // allow all (dev / Replit)
+      : (origin, cb) => {
+          // Allow requests with no origin (server-to-server, curl, etc.)
+          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+          cb(new Error(`CORS: origin '${origin}' not allowed`));
+        },
+    credentials: true,
+  })
+);
+app.use(express.json({ limit: "2mb" }));
 
 const supabaseUrl = "https://xzgccthebdjchdumgrvv.supabase.co";
 const serviceRoleKey: string =
@@ -704,13 +722,18 @@ app.get("/api/health", async (_req, res) => {
   }
 });
 
-if (process.env.NODE_ENV === "production") {
+// Serve frontend static files only when running as a single combined server
+// (not when frontend is deployed separately on Vercel/Netlify)
+const isApiOnly = process.env.API_ONLY === "true";
+if (process.env.NODE_ENV === "production" && !isApiOnly) {
   const distPath = path.resolve(process.cwd(), "dist");
-  app.use(express.static(distPath, { index: "index.html" }));
-  app.get("/{*path}", (_req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
-  });
-  console.log(`Serving static files from: ${distPath}`);
+  if (existsSync(path.join(distPath, "index.html"))) {
+    app.use(express.static(distPath, { index: "index.html" }));
+    app.get("/{*path}", (_req, res) => {
+      res.sendFile(path.join(distPath, "index.html"));
+    });
+    console.log(`Serving static files from: ${distPath}`);
+  }
 }
 
 const PORT = process.env.PORT || 3001;

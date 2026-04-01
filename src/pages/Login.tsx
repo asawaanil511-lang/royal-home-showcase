@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import betwicLogo from "@/assets/betwic-logo.jpg";
 import cricketGround from "@assets/images_1774996491972.jpeg";
 import { useToast } from "@/hooks/use-toast";
@@ -44,7 +45,7 @@ const Login = () => {
     }
     setLoading(true);
     try {
-      const response = await fetch("/api/login-by-username", {
+      const response = await fetch(apiUrl("/api/login-by-username"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username }),
@@ -73,7 +74,7 @@ const Login = () => {
   const handleDemoLogin = async () => {
     setDemoLoading(true);
     try {
-      const response = await fetch("/api/demo-login", { method: "POST" });
+      const response = await fetch(apiUrl("/api/demo-login"), { method: "POST" });
       const res = await response.json();
       if (!response.ok || res.error) {
         toast({ title: "Demo unavailable", description: res.error || "Try again later", variant: "destructive" });

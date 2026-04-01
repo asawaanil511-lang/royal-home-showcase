@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { apiUrl } from "@/lib/api";
 import { X, Info, AlertTriangle, Trophy, Zap, Megaphone } from "lucide-react";
 
 type Announcement = { id: string; message: string; type: string; created_at: string };
@@ -19,7 +20,7 @@ const AnnouncementBanner = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await fetch("/api/announcements");
+        const res = await fetch(apiUrl("/api/announcements"));
         const data = await res.json();
         setAnnouncements(data.announcements || []);
       } catch { }

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Megaphone, Plus, Trash2, ToggleLeft, ToggleRight, Info, AlertTriangle, Zap, Trophy, Loader2 } from "lucide-react";
@@ -36,7 +37,7 @@ const AdminAnnouncements = () => {
   const load = async () => {
     setLoading(true);
     const token = await getToken();
-    const res = await fetch("/api/announcements/all", { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(apiUrl("/api/announcements/all"), { headers: { Authorization: `Bearer ${token}` } });
     const data = await res.json();
     setAnnouncements(data.announcements || []);
     setLoading(false);
@@ -48,7 +49,7 @@ const AdminAnnouncements = () => {
     if (!message.trim()) { toast({ title: "Message required", variant: "destructive" }); return; }
     setCreating(true);
     const token = await getToken();
-    const res = await fetch("/api/announcements", {
+    const res = await fetch(apiUrl("/api/announcements"), {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ message: message.trim(), type }),
@@ -66,7 +67,7 @@ const AdminAnnouncements = () => {
 
   const handleToggle = async (ann: Announcement) => {
     const token = await getToken();
-    await fetch(`/api/announcements/${ann.id}`, {
+    await fetch(apiUrl(`/api/announcements/${ann.id}`), {
       method: "PATCH",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ is_active: !ann.is_active }),
@@ -77,7 +78,7 @@ const AdminAnnouncements = () => {
 
   const handleDelete = async (id: string) => {
     const token = await getToken();
-    await fetch(`/api/announcements/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+    await fetch(apiUrl(`/api/announcements/${id}`), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
     toast({ title: "Announcement deleted" });
     load();
   };

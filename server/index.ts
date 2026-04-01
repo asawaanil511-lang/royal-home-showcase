@@ -147,6 +147,7 @@ app.post("/api/admin-create-user", async (req, res) => {
           user_id: newUser.user.id,
           username,
           display_name: username,
+          avatar_url: "https://xzgccthebdjchdumgrvv.supabase.co/storage/v1/object/public/assets/betwic-logo.jpg",
           must_change_password: true,
           wallet_balance: 0,
         }, { onConflict: "user_id" });

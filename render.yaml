@@ -2,7 +2,7 @@ services:
   - type: web
     name: betwic-api
     runtime: node
-    buildCommand: npm install --include=dev && npm run build:server
+    buildCommand: npm install && npm run build:server
     startCommand: npm start
     envVars:
       - key: NODE_ENV

@@ -19,21 +19,10 @@ const { Pool } = pg;
 
 const app = express();
 
-// CORS — allow frontend origin(s) defined in env, or all in dev
-const rawOrigins = process.env.CORS_ORIGINS || appConfig.CORS_ORIGINS || "";
-const allowedOrigins = rawOrigins
-  ? rawOrigins.split(",").map((o) => o.trim()).filter(Boolean)
-  : [];
-
+// CORS — allow all origins (API is secured by Supabase JWT tokens, not CORS)
 app.use(
   cors({
-    origin: allowedOrigins.length === 0
-      ? true  // allow all (dev / Replit)
-      : (origin, cb) => {
-          // Allow requests with no origin (server-to-server, curl, etc.)
-          if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-          cb(new Error(`CORS: origin '${origin}' not allowed`));
-        },
+    origin: true,
     credentials: true,
   })
 );

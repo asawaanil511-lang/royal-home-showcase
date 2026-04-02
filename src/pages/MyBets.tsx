@@ -283,7 +283,9 @@ const MyBets = () => {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bet_id: betId }),
       });
-      const json = await res.json();
+
+      let json: any = {};
+      try { json = await res.json(); } catch { /* empty body */ }
 
       if (!res.ok || !json.success) {
         toast({ title: "Failed to cancel", description: json.error || "Could not cancel bet", variant: "destructive" });

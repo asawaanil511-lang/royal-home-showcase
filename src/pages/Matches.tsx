@@ -62,7 +62,6 @@ const Matches = () => {
     if (data) {
       const map = new Map<string, UserBet>();
       for (const b of data) {
-        // Keep latest bet per match (should only be one pending per match ideally)
         if (!map.has(b.match_id)) {
           map.set(b.match_id, {
             id: b.id,
@@ -70,6 +69,14 @@ const Matches = () => {
             amount: Number(b.amount),
             odds: Number(b.odds),
             potential_win: Number(b.potential_win),
+          });
+        } else {
+          // Aggregate multiple pending bets on same match — sum amount & potential_win
+          const existing = map.get(b.match_id)!;
+          map.set(b.match_id, {
+            ...existing,
+            amount: existing.amount + Number(b.amount),
+            potential_win: existing.potential_win + Number(b.potential_win),
           });
         }
       }
@@ -301,6 +308,7 @@ const Matches = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initialTeam={betTeam}
+        onBetPlaced={fetchUserBets}
       />
       <Footer />
     </div>

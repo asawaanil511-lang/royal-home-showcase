@@ -268,24 +268,33 @@ const MyBets = () => {
     if (!user) return;
     const bet = bets.find((b) => b.id === betId);
     if (!bet) return;
-    if (bet.result === "cancelled") { toast({ title: "Already cancelled", variant: "destructive" }); return; }
+    if (bet.result !== "pending") { toast({ title: "Already settled", variant: "destructive" }); return; }
     const matchOpen = bet.matches && (bet.matches.status === "live" || bet.matches.status === "upcoming");
     if (!matchOpen) { toast({ title: "Cannot cancel", description: "Match is no longer active", variant: "destructive" }); return; }
-    setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "cancelled" as const } : b));
+
     setCancelling(betId);
     try {
-      const { error: updateErr } = await (supabase as any).from("bets").update({ result: "cancelled", settled_at: new Date().toISOString() }).eq("id", betId);
-      if (updateErr) {
-        setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "pending" as const } : b));
-        toast({ title: "Failed to cancel", description: updateErr.message, variant: "destructive" });
-        setCancelling(null); return;
+      const session = await supabase.auth.getSession();
+      const token = session.data.session?.access_token;
+      if (!token) { toast({ title: "Not authenticated", variant: "destructive" }); setCancelling(null); return; }
+
+      const res = await fetch("/api/cancel-bet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ bet_id: betId }),
+      });
+      const json = await res.json();
+
+      if (!res.ok || !json.success) {
+        toast({ title: "Failed to cancel", description: json.error || "Could not cancel bet", variant: "destructive" });
+        setCancelling(null);
+        return;
       }
-      const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", user.id).single();
-      if (profile) await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + Number(bet.amount) }).eq("user_id", user.id);
+
+      setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "cancelled" as const } : b));
       await refreshProfile();
       toast({ title: "Bet Cancelled", description: `₹${Number(bet.amount).toLocaleString()} refunded to your wallet.` });
     } catch (err: any) {
-      setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "pending" as const } : b));
       toast({ title: "Failed to cancel", description: err.message, variant: "destructive" });
     }
     setCancelling(null);

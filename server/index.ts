@@ -647,18 +647,23 @@ app.post("/api/cancel-bet", async (req, res) => {
     try {
       await client.query("BEGIN");
 
-      // Only cancel if the bet is still pending AND belongs to this user
+      // Only cancel if the bet is still pending, belongs to this user, and the match is still live/upcoming
       const cancelResult = await client.query(
-        `UPDATE public.bets
+        `UPDATE public.bets b
          SET result = 'cancelled', settled_at = NOW()
-         WHERE id = $1 AND user_id = $2 AND result = 'pending'
-         RETURNING amount`,
+         FROM public.matches m
+         WHERE b.id = $1
+           AND b.user_id = $2
+           AND b.result = 'pending'
+           AND b.match_id = m.id
+           AND m.status IN ('upcoming', 'live')
+         RETURNING b.amount`,
         [bet_id, userId]
       );
 
       if (cancelResult.rowCount === 0) {
         await client.query("ROLLBACK");
-        return res.status(400).json({ error: "Bet is already settled or cannot be cancelled" });
+        return res.status(400).json({ error: "Bet cannot be cancelled — already settled or match is closed" });
       }
 
       const refundAmount = Number(cancelResult.rows[0].amount);

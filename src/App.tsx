@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import BottomNav from "@/components/BottomNav";
 import { useNotifications } from "@/hooks/useNotifications";
+import { Analytics } from "@vercel/analytics/react";
 import Index from "./pages/Index";
 import Matches from "./pages/Matches";
 import Wallet from "./pages/Wallet";
@@ -72,6 +73,7 @@ const App = () => (
             <BottomNav />
           </AuthProvider>
         </BrowserRouter>
+        <Analytics />
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>

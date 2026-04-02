@@ -15,19 +15,15 @@ try {
 
 const SUPABASE_URL = "https://xzgccthebdjchdumgrvv.supabase.co";
 
-// Public anon key — safe to hardcode (intentionally public, same as the URL)
 const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   config.VITE_SUPABASE_ANON_KEY ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh6Z2NjdGhlYmRqY2hkdW1ncnZ2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ0NTE2NTgsImV4cCI6MjA5MDAyNzY1OH0.x07A7TTZSv5hVdcoklkN-2YoNjGjmoTElN6fLRtOvvk";
 
-// Explicit override from env or config (set on Vercel as VITE_API_URL)
 const API_URL_OVERRIDE =
   process.env.VITE_API_URL || config.VITE_API_URL || "";
 
 export default defineConfig(({ mode }) => {
-  // In dev: empty string → Vite proxy forwards /api/* to localhost:3001
-  // In production build (Vercel): use the Render backend URL
   const API_URL =
     API_URL_OVERRIDE ||
     (mode === "production" ? "https://api.betwictossbook.com" : "");
@@ -56,6 +52,46 @@ export default defineConfig(({ mode }) => {
         "@": path.resolve(__dirname, "./src"),
         "@assets": path.resolve(__dirname, "./attached_assets"),
       },
+    },
+    build: {
+      // Split vendor code into separately cached chunks
+      // so returning users don't re-download unchanged libraries
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            // React core — smallest, fastest to parse
+            if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+              return "vendor-react";
+            }
+            // Supabase — auth/realtime (large, rarely changes)
+            if (id.includes("node_modules/@supabase/")) {
+              return "vendor-supabase";
+            }
+            // Framer Motion — animation engine (large, rarely changes)
+            if (id.includes("node_modules/framer-motion")) {
+              return "vendor-motion";
+            }
+            // Lucide icons — icon set (large, rarely changes)
+            if (id.includes("node_modules/lucide-react")) {
+              return "vendor-icons";
+            }
+            // Radix UI primitives
+            if (id.includes("node_modules/@radix-ui/")) {
+              return "vendor-radix";
+            }
+            // TanStack Query
+            if (id.includes("node_modules/@tanstack/")) {
+              return "vendor-query";
+            }
+            // React Router
+            if (id.includes("node_modules/react-router") || id.includes("node_modules/react-router-dom")) {
+              return "vendor-router";
+            }
+          },
+        },
+      },
+      // Raise the chunk size warning threshold — we're intentionally splitting
+      chunkSizeWarningLimit: 600,
     },
   };
 });

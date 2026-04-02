@@ -1,7 +1,14 @@
 import { createRoot } from "react-dom/client";
-import { Component, ReactNode } from "react";
+import { Component, ReactNode, useEffect } from "react";
 import App from "./App.tsx";
 import "./index.css";
+
+// Hide the HTML-level loader as soon as this module runs (JS bundle parsed)
+const hideLoader = () => {
+  if (typeof (window as any).__hideLoader === "function") {
+    (window as any).__hideLoader();
+  }
+};
 
 class ErrorBoundary extends Component<
   { children: ReactNode },
@@ -13,6 +20,7 @@ class ErrorBoundary extends Component<
   }
 
   static getDerivedStateFromError(error: Error) {
+    hideLoader();
     return { hasError: true, error: error.message };
   }
 
@@ -62,10 +70,17 @@ class ErrorBoundary extends Component<
   }
 }
 
+// Dismiss loader when App first renders
+function LoaderDismisser() {
+  useEffect(() => { hideLoader(); }, []);
+  return null;
+}
+
 const rootEl = document.getElementById("root");
 if (rootEl) {
   createRoot(rootEl).render(
     <ErrorBoundary>
+      <LoaderDismisser />
       <App />
     </ErrorBoundary>
   );

@@ -1,5 +1,72 @@
 import { createRoot } from "react-dom/client";
+import { Component, ReactNode } from "react";
 import App from "./App.tsx";
 import "./index.css";
 
-createRoot(document.getElementById("root")!).render(<App />);
+class ErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: string }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: "" };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error: error.message };
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "#0a0c15",
+            color: "#fff",
+            padding: "2rem",
+            textAlign: "center",
+            fontFamily: "system-ui, sans-serif",
+          }}
+        >
+          <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>⚡</div>
+          <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
+            Betwic Toss Book
+          </h2>
+          <p style={{ color: "#aaa", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
+            Something went wrong loading the app.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            style={{
+              background: "linear-gradient(135deg, #00d4b4, #0099ff)",
+              color: "#fff",
+              border: "none",
+              borderRadius: "0.75rem",
+              padding: "0.75rem 2rem",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontSize: "0.9rem",
+            }}
+          >
+            Tap to Retry
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+const rootEl = document.getElementById("root");
+if (rootEl) {
+  createRoot(rootEl).render(
+    <ErrorBoundary>
+      <App />
+    </ErrorBoundary>
+  );
+}

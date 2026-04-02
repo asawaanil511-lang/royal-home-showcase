@@ -14,9 +14,17 @@ const ThemeContext = createContext<ThemeContextType>({
   toggle: () => {},
 });
 
+// Safe localStorage helpers — Telegram and some WebViews block storage access
+const safeGet = (key: string): string | null => {
+  try { return localStorage.getItem(key); } catch { return null; }
+};
+const safeSet = (key: string, value: string) => {
+  try { localStorage.setItem(key, value); } catch { /* ignore */ }
+};
+
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem("stb_theme") as Theme) || "light";
+    return (safeGet("stb_theme") as Theme) || "light";
   });
 
   useEffect(() => {
@@ -28,7 +36,7 @@ export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
       root.classList.remove("light");
       root.classList.add("dark");
     }
-    localStorage.setItem("stb_theme", theme);
+    safeSet("stb_theme", theme);
   }, [theme]);
 
   const toggle = () => setTheme((t) => (t === "dark" ? "light" : "dark"));

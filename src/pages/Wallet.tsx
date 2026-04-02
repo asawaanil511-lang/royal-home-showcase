@@ -143,37 +143,36 @@ const Wallet = () => {
               initial={{ opacity: 0, y: 20, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               transition={{ delay: 0.04 }}
-              className="relative rounded-2xl border border-border/60 overflow-hidden mb-4"
-              style={{ background: "hsl(228 20% 9%)" }}
+              className="relative rounded-2xl border border-border/60 overflow-hidden mb-4 bg-card"
             >
-              <div className="absolute inset-0 opacity-[0.025]"
+              <div className="absolute inset-0 opacity-[0.03]"
                 style={{ backgroundImage: "linear-gradient(hsl(var(--primary)) 1px, transparent 1px), linear-gradient(90deg, hsl(var(--primary)) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
 
               <div className="relative p-5">
                 <div className="flex items-start justify-between mb-1">
-                  <p className="text-[11px] font-bold tracking-widest text-zinc-400 uppercase">Total Balance</p>
-                  <p className="text-[11px] font-bold tracking-widest text-zinc-400 uppercase">Exposure</p>
+                  <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Total Balance</p>
+                  <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">Exposure</p>
                 </div>
 
                 <div className="flex items-end justify-between mb-3">
                   <AnimatedBalance value={profile?.wallet_balance ?? 0} />
                   <div className="text-right">
-                    <span className={`text-2xl font-extrabold tabular-nums ${exposure > 0 ? "text-orange-400" : "text-orange-400/60"}`}>
+                    <span className={`text-2xl font-extrabold tabular-nums ${exposure > 0 ? "text-orange-500 dark:text-orange-400" : "text-orange-400/50"}`}>
                       ₹{exposure.toLocaleString()}
                     </span>
-                    {exposure > 0 && <p className="text-[10px] text-orange-400/60 mt-0.5">locked in bets</p>}
+                    {exposure > 0 && <p className="text-[10px] text-orange-500/60 dark:text-orange-400/60 mt-0.5">locked in bets</p>}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1.5 mb-5">
-                  <Info className="h-3.5 w-3.5 text-zinc-500" />
-                  <span className="text-xs text-zinc-500">
-                    Active in <span className="font-bold text-zinc-300">{activeMarkets}</span> market{activeMarkets !== 1 ? "s" : ""}
+                  <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Active in <span className="font-bold text-foreground">{activeMarkets}</span> market{activeMarkets !== 1 ? "s" : ""}
                   </span>
                 </div>
 
                 {/* Deposit row */}
-                <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-2">Deposit via</p>
+                <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-2">Deposit via</p>
                 <div className="flex gap-2 mb-3">
                   <a
                     href={tgLink("Deposit/Refill")}

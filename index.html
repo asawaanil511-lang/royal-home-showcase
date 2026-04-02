@@ -1,9 +1,8 @@
 <!doctype html>
-<html lang="en" class="light">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#0a0c15" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -14,50 +13,63 @@
     <meta property="og:title" content="Betwic Toss Book" />
     <meta property="og:description" content="The original and trusted cricket toss gaming arena. Est. 2019." />
     <meta property="og:type" content="website" />
-
     <meta name="twitter:card" content="summary_large_image" />
     <link rel="icon" type="image/jpeg" href="/betwic-logo.jpg" />
 
-    <!-- DNS prefetch + preconnect for Supabase (auth & realtime calls happen immediately) -->
+    <!-- Anti-flash: reads saved theme from localStorage and sets class BEFORE any paint -->
+    <script>
+      (function(){try{var t=localStorage.getItem('stb_theme');document.documentElement.className=t==='dark'?'dark':'light';}catch(e){document.documentElement.className='light';}})();
+    </script>
+
+    <!-- DNS/preconnect for Supabase -->
     <link rel="preconnect" href="https://xzgccthebdjchdumgrvv.supabase.co" crossorigin />
     <link rel="dns-prefetch" href="https://xzgccthebdjchdumgrvv.supabase.co" />
-    <!-- Realtime websocket endpoint -->
     <link rel="preconnect" href="wss://xzgccthebdjchdumgrvv.supabase.co" crossorigin />
 
-    <!-- Inline critical styles: show background + spinner instantly before any JS loads -->
+    <!-- Google Fonts as <link> (faster than CSS @import — parallel download, non-blocking) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" />
+
+    <!-- Critical inline styles: theme-aware loader visible before JS/CSS arrive -->
     <style>
       *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-      html,body{height:100%;background:#0a0c15}
+      html,body{height:100%}
       #root{height:100%}
+      html.dark body{background:#0a0c15}
+      html.light body{background:#f0f7f8}
       #app-loader{
         position:fixed;inset:0;display:flex;flex-direction:column;
-        align-items:center;justify-content:center;background:#0a0c15;
+        align-items:center;justify-content:center;
         z-index:9999;transition:opacity .3s ease;
       }
-      #app-loader.hidden{opacity:0;pointer-events:none}
+      html.dark  #app-loader{background:#0a0c15}
+      html.light #app-loader{background:#f0f7f8}
       .loader-logo{
         width:56px;height:56px;border-radius:50%;
         background:url('/betwic-logo.jpg') center/cover;
-        border:2px solid rgba(0,180,255,.4);
         margin-bottom:20px;
-        box-shadow:0 0 24px rgba(0,180,255,.25);
       }
+      html.dark  .loader-logo{border:2px solid rgba(0,180,255,.4);box-shadow:0 0 24px rgba(0,180,255,.25)}
+      html.light .loader-logo{border:2px solid rgba(0,130,160,.4);box-shadow:0 0 18px rgba(0,130,160,.2)}
       .loader-ring{
         width:36px;height:36px;border-radius:50%;
-        border:3px solid rgba(0,180,255,.15);
-        border-top-color:#00b4ff;
+        border-top-color:transparent;
         animation:spin .7s linear infinite;
       }
-      @keyframes spin{to{transform:rotate(360deg)}}
+      html.dark  .loader-ring{border:3px solid rgba(0,180,255,.15);border-top-color:#00b4ff}
+      html.light .loader-ring{border:3px solid rgba(0,130,160,.2);border-top-color:#007fa5}
       .loader-text{
-        margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.2em;
-        color:rgba(255,255,255,.4);font-family:system-ui,sans-serif;
+        margin-top:14px;font-size:11px;font-weight:700;letter-spacing:.2em;font-family:system-ui,sans-serif;
       }
+      html.dark  .loader-text{color:rgba(255,255,255,.4)}
+      html.light .loader-text{color:rgba(10,50,70,.45)}
+      @keyframes spin{to{transform:rotate(360deg)}}
+      #app-loader.hidden{opacity:0;pointer-events:none}
     </style>
   </head>
 
   <body>
-    <!-- Visible the instant the HTML arrives — before any JS or CSS bundle loads -->
     <div id="app-loader">
       <div class="loader-logo"></div>
       <div class="loader-ring"></div>
@@ -65,10 +77,8 @@
     </div>
 
     <div id="root"></div>
-
     <script type="module" src="/src/main.tsx"></script>
 
-    <!-- Hide the loader once React has mounted -->
     <script>
       window.__hideLoader=function(){
         var el=document.getElementById('app-loader');

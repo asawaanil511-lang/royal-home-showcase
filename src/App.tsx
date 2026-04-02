@@ -13,17 +13,17 @@ import { Analytics } from "@vercel/analytics/react";
 import WalletAnimation from "./components/WalletAnimation";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
 
-// Eagerly load pages that are likely the first interaction
+// Eagerly load only the entry screen — everything else is lazy
 import Login from "./pages/Login";
-import Matches from "./pages/Matches";
-import Rules from "./pages/Rules";
 
-// Lazy load heavier pages — only fetched when the user navigates there
+// All other pages are lazy — downloaded only when navigated to
 const Index = lazy(() => import("./pages/Index"));
+const Matches = lazy(() => import("./pages/Matches"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const MyBets = lazy(() => import("./pages/MyBets"));
 const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Results = lazy(() => import("./pages/Results"));
+const Rules = lazy(() => import("./pages/Rules"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
 const NotFound = lazy(() => import("./pages/NotFound"));

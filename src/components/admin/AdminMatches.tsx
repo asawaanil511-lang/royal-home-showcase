@@ -259,7 +259,6 @@ const AdminMatches = () => {
       }
     }
     toast({ title: "Match settled!" });
-    await autoCleanupClosedMatches();
     fetchMatches();
   };
 
@@ -287,20 +286,6 @@ const AdminMatches = () => {
     fetchMatches();
   };
 
-  // Auto-delete oldest closed/cancelled matches, keeping max 10
-  const autoCleanupClosedMatches = async () => {
-    const { data: closedMatches } = await (supabase as any)
-      .from("matches")
-      .select("id, match_date")
-      .in("status", ["closed", "cancelled"])
-      .order("match_date", { ascending: false });
-    if (closedMatches && closedMatches.length > 10) {
-      const toDelete = (closedMatches as any[]).slice(10);
-      const idsToDelete = toDelete.map((m: any) => m.id);
-      await (supabase as any).from("matches").delete().in("id", idsToDelete);
-      toast({ title: `Auto-cleaned: removed ${idsToDelete.length} old match${idsToDelete.length > 1 ? "es" : ""} (kept 10 latest)` });
-    }
-  };
 
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;

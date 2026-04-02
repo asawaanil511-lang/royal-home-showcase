@@ -101,7 +101,24 @@ const AdminMatches = () => {
     setBetStats(statsMap);
   };
 
-  useEffect(() => { fetchMatches(); }, []);
+  useEffect(() => {
+    fetchMatches();
+
+    // Realtime: auto-refresh P&L when bets or matches change
+    const betsChannel = (supabase as any)
+      .channel("admin-bets-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "bets" }, () => fetchMatches())
+      .subscribe();
+    const matchesChannel = (supabase as any)
+      .channel("admin-matches-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "matches" }, () => fetchMatches())
+      .subscribe();
+
+    return () => {
+      (supabase as any).removeChannel(betsChannel);
+      (supabase as any).removeChannel(matchesChannel);
+    };
+  }, []);
 
   const handleImageFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

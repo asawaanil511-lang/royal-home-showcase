@@ -1,20 +1,31 @@
 import { Match } from "@/data/matches";
 import { Button } from "@/components/ui/button";
-import { Bell, Clock, Lock, Timer, Trophy, X, ZoomIn } from "lucide-react";
+import {
+  Bell, BellRing, Clock, Lock, Timer, Trophy, X, ZoomIn,
+  Plus, XCircle, Loader2, Share2, IndianRupee, CheckCircle2,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
+
+export type UserBet = {
+  id: string;
+  team_picked: "A" | "B";
+  amount: number;
+  odds: number;
+  potential_win: number;
+};
 
 type MatchCardProps = {
   match: Match;
   onBet: (match: Match, team?: "A" | "B") => void;
+  userBet?: UserBet | null;
+  onCancelBet?: (betId: string, matchId: string) => void;
+  cancellingBetId?: string | null;
 };
-
-// ─── Countdown hook ───────────────────────────────────────────────────────────
 
 function useCountdown(target: string | null | undefined) {
   const [remaining, setRemaining] = useState<number | null>(null);
-
   useEffect(() => {
     if (!target) return;
     const tick = () => {
@@ -25,7 +36,6 @@ function useCountdown(target: string | null | undefined) {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [target]);
-
   return remaining;
 }
 
@@ -42,68 +52,44 @@ function formatEndTime(utcString: string): string {
   const date = new Date(utcString);
   const today = new Date();
   const timeStr = date
-    .toLocaleTimeString("en-IN", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-      timeZone: "Asia/Kolkata",
-    })
+    .toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true, timeZone: "Asia/Kolkata" })
     .toUpperCase();
-
   const todayIST = today.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
   const targetIST = date.toLocaleDateString("en-IN", { timeZone: "Asia/Kolkata" });
-
   if (todayIST !== targetIST) {
-    const dateStr = date.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      timeZone: "Asia/Kolkata",
-    });
+    const dateStr = date.toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
     return `${dateStr}, ${timeStr}`;
   }
   return timeStr;
 }
-
-// ─── Image Lightbox ───────────────────────────────────────────────────────────
 
 const ImageLightbox = ({ src, onClose }: { src: string; onClose: () => void }) => {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handler);
     document.body.style.overflow = "hidden";
-    return () => {
-      document.removeEventListener("keydown", handler);
-      document.body.style.overflow = "";
-    };
+    return () => { document.removeEventListener("keydown", handler); document.body.style.overflow = ""; };
   }, [onClose]);
 
   return createPortal(
     <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
       className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.92)" }}
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.85, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.85, opacity: 0 }}
+        initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
         transition={{ type: "spring", stiffness: 280, damping: 22 }}
         className="relative max-w-2xl w-full"
         onClick={(e) => e.stopPropagation()}
       >
-        <img
-          src={src}
-          alt="Match schedule"
+        <img src={src} alt="Match schedule" loading="lazy"
           className="w-full rounded-2xl object-contain max-h-[85vh]"
           style={{ boxShadow: "0 0 80px rgba(0,0,0,0.8)" }}
         />
-        <button
-          onClick={onClose}
-          className="absolute -top-3 -right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
-        >
+        <button onClick={onClose}
+          className="absolute -top-3 -right-3 flex h-9 w-9 items-center justify-center rounded-full bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors">
           <X className="h-4 w-4" />
         </button>
       </motion.div>
@@ -112,65 +98,168 @@ const ImageLightbox = ({ src, onClose }: { src: string; onClose: () => void }) =
   );
 };
 
+// ─── Notification Bell Menu ──────────────────────────────────────────────────
+
+type NotifState = { notifyLive: boolean; notifyResult: boolean };
+
+const BellMenu = ({ match, onClose }: { match: Match; onClose: () => void }) => {
+  const key = `notif_${match.id}`;
+  const [state, setState] = useState<NotifState>(() => {
+    try { return JSON.parse(localStorage.getItem(key) || "{}"); } catch { return {}; }
+  });
+
+  const toggle = (field: keyof NotifState) => {
+    const next = { ...state, [field]: !state[field] };
+    setState(next);
+    try { localStorage.setItem(key, JSON.stringify(next)); } catch { }
+  };
+
+  const handleShare = async () => {
+    const text = `🏏 ${match.teamA.name} vs ${match.teamB.name} — Bet now on Betwic Toss Book!`;
+    try {
+      if (navigator.share) { await navigator.share({ title: "Betwic Toss Book", text }); }
+      else { await navigator.clipboard.writeText(text); }
+    } catch { }
+    onClose();
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.9, y: -6 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.9, y: -6 }}
+      transition={{ duration: 0.15 }}
+      className="absolute right-0 top-10 z-50 w-52 rounded-2xl border border-white/10 shadow-2xl overflow-hidden"
+      style={{ background: "hsl(228 20% 10%)" }}
+      onClick={(e) => e.stopPropagation()}
+    >
+      <div className="px-3 py-2 border-b border-white/8">
+        <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Match Alerts</p>
+      </div>
+
+      {[
+        {
+          icon: Bell,
+          label: "Notify when Live",
+          sub: "Alert when betting opens",
+          field: "notifyLive" as keyof NotifState,
+        },
+        {
+          icon: Trophy,
+          label: "Notify on Result",
+          sub: "Alert when toss is settled",
+          field: "notifyResult" as keyof NotifState,
+        },
+      ].map((item) => (
+        <button
+          key={item.field}
+          onClick={() => toggle(item.field)}
+          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
+        >
+          <div className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition-colors ${
+            state[item.field] ? "bg-primary/20 border border-primary/40" : "bg-white/5 border border-white/10"
+          }`}>
+            <item.icon className={`h-3.5 w-3.5 ${state[item.field] ? "text-primary" : "text-zinc-500"}`} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`text-xs font-semibold ${state[item.field] ? "text-primary" : "text-zinc-300"}`}>{item.label}</p>
+            <p className="text-[10px] text-zinc-600 leading-tight">{item.sub}</p>
+          </div>
+          {state[item.field] && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
+        </button>
+      ))}
+
+      <div className="border-t border-white/8">
+        <button
+          onClick={handleShare}
+          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-white/5 transition-colors text-left"
+        >
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/5 border border-white/10 shrink-0">
+            <Share2 className="h-3.5 w-3.5 text-zinc-500" />
+          </div>
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-zinc-300">Share Match</p>
+            <p className="text-[10px] text-zinc-600">Copy or share this match</p>
+          </div>
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
 // ─── MatchCard ─────────────────────────────────────────────────────────────────
 
-const MatchCard = ({ match, onBet }: MatchCardProps) => {
+const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: MatchCardProps) => {
   const isClosed = match.status === "closed";
   const isLive = match.status === "live";
   const isUpcoming = match.status === "upcoming";
+  const isOpen = isLive || isUpcoming;
+
   const [imgError, setImgError] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [bellOpen, setBellOpen] = useState(false);
+  const bellRef = useRef<HTMLDivElement>(null);
 
   const countdownTarget = !isClosed ? (match.closingTime ?? null) : null;
   const closingMs = useCountdown(countdownTarget);
   const closingSoon = closingMs !== null && closingMs < 5 * 60 * 1000 && closingMs > 0;
 
   const winnerSide = match.winner;
-  const winnerName =
-    winnerSide === "A" ? match.teamA.name : winnerSide === "B" ? match.teamB.name : null;
-
+  const winnerName = winnerSide === "A" ? match.teamA.name : winnerSide === "B" ? match.teamB.name : null;
   const hasImage = !!match.imageUrl && !imgError;
 
-  const tossRate =
-    match.oddsA === match.oddsB
-      ? `${match.oddsA}x`
-      : `${match.oddsA}x / ${match.oddsB}x`;
+  const hasBet = !!userBet && isOpen;
+  const isCancellingThis = cancellingBetId === userBet?.id;
+  const pickedTeamName = userBet?.team_picked === "A" ? match.teamA.name : match.teamB.name;
+  const potentialWin = userBet ? Number(userBet.potential_win) : 0;
+  const profit = potentialWin - (userBet ? Number(userBet.amount) : 0);
 
-  const endTimeLabel = match.closingTime
-    ? formatEndTime(match.closingTime)
-    : match.time
-    ? match.time.toUpperCase()
-    : "—";
-
-  const accentColor = isLive ? "#ef4444" : "#00b4ff";
+  const tossRate = match.oddsA === match.oddsB ? `${match.oddsA}x` : `${match.oddsA}x / ${match.oddsB}x`;
+  const endTimeLabel = match.closingTime ? formatEndTime(match.closingTime) : match.time ? match.time.toUpperCase() : "—";
+  const accentColor = isLive ? "#ef4444" : hasBet ? "#00d4aa" : "#00b4ff";
   const borderColor = isLive
-    ? "rgba(239,68,68,0.22)"
+    ? hasBet ? "rgba(0,212,170,0.35)" : "rgba(239,68,68,0.22)"
     : isUpcoming
-    ? "rgba(0,180,255,0.14)"
+    ? hasBet ? "rgba(0,212,170,0.25)" : "rgba(0,180,255,0.14)"
     : "hsl(var(--border))";
+
+  // Close bell menu on outside click
+  useEffect(() => {
+    if (!bellOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
+        setBellOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [bellOpen]);
+
+  const notifKey = `notif_${match.id}`;
+  const notifState: NotifState = (() => {
+    try { return JSON.parse(localStorage.getItem(notifKey) || "{}"); } catch { return {}; }
+  })();
+  const hasNotif = notifState.notifyLive || notifState.notifyResult;
 
   return (
     <>
       <motion.div
-        whileHover={!isClosed ? { y: -4, scale: 1.006 } : {}}
-        transition={{ type: "spring", stiffness: 300, damping: 22 }}
+        whileHover={!isClosed ? { y: -3, scale: 1.004 } : {}}
+        transition={{ type: "spring", stiffness: 300, damping: 24 }}
         className={`relative overflow-hidden rounded-2xl ${isClosed ? "opacity-70" : ""}`}
         style={{
           background: "hsl(var(--card))",
           border: `1px solid ${borderColor}`,
-          boxShadow: !isClosed ? `0 0 32px ${accentColor}0d` : "none",
+          boxShadow: !isClosed ? `0 0 28px ${accentColor}0d` : "none",
         }}
       >
         {/* top accent line */}
-        <div
-          className="h-[2px] w-full"
-          style={{
-            background: `linear-gradient(90deg, transparent, ${accentColor}99, transparent)`,
-          }}
-        />
+        <div className="h-[2px] w-full" style={{
+          background: `linear-gradient(90deg, transparent, ${accentColor}99, transparent)`,
+        }} />
 
-        {/* ── Timer + Bell row ───────────────────────────────── */}
-        <div className="flex items-center justify-between px-4 pt-3.5 pb-2.5">
+        {/* ── Timer + Bell row ─────────────────────────────── */}
+        <div className="flex items-center justify-between px-4 pt-3 pb-2">
           {closingMs !== null && closingMs > 0 ? (
             <motion.span
               key={closingSoon ? "urgent" : "normal"}
@@ -202,128 +291,131 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             </span>
           )}
 
-          <button
-            className="flex h-8 w-8 items-center justify-center rounded-full transition-colors hover:bg-secondary text-muted-foreground"
-          >
-            <Bell className="h-4 w-4" />
-          </button>
+          {/* Bell button */}
+          <div className="relative" ref={bellRef}>
+            <button
+              onClick={() => setBellOpen((v) => !v)}
+              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                bellOpen ? "bg-primary/15 text-primary" : "hover:bg-secondary text-muted-foreground"
+              }`}
+            >
+              {hasNotif
+                ? <BellRing className="h-4 w-4 text-primary" />
+                : <Bell className="h-4 w-4" />}
+            </button>
+            <AnimatePresence>
+              {bellOpen && <BellMenu match={match} onClose={() => setBellOpen(false)} />}
+            </AnimatePresence>
+          </div>
         </div>
 
-        {/* ── Match title (if set) ───────────────────────────── */}
+        {/* ── Match title ────────────────────────────────── */}
         {match.matchTitle && (
-          <div className="px-4 pb-2.5">
-            <p
-              className="text-sm font-extrabold tracking-wide leading-snug text-foreground"
-            >
-              {match.matchTitle}
-            </p>
+          <div className="px-4 pb-2">
+            <p className="text-sm font-extrabold tracking-wide leading-snug text-foreground">{match.matchTitle}</p>
           </div>
         )}
 
-        {/* ── Match image thumbnail (clickable) ─────────────── */}
+        {/* ── Match image thumbnail ──────────────────────── */}
         {hasImage && (
           <div className="px-4 pb-3">
             <div
               className="relative overflow-hidden rounded-xl cursor-pointer group"
-              style={{ height: 80 }}
+              style={{ height: 76 }}
               onClick={() => setLightboxOpen(true)}
-              title="Click to view full image"
             >
               <img
                 src={match.imageUrl!}
                 alt="Match schedule"
+                loading="lazy"
                 onError={() => setImgError(true)}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
-              {/* hover overlay with zoom icon */}
               <div
                 className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                 style={{ background: "rgba(0,0,0,0.45)" }}
               >
-                <ZoomIn className="h-6 w-6 text-white drop-shadow-lg" />
+                <ZoomIn className="h-5 w-5 text-white drop-shadow-lg" />
               </div>
-              <div
-                className="absolute inset-0 rounded-xl"
-                style={{ border: "1px solid rgba(255,255,255,0.10)" }}
-              />
+              <div className="absolute inset-0 rounded-xl" style={{ border: "1px solid rgba(255,255,255,0.08)" }} />
             </div>
           </div>
         )}
 
-        {/* ── Team pills ─────────────────────────────────────── */}
+        {/* ── Team pills ─────────────────────────────────── */}
         <div className="space-y-2 px-4 pb-3">
-          {/* Team A */}
-          <div
-            role={!isClosed ? "button" : undefined}
-            onClick={!isClosed ? () => onBet(match, "A") : undefined}
-            className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-all duration-300 ${
-              winnerSide === "B" ? "opacity-25" : ""
-            } ${!isClosed ? "cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/10 active:scale-[0.98]" : ""}`}
-            style={{
-              background: winnerSide === "A" ? "rgba(234,179,8,0.11)" : "hsl(var(--secondary))",
-              border: winnerSide === "A" ? "1px solid rgba(234,179,8,0.25)" : "1px solid hsl(var(--border)/0.5)",
-            }}
-          >
-            <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none">
-              {match.teamA.name}
-            </span>
-            {winnerSide === "A" ? (
-              <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
-            ) : !isClosed ? (
-              <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full"
-                style={{ background: "linear-gradient(135deg,#00b4ff,#0055ff)", boxShadow: "0 2px 8px rgba(0,180,255,0.35)" }}>
-                Choose
-              </span>
-            ) : null}
-          </div>
+          {[
+            { team: "A" as const, name: match.teamA.name },
+            { team: "B" as const, name: match.teamB.name },
+          ].map((t, idx) => {
+            const isWinner = winnerSide === t.team;
+            const isLoser = winnerSide && winnerSide !== t.team;
+            const isPicked = hasBet && userBet?.team_picked === t.team;
 
-          {/* VS divider */}
-          <div className="flex justify-center py-0.5">
-            <div
-              className="flex h-9 w-9 items-center justify-center rounded-full"
-              style={{
-                border: "1.5px solid rgba(0,180,255,0.35)",
-                background: "rgba(0,180,255,0.05)",
-              }}
-            >
-              <span
-                className="text-[11px] font-bold"
-                style={{ color: "rgba(0,180,255,0.75)" }}
-              >
-                vs
-              </span>
-            </div>
-          </div>
-
-          {/* Team B */}
-          <div
-            role={!isClosed ? "button" : undefined}
-            onClick={!isClosed ? () => onBet(match, "B") : undefined}
-            className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-all duration-300 ${
-              winnerSide === "A" ? "opacity-25" : ""
-            } ${!isClosed ? "cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/10 active:scale-[0.98]" : ""}`}
-            style={{
-              background: winnerSide === "B" ? "rgba(234,179,8,0.11)" : "hsl(var(--secondary))",
-              border: winnerSide === "B" ? "1px solid rgba(234,179,8,0.25)" : "1px solid hsl(var(--border)/0.5)",
-            }}
-          >
-            <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none">
-              {match.teamB.name}
-            </span>
-            {winnerSide === "B" ? (
-              <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
-            ) : !isClosed ? (
-              <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full"
-                style={{ background: "linear-gradient(135deg,#00b4ff,#0055ff)", boxShadow: "0 2px 8px rgba(0,180,255,0.35)" }}>
-                Choose
-              </span>
-            ) : null}
-          </div>
+            return (
+              <div key={t.team}>
+                <div
+                  role={!isClosed && !hasBet ? "button" : undefined}
+                  onClick={!isClosed && !hasBet ? () => onBet(match, t.team) : undefined}
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-200 ${
+                    isLoser ? "opacity-25" : ""
+                  } ${!isClosed && !hasBet ? "cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/10 active:scale-[0.98]" : ""}`}
+                  style={{
+                    background: isWinner
+                      ? "rgba(234,179,8,0.11)"
+                      : isPicked
+                      ? "rgba(0,212,170,0.10)"
+                      : "hsl(var(--secondary))",
+                    border: isWinner
+                      ? "1px solid rgba(234,179,8,0.30)"
+                      : isPicked
+                      ? "1px solid rgba(0,212,170,0.35)"
+                      : "1px solid hsl(var(--border)/0.5)",
+                  }}
+                >
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none truncate">
+                      {t.name}
+                    </span>
+                    {isPicked && (
+                      <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{ background: "rgba(0,212,170,0.2)", color: "#00d4aa", border: "1px solid rgba(0,212,170,0.3)" }}>
+                        YOUR PICK
+                      </span>
+                    )}
+                  </div>
+                  {isWinner ? (
+                    <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
+                  ) : isPicked ? (
+                    <div className="flex items-center gap-1 shrink-0">
+                      <IndianRupee className="h-3 w-3 text-[#00d4aa]" />
+                      <span className="text-sm font-extrabold tabular-nums" style={{ color: "#00d4aa" }}>
+                        {Number(userBet!.amount).toLocaleString()}
+                      </span>
+                    </div>
+                  ) : !isClosed && !hasBet ? (
+                    <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full shrink-0"
+                      style={{ background: "linear-gradient(135deg,#00b4ff,#0055ff)", boxShadow: "0 2px 8px rgba(0,180,255,0.35)" }}>
+                      Choose
+                    </span>
+                  ) : null}
+                </div>
+                {idx === 0 && (
+                  <div className="flex justify-center py-1">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full"
+                      style={{ border: "1.5px solid rgba(0,180,255,0.30)", background: "rgba(0,180,255,0.05)" }}>
+                      <span className="text-[11px] font-bold" style={{ color: "rgba(0,180,255,0.70)" }}>vs</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        {/* ── Winner banner ──────────────────────────────────── */}
+        {/* ── Bet summary strip (when user has a bet) ─────── */}
         <AnimatePresence>
-          {winnerName && (
+          {hasBet && userBet && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -331,12 +423,36 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
               className="overflow-hidden px-4 pb-3"
             >
               <div
-                className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5"
-                style={{
-                  background: "rgba(234,179,8,0.09)",
-                  border: "1px solid rgba(234,179,8,0.22)",
-                }}
+                className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2"
+                style={{ background: "rgba(0,212,170,0.06)", border: "1px solid rgba(0,212,170,0.20)" }}
               >
+                <div className="flex items-center gap-3 min-w-0">
+                  <Lock className="h-3.5 w-3.5 text-[#00d4aa] shrink-0" />
+                  <div className="min-w-0">
+                    <p className="text-[10px] font-bold text-[#00d4aa]/70 uppercase tracking-widest">Bet Locked</p>
+                    <p className="text-xs font-extrabold text-[#00d4aa] truncate">
+                      ₹{Number(userBet.amount).toLocaleString()} · Win ₹{potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                    </p>
+                  </div>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-[10px] text-zinc-500">Profit</p>
+                  <p className="text-xs font-extrabold text-emerald-400">+₹{profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* ── Winner banner ──────────────────────────────── */}
+        <AnimatePresence>
+          {winnerName && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
+              className="overflow-hidden px-4 pb-3"
+            >
+              <div className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5"
+                style={{ background: "rgba(234,179,8,0.09)", border: "1px solid rgba(234,179,8,0.22)" }}>
                 <Trophy className="h-4 w-4 shrink-0 text-yellow-400" />
                 <p className="text-xs font-extrabold text-yellow-600 dark:text-yellow-300 tracking-wide">
                   <span className="text-yellow-600/55 font-medium mr-1">Won the toss:</span>
@@ -347,58 +463,59 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
           )}
         </AnimatePresence>
 
-        {/* ── Info grid: ENDTIME + TOSS RATE ─────────────────── */}
+        {/* ── Info grid: ENDTIME + TOSS RATE ─────────────── */}
         <div className="grid grid-cols-2 gap-2 px-4 pb-3">
-          <div className="rounded-xl px-3.5 py-3 bg-secondary border border-border/40">
-            <p className="text-[9px] font-semibold tracking-[0.2em] mb-1.5 text-muted-foreground">
-              ENDTIME
-            </p>
-            <p className="text-sm font-bold tabular-nums text-primary">
-              {endTimeLabel}
-            </p>
-          </div>
-
-          <div className="rounded-xl px-3.5 py-3 bg-secondary border border-border/40">
-            <p className="text-[9px] font-semibold tracking-[0.2em] mb-1.5 text-muted-foreground">
-              TOSS RATE
-            </p>
-            <p className="text-sm font-bold text-primary">
-              {tossRate}
-            </p>
-          </div>
+          {[
+            { label: "ENDTIME", value: endTimeLabel },
+            { label: "TOSS RATE", value: tossRate },
+          ].map((g) => (
+            <div key={g.label} className="rounded-xl px-3 py-2.5 bg-secondary border border-border/40">
+              <p className="text-[9px] font-semibold tracking-[0.2em] mb-1 text-muted-foreground">{g.label}</p>
+              <p className="text-sm font-bold tabular-nums text-primary">{g.value}</p>
+            </div>
+          ))}
         </div>
 
-        {/* ── CTA button ─────────────────────────────────────── */}
-        <div className="px-4 pb-4">
+        {/* ── CTA / Bet Actions ─────────────────────────── */}
+        <div className="px-4 pb-4 space-y-2">
           {isClosed ? (
-            <div className="flex flex-col gap-2">
+            <div className="space-y-1.5">
               <div
                 className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-bold tracking-wide"
-                style={{
-                  background: "rgba(234,179,8,0.10)",
-                  border: "1px solid rgba(234,179,8,0.30)",
-                  color: "#f59e0b",
-                }}
+                style={{ background: "rgba(234,179,8,0.10)", border: "1px solid rgba(234,179,8,0.30)", color: "#f59e0b" }}
               >
                 <Lock className="h-3.5 w-3.5" />
                 BETTING CLOSED
-                {winnerName && (
-                  <span className="ml-1 text-yellow-300 font-extrabold">· {winnerName} WON</span>
-                )}
+                {winnerName && <span className="ml-1 text-yellow-300 font-extrabold">· {winnerName} WON</span>}
               </div>
               <p className="text-center text-[10px] text-muted-foreground font-medium">
-                Check <span className="text-primary font-bold">My Bets</span> to see your winnings &amp; withdraw
+                Check <span className="text-primary font-bold">My Bets</span> for winnings
               </p>
+            </div>
+          ) : hasBet ? (
+            <div className="flex gap-2">
+              <Button
+                className="flex-1 h-11 text-xs font-extrabold gap-1.5 tracking-wide"
+                style={{ background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(0,180,255,0.25)" }}
+                onClick={() => onBet(match, userBet!.team_picked)}
+              >
+                <Plus className="h-4 w-4" /> BET MORE
+              </Button>
+              <Button
+                variant="outline"
+                className="flex-1 h-11 text-xs font-extrabold gap-1.5 border-red-500/40 bg-red-500/5 text-red-400 hover:bg-red-500/15 hover:border-red-500/60 tracking-wide"
+                onClick={() => onCancelBet?.(userBet!.id, match.id)}
+                disabled={isCancellingThis}
+              >
+                {isCancellingThis
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Cancelling…</>
+                  : <><XCircle className="h-4 w-4" /> CANCEL</>}
+              </Button>
             </div>
           ) : (
             <Button
-              className="w-full h-12 text-sm font-extrabold tracking-[0.15em] transition-all"
-              style={{
-                background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)",
-                color: "#fff",
-                border: "none",
-                boxShadow: "0 4px 24px rgba(0,180,255,0.30)",
-              }}
+              className="w-full h-12 text-sm font-extrabold tracking-[0.12em] transition-all"
+              style={{ background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)", color: "#fff", border: "none", boxShadow: "0 4px 24px rgba(0,180,255,0.28)" }}
               onClick={() => onBet(match)}
             >
               BET &amp; PLAY
@@ -407,13 +524,9 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
         </div>
       </motion.div>
 
-      {/* ── Lightbox portal ────────────────────────────────────── */}
       <AnimatePresence>
         {lightboxOpen && hasImage && (
-          <ImageLightbox
-            src={match.imageUrl!}
-            onClose={() => setLightboxOpen(false)}
-          />
+          <ImageLightbox src={match.imageUrl!} onClose={() => setLightboxOpen(false)} />
         )}
       </AnimatePresence>
     </>

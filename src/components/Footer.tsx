@@ -38,7 +38,7 @@ const Footer = () => {
               </div>
             </Link>
             <p className="text-xs text-muted-foreground max-w-[210px] text-center md:text-left leading-relaxed">
-              The original and trusted virtual cricket toss betting platform.
+              The original and trusted virtual cricket toss gaming arena.
             </p>
             <a
               href={TELEGRAM_URL}

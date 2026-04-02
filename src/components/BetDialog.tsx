@@ -6,15 +6,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  X, Wallet, RotateCcw, ChevronLeft,
+  X, Wallet, RotateCcw,
   Percent, Zap, CheckCircle2, Loader2,
-  Swords, PartyPopper, Plus,
+  PartyPopper, Plus,
 } from "lucide-react";
 
 type BetDialogProps = {
   match: Match | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTeam?: "A" | "B";
 };
 
 const PRESET_AMOUNTS = [100, 500, 2500, 10000, 20000, 50000];
@@ -105,9 +106,9 @@ const TeamCircle = ({
   );
 };
 
-const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
-  const [selectedTeam, setSelectedTeam] = useState<"A" | "B" | null>(null);
+const BetDialog = ({ match, open, onOpenChange, initialTeam }: BetDialogProps) => {
+  const [step, setStep] = useState<2 | 3>(2);
+  const [selectedTeam, setSelectedTeam] = useState<"A" | "B">("A");
   const [amount, setAmount] = useState("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
   const [placing, setPlacing] = useState(false);
@@ -119,39 +120,37 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
   const balance = profile?.wallet_balance ?? 0;
 
   useEffect(() => {
-    if (!open) {
-      setTimeout(() => {
-        setStep(1); setSelectedTeam(null); setAmount("");
-        setSelectedPreset(null); setConfirmedBet(null);
-      }, 300);
+    if (open) {
+      setSelectedTeam(initialTeam ?? "A");
+      setStep(2);
+      setAmount("");
+      setSelectedPreset(null);
+      setConfirmedBet(null);
     }
-  }, [open]);
+  }, [open, initialTeam]);
 
   if (!match) return null;
 
-  const selectedOdds = selectedTeam === "A" ? match.oddsA : selectedTeam === "B" ? match.oddsB : 0;
-  const selectedTeamName = selectedTeam === "A" ? match.teamA.name : selectedTeam === "B" ? match.teamB.name : "";
-  const selectedTeamLogo = selectedTeam === "A" ? match.teamA.logo : selectedTeam === "B" ? match.teamB.logo : "";
+  const selectedOdds = selectedTeam === "A" ? match.oddsA : match.oddsB;
+  const selectedTeamName = selectedTeam === "A" ? match.teamA.name : match.teamB.name;
+  const selectedTeamLogo = selectedTeam === "A" ? match.teamA.logo : match.teamB.logo;
   const betAmount = Number(amount) || 0;
   const profit = selectedOdds > 0 ? betAmount * (selectedOdds - 1) : 0;
   const totalReturn = betAmount + profit;
   const isLive = match.status === "live";
 
-  const handleTeamSelect = (team: "A" | "B") => { setSelectedTeam(team); setStep(2); };
   const handlePreset = (val: number) => { setAmount(String(val)); setSelectedPreset(val); };
   const handlePercent = (pct: number) => {
     const val = Math.min(Math.floor((balance * pct) / 100), match.maxBet);
     setAmount(String(val)); setSelectedPreset(null);
   };
   const handleReset = () => { setAmount(""); setSelectedPreset(null); };
-  const handleBack = () => { setStep(1); setSelectedTeam(null); setAmount(""); setSelectedPreset(null); };
-  const handleBetMore = () => { setStep(1); setSelectedTeam(null); setAmount(""); setSelectedPreset(null); setConfirmedBet(null); };
+  const handleBetMore = () => { setStep(2); setSelectedTeam(initialTeam ?? "A"); setAmount(""); setSelectedPreset(null); setConfirmedBet(null); };
 
   const handlePlaceBet = async () => {
     if (!user || !profile) { toast({ title: "Login required", variant: "destructive" }); return; }
-    if (!selectedTeam) { toast({ title: "Select a team", variant: "destructive" }); return; }
-    if (!betAmount || betAmount < 100) { toast({ title: "Minimum bet is ₹100", variant: "destructive" }); return; }
-    if (betAmount > match.maxBet) { toast({ title: `Max bet is ₹${match.maxBet.toLocaleString()}`, variant: "destructive" }); return; }
+    if (!betAmount || betAmount < 100) { toast({ title: "Minimum pick is ₹100", variant: "destructive" }); return; }
+    if (betAmount > match.maxBet) { toast({ title: `Max stake is ₹${match.maxBet.toLocaleString()}`, variant: "destructive" }); return; }
     if (betAmount > balance) { toast({ title: "Insufficient balance", variant: "destructive" }); return; }
 
     setPlacing(true);
@@ -163,7 +162,7 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
     });
     if (error) {
       await supabase.from("profiles").update({ wallet_balance: balance }).eq("user_id", user.id);
-      toast({ title: "Bet failed", description: error.message, variant: "destructive" });
+      toast({ title: "Play failed", description: error.message, variant: "destructive" });
       setPlacing(false); return;
     }
     await refreshProfile();
@@ -173,7 +172,8 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
   };
 
   const amountOk = betAmount >= 100 && betAmount <= balance && betAmount <= match.maxBet;
-  const [tc1, tc2] = selectedTeamName ? GRADIENT_PAIRS[hashName(selectedTeamName)] : ["#00d4b4", "#0099ff"];
+  const [tc1, tc2] = GRADIENT_PAIRS[hashName(selectedTeamName)];
+  const [otherC1] = GRADIENT_PAIRS[hashName(selectedTeam === "A" ? match.teamB.name : match.teamA.name)];
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -192,105 +192,63 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
 
         <AnimatePresence mode="wait">
 
-          {/* ─── STEP 1: Team Selection ─── */}
-          {step === 1 && (
-            <motion.div key="step1" initial={{ opacity: 0, x: -16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -16 }}
-              transition={{ duration: 0.2 }} className="p-5">
-
-              {/* Header */}
-              <div className="flex items-center justify-between mb-5">
-                <div>
-                  <p className="text-xs text-white/40 uppercase tracking-widest font-semibold">
-                    {isLive ? "● LIVE" : "UPCOMING"}
-                  </p>
-                  <h2 className="text-lg font-extrabold text-white mt-0.5">Pick Your Side</h2>
-                </div>
-                <div className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5">
-                  <Wallet className="h-3.5 w-3.5 text-primary" />
-                  <span className="text-xs font-bold text-primary">₹{balance.toLocaleString()}</span>
-                </div>
-              </div>
-
-              <p className="text-[11px] text-white/35 mb-5 text-center">
-                {match.teamA.name} vs {match.teamB.name} · Max ₹{match.maxBet.toLocaleString()}
-              </p>
-
-              {/* VS row — both team circles */}
-              <div className="flex items-center justify-center gap-6 mb-6">
-                {([
-                  { team: "A" as const, name: match.teamA.name, logo: match.teamA.logo, odds: match.oddsA },
-                  { team: "B" as const, name: match.teamB.name, logo: match.teamB.logo, odds: match.oddsB },
-                ]).map((t, idx) => {
-                  const [g1] = GRADIENT_PAIRS[hashName(t.name)];
-                  return (
-                    <div key={t.team} className="flex flex-col items-center gap-2">
-                      <motion.button
-                        whileTap={{ scale: 0.94 }}
-                        onClick={() => handleTeamSelect(t.team)}
-                        className="group flex flex-col items-center gap-3 rounded-2xl border border-white/8 bg-white/4 px-5 py-4 transition-all hover:border-white/20 hover:bg-white/8 active:scale-95"
-                      >
-                        <TeamCircle name={t.name} logo={t.logo} size="lg" />
-                        <p className="text-xs font-bold text-white/90 text-center max-w-[80px] leading-tight">{t.name}</p>
-                        <div
-                          className="rounded-full px-3 py-1 text-xs font-extrabold"
-                          style={{
-                            background: `${g1}20`,
-                            color: g1,
-                            border: `1px solid ${g1}40`,
-                          }}
-                        >
-                          {t.odds}x
-                        </div>
-                      </motion.button>
-                      {idx === 0 && (
-                        <div className="absolute left-1/2 -translate-x-1/2 flex h-8 w-8 items-center justify-center rounded-full border border-white/15 bg-white/5">
-                          <Swords className="h-3.5 w-3.5 text-white/40" />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </motion.div>
-          )}
-
           {/* ─── STEP 2: Stake Entry ─── */}
           {step === 2 && (
             <motion.div key="step2" initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 16 }}
               transition={{ duration: 0.2 }} className="p-5 space-y-4">
 
-              {/* Back + balance */}
+              {/* Header */}
               <div className="flex items-center justify-between">
-                <button onClick={handleBack}
-                  className="flex items-center gap-1 text-white/40 hover:text-white transition-colors text-xs font-semibold">
-                  <ChevronLeft className="h-4 w-4" /> Back
-                </button>
+                <div>
+                  <p className="text-[10px] text-white/40 uppercase tracking-widest font-semibold">
+                    {isLive ? "● LIVE" : "UPCOMING"} · {match.teamA.name} vs {match.teamB.name}
+                  </p>
+                  <h2 className="text-base font-extrabold text-white mt-0.5">Place Your Pick</h2>
+                </div>
                 <div className="flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5">
                   <Wallet className="h-3 w-3 text-primary" />
                   <span className="text-[11px] font-bold text-primary">₹{balance.toLocaleString()}</span>
                 </div>
               </div>
 
-              {/* Selected team hero */}
-              <div
-                className="relative flex items-center gap-4 rounded-2xl border border-white/10 px-4 py-3 overflow-hidden"
-                style={{ background: `linear-gradient(135deg, ${tc1}12, ${tc2}08)` }}
-              >
-                <div
-                  className="absolute inset-0 opacity-15 pointer-events-none"
-                  style={{ background: `radial-gradient(ellipse at 0% 50%, ${tc1} 0%, transparent 60%)` }}
-                />
-                <TeamCircle name={selectedTeamName} logo={selectedTeamLogo} size="sm" selected />
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs text-white/40 font-medium">Your Pick</p>
-                  <p className="text-sm font-extrabold text-white truncate">{selectedTeamName}</p>
-                </div>
-                <div
-                  className="rounded-xl px-3 py-1.5 text-sm font-extrabold shrink-0"
-                  style={{ background: `${tc1}20`, color: tc1, border: `1px solid ${tc1}40` }}
-                >
-                  {selectedOdds}x
-                </div>
+              {/* Compact team switcher */}
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { team: "A" as const, name: match.teamA.name, logo: match.teamA.logo, odds: match.oddsA },
+                  { team: "B" as const, name: match.teamB.name, logo: match.teamB.logo, odds: match.oddsB },
+                ]).map((t) => {
+                  const [g1] = GRADIENT_PAIRS[hashName(t.name)];
+                  const active = selectedTeam === t.team;
+                  return (
+                    <motion.button
+                      key={t.team}
+                      whileTap={{ scale: 0.96 }}
+                      onClick={() => { setSelectedTeam(t.team); setSelectedPreset(null); }}
+                      className={`relative flex items-center gap-2.5 rounded-xl px-3 py-2.5 transition-all border ${
+                        active
+                          ? "border-white/20 bg-white/8"
+                          : "border-white/6 bg-white/3 opacity-55 hover:opacity-75 hover:border-white/12"
+                      }`}
+                      style={active ? { boxShadow: `0 0 16px ${g1}28` } : {}}
+                    >
+                      {active && (
+                        <div
+                          className="absolute inset-0 rounded-xl opacity-10 pointer-events-none"
+                          style={{ background: `radial-gradient(ellipse at 0% 50%, ${g1}, transparent 70%)` }}
+                        />
+                      )}
+                      <TeamCircle name={t.name} logo={t.logo} size="sm" selected={active} />
+                      <div className="flex-1 min-w-0 text-left">
+                        <p className="text-[10px] text-white/40 font-medium leading-none mb-0.5">Team {t.team}</p>
+                        <p className="text-xs font-extrabold text-white truncate leading-none">{t.name}</p>
+                        <p className="text-[10px] font-bold mt-0.5" style={{ color: g1 }}>{t.odds}x</p>
+                      </div>
+                      {active && (
+                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: g1 }} />
+                      )}
+                    </motion.button>
+                  );
+                })}
               </div>
 
               {/* Quick amounts */}
@@ -320,7 +278,7 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
                 {PERCENT_OPTIONS.map((pct) => (
                   <motion.button key={pct} whileTap={{ scale: 0.95 }} onClick={() => handlePercent(pct)}
                     className="flex items-center justify-center gap-1 rounded-xl border border-dashed border-primary/30 bg-primary/5 py-2 text-xs font-bold text-primary/70 hover:border-primary/60 hover:bg-primary/12 hover:text-primary transition-all">
-                    <Percent className="h-3 w-3" />{pct}
+                    <Percent className="h-3 w-3" />{pct}%
                   </motion.button>
                 ))}
               </div>
@@ -346,7 +304,7 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
                 <AnimatePresence>
                   {betAmount > 0 && betAmount < 100 && (
                     <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      className="text-[10px] text-red-400 mt-1.5 ml-1">Min bet is ₹100</motion.p>
+                      className="text-[10px] text-red-400 mt-1.5 ml-1">Min stake is ₹100</motion.p>
                   )}
                   {betAmount > balance && (
                     <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
@@ -354,7 +312,7 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
                   )}
                   {betAmount > match.maxBet && (
                     <motion.p initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      className="text-[10px] text-amber-400 mt-1.5 ml-1">Max bet is ₹{match.maxBet.toLocaleString()}</motion.p>
+                      className="text-[10px] text-amber-400 mt-1.5 ml-1">Max stake is ₹{match.maxBet.toLocaleString()}</motion.p>
                   )}
                 </AnimatePresence>
               </div>
@@ -368,7 +326,7 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
                 >
                   <div className="grid grid-cols-3 divide-x divide-white/6 text-center text-xs">
                     {[
-                      { label: "Bet", value: `₹${betAmount.toLocaleString()}`, color: "text-white" },
+                      { label: "Stake", value: `₹${betAmount.toLocaleString()}`, color: "text-white" },
                       { label: "Profit", value: `₹${profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: "text-emerald-400" },
                       { label: "Return", value: `₹${totalReturn.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: "text-primary" },
                     ].map((r) => (
@@ -400,14 +358,14 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
                   {placing ? (
                     <><Loader2 className="h-4 w-4 animate-spin" /> Placing…</>
                   ) : (
-                    <><Zap className="h-4 w-4" /> Place Bet — ₹{betAmount > 0 ? betAmount.toLocaleString() : "0"}</>
+                    <><Zap className="h-4 w-4" /> Play — ₹{betAmount > 0 ? betAmount.toLocaleString() : "0"}</>
                   )}
                 </motion.button>
               </div>
             </motion.div>
           )}
 
-          {/* ─── STEP 3: Bet Confirmed ─── */}
+          {/* ─── STEP 3: Confirmed ─── */}
           {step === 3 && confirmedBet && (
             <motion.div
               key="step3"
@@ -417,13 +375,11 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
               transition={{ duration: 0.25 }}
               className="p-5 flex flex-col items-center text-center gap-4"
             >
-              {/* Confetti-like glow */}
               <div
                 className="absolute inset-0 pointer-events-none opacity-20"
                 style={{ background: `radial-gradient(ellipse at 50% 30%, ${tc1} 0%, transparent 65%)` }}
               />
 
-              {/* Success icon */}
               <motion.div
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -435,18 +391,17 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
               </motion.div>
 
               <div>
-                <p className="text-xl font-extrabold text-white">Bet Placed!</p>
+                <p className="text-xl font-extrabold text-white">Pick Placed!</p>
                 <p className="text-xs text-white/40 mt-1">{match.teamA.name} vs {match.teamB.name}</p>
               </div>
 
-              {/* Bet summary card */}
               <div
                 className="w-full rounded-2xl border border-white/10 overflow-hidden"
                 style={{ background: "rgba(255,255,255,0.03)" }}
               >
                 {[
-                  { label: "Your Team", value: confirmedBet.teamName, color: tc1 },
-                  { label: "Bet Amount", value: `₹${confirmedBet.amount.toLocaleString()}`, color: "white" },
+                  { label: "Your Pick", value: confirmedBet.teamName, color: tc1 },
+                  { label: "Stake Amount", value: `₹${confirmedBet.amount.toLocaleString()}`, color: "white" },
                   { label: "Odds", value: `${confirmedBet.odds}x`, color: "white" },
                   { label: "Potential Win", value: `₹${confirmedBet.potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}`, color: "#22c55e" },
                 ].map((r, i) => (
@@ -463,10 +418,9 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
               </div>
 
               <p className="text-[11px] text-white/30 leading-snug px-4">
-                Results are settled after the toss. Check <strong className="text-white/50">My Bets</strong> for updates.
+                Results are settled after the toss. Check <strong className="text-white/50">My Picks</strong> for updates.
               </p>
 
-              {/* Actions */}
               <div className="flex w-full gap-2">
                 <button
                   onClick={() => onOpenChange(false)}
@@ -477,9 +431,9 @@ const BetDialog = ({ match, open, onOpenChange }: BetDialogProps) => {
                 <motion.button
                   whileTap={{ scale: 0.97 }}
                   onClick={handleBetMore}
-                  className="flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-extrabold gradient-neon-primary text-primary-foreground shadow-neon"
+                  className="flex-1 flex items-center justify-center gap-1.5 rounded-xl py-3 text-xs font-extrabold text-primary-foreground gradient-neon-primary shadow-neon"
                 >
-                  <Plus className="h-4 w-4" /> Bet More
+                  <Plus className="h-3.5 w-3.5" /> Play More
                 </motion.button>
               </div>
             </motion.div>

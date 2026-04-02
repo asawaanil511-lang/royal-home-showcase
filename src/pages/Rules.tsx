@@ -100,9 +100,9 @@ const sections: Section[] = [
     ],
   },
   {
-    id: "betting",
-    title: "Betting Rules",
-    subtitle: "Rules for placing toss bets",
+    id: "game-rules",
+    title: "Game Rules",
+    subtitle: "Rules for placing toss picks",
     icon: Gavel,
     iconColor: "text-blue-400",
     bgColor: "bg-blue-500/10 border-blue-500/20",

@@ -4,8 +4,8 @@ import { Link } from "react-router-dom";
 
 const games = [
   {
-    title: "Match Betting",
-    description: "Bet on live cricket toss matches with real-time odds and instant settlement in 10 minutes.",
+    title: "Toss Plays",
+    description: "Play on live cricket toss matches with real-time odds and instant settlement in 10 minutes.",
     badge: "🔴 LIVE",
     badgeClass: "bg-red-500/20 text-red-400 border-red-500/30",
     gradient: "from-red-600/20 via-orange-600/10 to-red-800/20",

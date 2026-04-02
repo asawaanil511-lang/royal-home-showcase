@@ -36,7 +36,7 @@ const Admin = () => {
     if (!user) { navigate("/login"); return; }
     const checkRole = async () => {
       const { data } = await (supabase as any).from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle();
-      if (!data) { navigate("/"); return; }
+      if (!data) { navigate("/matches"); return; }
       setIsAdmin(true);
       setChecking(false);
     };

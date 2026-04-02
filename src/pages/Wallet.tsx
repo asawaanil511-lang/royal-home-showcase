@@ -80,8 +80,8 @@ const Wallet = () => {
     if (!user) return;
     const fetchExposure = async () => {
       const { data } = await supabase
-        .from("bets").select("amount, status")
-        .eq("user_id", user.id).eq("status", "pending");
+        .from("bets").select("amount, result")
+        .eq("user_id", user.id).eq("result", "pending");
       if (data) {
         setExposure(data.reduce((sum, b) => sum + (b.amount || 0), 0));
         setActiveMarkets(data.length);

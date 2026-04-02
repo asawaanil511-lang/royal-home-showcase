@@ -63,7 +63,7 @@ const HeroSection = () => {
             className="mb-5 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/8 px-4 py-1.5 text-sm font-semibold text-primary"
           >
             <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
-            Live Betting Platform
+            Live Toss Gaming Arena
             <Zap className="h-3.5 w-3.5 text-amber-500" />
           </div>
 
@@ -73,7 +73,7 @@ const HeroSection = () => {
           </h1>
 
           <p className="mx-auto mb-8 max-w-xl text-base text-muted-foreground leading-relaxed">
-            The most exciting cricket toss betting platform. Bet on live matches and win virtual rewards instantly.
+            The most exciting cricket toss gaming arena. Pick your team, stake your coins, and win virtual rewards instantly.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-3">

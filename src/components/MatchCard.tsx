@@ -7,7 +7,7 @@ import { createPortal } from "react-dom";
 
 type MatchCardProps = {
   match: Match;
-  onBet: (match: Match) => void;
+  onBet: (match: Match, team?: "A" | "B") => void;
 };
 
 // ─── Countdown hook ───────────────────────────────────────────────────────────
@@ -254,9 +254,11 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
         <div className="space-y-2 px-4 pb-3">
           {/* Team A */}
           <div
-            className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-opacity duration-300 ${
+            role={!isClosed ? "button" : undefined}
+            onClick={!isClosed ? () => onBet(match, "A") : undefined}
+            className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-all duration-300 ${
               winnerSide === "B" ? "opacity-25" : ""
-            }`}
+            } ${!isClosed ? "cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/10 active:scale-[0.98]" : ""}`}
             style={{
               background: winnerSide === "A" ? "rgba(234,179,8,0.11)" : "hsl(var(--secondary))",
               border: winnerSide === "A" ? "1px solid rgba(234,179,8,0.25)" : "1px solid hsl(var(--border)/0.5)",
@@ -265,9 +267,13 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none">
               {match.teamA.name}
             </span>
-            {winnerSide === "A" && (
+            {winnerSide === "A" ? (
               <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
-            )}
+            ) : !isClosed ? (
+              <span className="text-[10px] font-bold text-blue-400/70 px-2 py-0.5 rounded-full border border-blue-400/20 bg-blue-400/5">
+                Pick
+              </span>
+            ) : null}
           </div>
 
           {/* VS divider */}
@@ -290,9 +296,11 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
 
           {/* Team B */}
           <div
-            className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-opacity duration-300 ${
+            role={!isClosed ? "button" : undefined}
+            onClick={!isClosed ? () => onBet(match, "B") : undefined}
+            className={`flex items-center justify-between rounded-xl px-4 py-3.5 transition-all duration-300 ${
               winnerSide === "A" ? "opacity-25" : ""
-            }`}
+            } ${!isClosed ? "cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/10 active:scale-[0.98]" : ""}`}
             style={{
               background: winnerSide === "B" ? "rgba(234,179,8,0.11)" : "hsl(var(--secondary))",
               border: winnerSide === "B" ? "1px solid rgba(234,179,8,0.25)" : "1px solid hsl(var(--border)/0.5)",
@@ -301,9 +309,13 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             <span className="text-sm font-extrabold tracking-widest text-foreground uppercase leading-none">
               {match.teamB.name}
             </span>
-            {winnerSide === "B" && (
+            {winnerSide === "B" ? (
               <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
-            )}
+            ) : !isClosed ? (
+              <span className="text-[10px] font-bold text-blue-400/70 px-2 py-0.5 rounded-full border border-blue-400/20 bg-blue-400/5">
+                Pick
+              </span>
+            ) : null}
           </div>
         </div>
 
@@ -380,10 +392,10 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             {isClosed ? (
               <>
                 <Lock className="mr-2 h-4 w-4" />
-                BETTING CLOSED
+                PICKS CLOSED
               </>
             ) : (
-              "BET ON TOSS"
+              "PICK & PLAY"
             )}
           </Button>
         </div>

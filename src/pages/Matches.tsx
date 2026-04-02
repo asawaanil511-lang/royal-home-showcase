@@ -13,6 +13,7 @@ type Tab = "live" | "closed";
 const Matches = () => {
   const [tab, setTab] = useState<Tab>("live");
   const [betMatch, setBetMatch] = useState<Match | null>(null);
+  const [betTeam, setBetTeam] = useState<"A" | "B" | undefined>(undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,8 +88,9 @@ const Matches = () => {
       return 0;
     });
 
-  const handleBet = (match: Match) => {
+  const handleBet = (match: Match, team?: "A" | "B") => {
     setBetMatch(match);
+    setBetTeam(team);
     setDialogOpen(true);
   };
 
@@ -109,7 +111,7 @@ const Matches = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
             <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
               <Radio className="h-4 w-4" />
-              Live Betting
+              Live Toss Arena
               {realtimeConnected && (
                 <span className="flex items-center gap-1 text-xs text-emerald-400">
                   <Wifi className="h-3 w-3" /> Connected
@@ -117,7 +119,7 @@ const Matches = () => {
               )}
             </div>
             <h1 className="mb-3 text-4xl font-extrabold text-foreground md:text-5xl">
-              Real-Time <span className="text-neon">Betting</span>
+              Real-Time <span className="text-neon">Action</span>
             </h1>
             <p className="mx-auto max-w-lg text-muted-foreground text-sm">
               Live odds, instant updates. Your next win is one match away.
@@ -229,7 +231,7 @@ const Matches = () => {
         )}
       </div>
 
-      <BetDialog match={betMatch} open={dialogOpen} onOpenChange={setDialogOpen} />
+      <BetDialog match={betMatch} open={dialogOpen} onOpenChange={setDialogOpen} initialTeam={betTeam} />
       <Footer />
     </div>
   );

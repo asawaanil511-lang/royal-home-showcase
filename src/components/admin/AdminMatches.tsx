@@ -69,9 +69,9 @@ const AdminMatches = () => {
 
   const [teamA, setTeamA] = useState("");
   const [teamB, setTeamB] = useState("");
-  const [oddsA, setOddsA] = useState("1.90");
-  const [oddsB, setOddsB] = useState("1.90");
-  const [maxBet, setMaxBet] = useState("10000");
+  const [oddsA, setOddsA] = useState("1.95");
+  const [oddsB, setOddsB] = useState("1.95");
+  const [maxBet, setMaxBet] = useState("50000");
   const [matchDate, setMatchDate] = useState("");
   const [liveTime, setLiveTime] = useState("");
   const [closingTime, setClosingTime] = useState("");
@@ -175,7 +175,7 @@ const AdminMatches = () => {
     }
     setSaving(false);
     setShowForm(false);
-    setTeamA(""); setTeamB(""); setOddsA("1.90"); setOddsB("1.90"); setMaxBet("10000");
+    setTeamA(""); setTeamB(""); setOddsA("1.95"); setOddsB("1.95"); setMaxBet("50000");
     setMatchDate(""); setLiveTime(""); setClosingTime(""); setImageUrl(""); setImageFile(null); setImagePreview(null); setMatchTitle("");
     toast({ title: "Match created!" });
     fetchMatches();
@@ -503,7 +503,7 @@ const AdminMatches = () => {
                       <Input type="datetime-local" value={liveTime} onChange={(e) => setLiveTime(e.target.value)} className="bg-secondary border-border" />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-red-400/80 mb-1.5 block">🔴 Betting CLOSES at</label>
+                      <label className="text-xs font-semibold text-red-400/80 mb-1.5 block">🔴 Picks CLOSE at</label>
                       <Input type="datetime-local" value={closingTime} onChange={(e) => setClosingTime(e.target.value)} className="bg-secondary border-border" />
                     </div>
                   </div>
@@ -714,7 +714,7 @@ const AdminMatches = () => {
                         <>
                           {m.status === "closed" && (
                             <p className="w-full text-[10px] text-amber-400 font-semibold flex items-center gap-1">
-                              <AlertTriangle className="h-3 w-3" /> Betting closed — settle the result:
+                              <AlertTriangle className="h-3 w-3" /> Picks closed — settle the result:
                             </p>
                           )}
                           <Button size="sm" variant="outline" className="h-7 text-xs border-primary/30 text-primary hover:bg-primary/10 gap-1"

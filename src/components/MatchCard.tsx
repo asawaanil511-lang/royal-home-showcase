@@ -10,6 +10,7 @@ import { createPortal } from "react-dom";
 
 export type UserBet = {
   id: string;
+  ids: string[];
   team_picked: "A" | "B";
   amount: number;
   odds: number;
@@ -20,7 +21,7 @@ type MatchCardProps = {
   match: Match;
   onBet: (match: Match, team?: "A" | "B") => void;
   userBet?: UserBet | null;
-  onCancelBet?: (betId: string, matchId: string) => void;
+  onCancelBet?: (matchId: string) => void;
   cancellingBetId?: string | null;
 };
 
@@ -208,7 +209,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
   const hasImage = !!match.imageUrl && !imgError;
 
   const hasBet = !!userBet && isOpen;
-  const isCancellingThis = cancellingBetId === userBet?.id;
+  const isCancellingThis = !!(cancellingBetId && userBet?.ids?.includes(cancellingBetId));
   const pickedTeamName = userBet?.team_picked === "A" ? match.teamA.name : match.teamB.name;
   const potentialWin = userBet ? Number(userBet.potential_win) : 0;
   const profit = potentialWin - (userBet ? Number(userBet.amount) : 0);
@@ -503,7 +504,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
               <Button
                 variant="outline"
                 className="flex-1 h-11 text-xs font-extrabold gap-1.5 border-red-500/40 bg-red-500/5 text-red-400 hover:bg-red-500/15 hover:border-red-500/60 tracking-wide"
-                onClick={() => onCancelBet?.(userBet!.id, match.id)}
+                onClick={() => onCancelBet?.(match.id)}
                 disabled={isCancellingThis}
               >
                 {isCancellingThis

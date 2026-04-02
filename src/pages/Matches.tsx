@@ -65,16 +65,18 @@ const Matches = () => {
         if (!map.has(b.match_id)) {
           map.set(b.match_id, {
             id: b.id,
+            ids: [b.id],
             team_picked: b.team_picked,
             amount: Number(b.amount),
             odds: Number(b.odds),
             potential_win: Number(b.potential_win),
           });
         } else {
-          // Aggregate multiple pending bets on same match — sum amount & potential_win
+          // Aggregate multiple pending bets on same match — sum amounts and collect all IDs
           const existing = map.get(b.match_id)!;
           map.set(b.match_id, {
             ...existing,
+            ids: [...existing.ids, b.id],
             amount: existing.amount + Number(b.amount),
             potential_win: existing.potential_win + Number(b.potential_win),
           });
@@ -125,29 +127,44 @@ const Matches = () => {
     setDialogOpen(true);
   };
 
-  const handleCancelBet = async (betId: string, matchId: string) => {
+  const handleCancelBet = async (matchId: string) => {
     if (!user) return;
-    setCancellingBetId(betId);
+    const betEntry = userBets.get(matchId);
+    if (!betEntry) return;
+
+    const betIds = betEntry.ids;
+    const totalAmount = betEntry.amount;
+
+    // Use first bet ID for the loading indicator (isCancellingThis checks ids.includes)
+    setCancellingBetId(betIds[0]);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) { toast({ title: "Not authenticated", variant: "destructive" }); return; }
 
-      const res = await fetch(apiUrl("/api/cancel-bet"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ bet_id: betId }),
-      });
+      // Cancel ALL pending bets for this match in parallel
+      const results = await Promise.all(
+        betIds.map((id) =>
+          fetch(apiUrl("/api/cancel-bet"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            body: JSON.stringify({ bet_id: id }),
+          }).then(async (r) => {
+            let j: any = {};
+            try { j = await r.json(); } catch { }
+            return { ok: r.ok, json: j };
+          })
+        )
+      );
 
-      let json: any = {};
-      try { json = await res.json(); } catch { }
-
-      if (!res.ok || !json.success) {
-        toast({ title: "Failed to cancel", description: json.error || "Could not cancel bet", variant: "destructive" });
+      const failures = results.filter((r) => !r.ok || !r.json.success);
+      if (failures.length > 0) {
+        const errMsg = failures[0]?.json?.error || "Could not cancel bet(s)";
+        toast({ title: "Failed to cancel", description: errMsg, variant: "destructive" });
         return;
       }
 
-      // Remove from local map immediately — no cancel button visible until refresh fetches DB
+      // Remove entire match entry from local map — realtime will re-fetch for the remaining state
       setUserBets((prev) => {
         const next = new Map(prev);
         next.delete(matchId);
@@ -157,7 +174,7 @@ const Matches = () => {
       await refreshProfile();
       toast({
         title: "Bet Cancelled",
-        description: `₹${json.refunded?.toLocaleString() || "—"} refunded to your wallet.`,
+        description: `₹${totalAmount.toLocaleString()} refunded to your wallet.`,
       });
     } catch (err: any) {
       toast({ title: "Failed to cancel", description: err.message, variant: "destructive" });

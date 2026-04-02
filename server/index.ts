@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import path from "path";
-import { readFileSync, existsSync } from "fs";
+import { readFileSync, existsSync, appendFileSync } from "fs";
 import { createClient } from "@supabase/supabase-js";
 import pg from "pg";
 
@@ -15,6 +15,28 @@ try {
   // config.json not present — fall back to environment variables
 }
 
+// ---- Centralised logger ----
+const LOG_FILE = path.join(process.cwd(), "server-errors.log");
+function logError(context: string, err: unknown) {
+  const ts = new Date().toISOString();
+  const msg = err instanceof Error ? `${err.message}\n${err.stack}` : String(err);
+  const line = `[${ts}] [ERROR] [${context}] ${msg}\n`;
+  console.error(line.trimEnd());
+  try { appendFileSync(LOG_FILE, line); } catch { /* disk full / permission — ignore */ }
+}
+function logInfo(context: string, msg: string) {
+  const ts = new Date().toISOString();
+  console.log(`[${ts}] [INFO ] [${context}] ${msg}`);
+}
+
+// ---- Crash guard — keep server alive on uncaught errors ----
+process.on("uncaughtException", (err) => {
+  logError("uncaughtException", err);
+});
+process.on("unhandledRejection", (reason) => {
+  logError("unhandledRejection", reason);
+});
+
 const { Pool } = pg;
 
 const app = express();
@@ -27,6 +49,12 @@ app.use(
   })
 );
 app.use(express.json({ limit: "2mb" }));
+
+// ---- Request logger ----
+app.use((req, _res, next) => {
+  logInfo("request", `${req.method} ${req.path}`);
+  next();
+});
 
 const supabaseUrl = "https://xzgccthebdjchdumgrvv.supabase.co";
 const serviceRoleKey: string =
@@ -59,12 +87,12 @@ export const db = new Pool({
 
 db.connect()
   .then((client) => {
-    console.log("PostgreSQL connected");
+    logInfo("db", "PostgreSQL connected");
     client.release();
     setupTables();
   })
   .catch((err) => {
-    console.warn("PostgreSQL connection warning:", err.message);
+    logError("db/connect", err);
   });
 
 // ---- Auto-create helper tables ----
@@ -101,9 +129,9 @@ const setupTables = async () => {
         last_seen TIMESTAMPTZ DEFAULT now()
       );
     `);
-    console.log("Helper tables ready");
+    logInfo("db", "Helper tables ready");
   } catch (err: any) {
-    console.warn("Table setup warning:", err.message);
+    logError("db/setupTables", err);
   }
 };
 
@@ -633,57 +661,107 @@ app.post("/api/admin/settle-match", async (req, res) => {
   }
 });
 
-// ---- Cancel bet (atomic: cancel + refund in one transaction) ----
+// ---- Cancel bet (uses Supabase admin client to bypass RLS safely) ----
 app.post("/api/cancel-bet", async (req, res) => {
   try {
     const userId = await verifyUser(req, res);
     if (!userId) return;
 
     const { bet_id } = req.body;
-    if (!bet_id) return res.status(400).json({ error: "bet_id required" });
-
-    // Use a PostgreSQL transaction so cancel + refund are atomic
-    const client = await db.connect();
-    try {
-      await client.query("BEGIN");
-
-      // Only cancel if the bet is still pending, belongs to this user, and the match is still live/upcoming
-      const cancelResult = await client.query(
-        `UPDATE public.bets b
-         SET result = 'cancelled', settled_at = NOW()
-         FROM public.matches m
-         WHERE b.id = $1
-           AND b.user_id = $2
-           AND b.result = 'pending'
-           AND b.match_id = m.id
-           AND m.status IN ('upcoming', 'live')
-         RETURNING b.amount`,
-        [bet_id, userId]
-      );
-
-      if (cancelResult.rowCount === 0) {
-        await client.query("ROLLBACK");
-        return res.status(400).json({ error: "Bet cannot be cancelled — already settled or match is closed" });
-      }
-
-      const refundAmount = Number(cancelResult.rows[0].amount);
-
-      // Atomically add refund — no race condition possible
-      await client.query(
-        `UPDATE public.profiles SET wallet_balance = wallet_balance + $1 WHERE user_id = $2`,
-        [refundAmount, userId]
-      );
-
-      await client.query("COMMIT");
-      return res.json({ success: true, refunded: refundAmount });
-    } catch (err) {
-      await client.query("ROLLBACK");
-      throw err;
-    } finally {
-      client.release();
+    if (!bet_id || typeof bet_id !== "string") {
+      return res.status(400).json({ error: "bet_id required" });
     }
+
+    const adminClient = getAdminClient();
+
+    // Step 1: Fetch the bet — verify it belongs to the user and is still pending
+    const { data: bet, error: betFetchErr } = await adminClient
+      .from("bets")
+      .select("id, user_id, amount, result, match_id")
+      .eq("id", bet_id)
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (betFetchErr) {
+      logError("cancel-bet/fetch-bet", betFetchErr);
+      return res.status(500).json({ error: "Failed to look up bet" });
+    }
+    if (!bet) {
+      return res.status(404).json({ error: "Bet not found or does not belong to you" });
+    }
+    if (bet.result !== "pending") {
+      return res.status(400).json({ error: `Bet is already ${bet.result} — cannot cancel` });
+    }
+
+    // Step 2: Verify the match is still open (live or upcoming)
+    const { data: match, error: matchFetchErr } = await adminClient
+      .from("matches")
+      .select("id, status")
+      .eq("id", bet.match_id)
+      .maybeSingle();
+
+    if (matchFetchErr) {
+      logError("cancel-bet/fetch-match", matchFetchErr);
+      return res.status(500).json({ error: "Failed to look up match" });
+    }
+    if (!match || !["upcoming", "live"].includes(match.status)) {
+      return res.status(400).json({ error: "Bet cannot be cancelled — match is no longer active" });
+    }
+
+    // Step 3: Mark the bet as cancelled
+    const { error: cancelErr } = await adminClient
+      .from("bets")
+      .update({ result: "cancelled", settled_at: new Date().toISOString() })
+      .eq("id", bet_id)
+      .eq("user_id", userId)
+      .eq("result", "pending"); // double-guard against race conditions
+
+    if (cancelErr) {
+      logError("cancel-bet/update-bet", cancelErr);
+      return res.status(500).json({ error: "Failed to cancel bet: " + cancelErr.message });
+    }
+
+    // Step 4: Refund the wallet atomically
+    const refundAmount = Number(bet.amount);
+    const { data: profile, error: profileFetchErr } = await adminClient
+      .from("profiles")
+      .select("wallet_balance")
+      .eq("user_id", userId)
+      .single();
+
+    if (profileFetchErr || !profile) {
+      logError("cancel-bet/fetch-profile", profileFetchErr);
+      return res.status(500).json({ error: "Bet cancelled but wallet refund failed — contact support" });
+    }
+
+    const newBalance = Number(profile.wallet_balance) + refundAmount;
+    const { error: walletErr } = await adminClient
+      .from("profiles")
+      .update({ wallet_balance: newBalance })
+      .eq("user_id", userId);
+
+    if (walletErr) {
+      logError("cancel-bet/update-wallet", walletErr);
+      return res.status(500).json({ error: "Bet cancelled but wallet refund failed: " + walletErr.message });
+    }
+
+    // Step 5: Log the transaction for audit trail
+    try {
+      await db.query(
+        `INSERT INTO public.wallet_transactions (user_id, action, amount, balance_before, balance_after, note)
+         VALUES ($1, 'refund', $2, $3, $4, 'Bet cancelled — refund')`,
+        [userId, refundAmount, Number(profile.wallet_balance), newBalance]
+      );
+    } catch (txErr) {
+      logError("cancel-bet/log-transaction", txErr);
+      // Non-fatal — don't fail the response over the audit log
+    }
+
+    logInfo("cancel-bet", `User ${userId} cancelled bet ${bet_id}, refunded ${refundAmount}`);
+    return res.json({ success: true, refunded: refundAmount });
   } catch (err: any) {
-    return res.status(500).json({ error: err.message });
+    logError("cancel-bet", err);
+    return res.status(500).json({ error: err?.message || "Unexpected server error" });
   }
 });
 
@@ -735,7 +813,32 @@ if (process.env.NODE_ENV === "production" && !isApiOnly) {
   }
 }
 
+// ---- Admin: view recent server errors ----
+app.get("/api/admin/error-logs", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    if (!existsSync(LOG_FILE)) return res.json({ logs: [] });
+    const raw = readFileSync(LOG_FILE, "utf8");
+    const lines = raw.trim().split("\n").filter(Boolean);
+    // Return last 100 lines newest-first
+    const recent = lines.slice(-100).reverse();
+    return res.json({ logs: recent });
+  } catch (err: any) {
+    logError("admin/error-logs", err);
+    return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Global Express error handler (catches anything that slips through) ----
+app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+  logError(`globalHandler:${req.method}:${req.path}`, err);
+  if (!res.headersSent) {
+    res.status(500).json({ error: err?.message || "Internal server error" });
+  }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`API server running on port ${PORT}`);
+  logInfo("startup", `API server running on port ${PORT}`);
 });

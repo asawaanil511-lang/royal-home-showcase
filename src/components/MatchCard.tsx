@@ -270,8 +270,9 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             {winnerSide === "A" ? (
               <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
             ) : !isClosed ? (
-              <span className="text-[10px] font-bold text-blue-400/70 px-2 py-0.5 rounded-full border border-blue-400/20 bg-blue-400/5">
-                Pick
+              <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full"
+                style={{ background: "linear-gradient(135deg,#00b4ff,#0055ff)", boxShadow: "0 2px 8px rgba(0,180,255,0.35)" }}>
+                Choose
               </span>
             ) : null}
           </div>
@@ -312,8 +313,9 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             {winnerSide === "B" ? (
               <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
             ) : !isClosed ? (
-              <span className="text-[10px] font-bold text-blue-400/70 px-2 py-0.5 rounded-full border border-blue-400/20 bg-blue-400/5">
-                Pick
+              <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full"
+                style={{ background: "linear-gradient(135deg,#00b4ff,#0055ff)", boxShadow: "0 2px 8px rgba(0,180,255,0.35)" }}>
+                Choose
               </span>
             ) : null}
           </div>
@@ -368,36 +370,40 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
 
         {/* ── CTA button ─────────────────────────────────────── */}
         <div className="px-4 pb-4">
-          <Button
-            className="w-full h-12 text-sm font-extrabold tracking-[0.15em] transition-all"
-            style={
-              isClosed
-                ? {
-                    background: "hsl(var(--secondary))",
-                    color: "hsl(var(--muted-foreground)/0.5)",
-                    border: "1px solid hsl(var(--border))",
-                    cursor: "not-allowed",
-                    boxShadow: "none",
-                  }
-                : {
-                    background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)",
-                    color: "#fff",
-                    border: "none",
-                    boxShadow: "0 4px 24px rgba(0,180,255,0.30)",
-                  }
-            }
-            disabled={isClosed}
-            onClick={() => onBet(match)}
-          >
-            {isClosed ? (
-              <>
-                <Lock className="mr-2 h-4 w-4" />
-                BET CLOSED
-              </>
-            ) : (
-              "BET & PLAY"
-            )}
-          </Button>
+          {isClosed ? (
+            <div className="flex flex-col gap-2">
+              <div
+                className="w-full h-11 flex items-center justify-center gap-2 rounded-xl text-xs font-bold tracking-wide"
+                style={{
+                  background: "rgba(234,179,8,0.10)",
+                  border: "1px solid rgba(234,179,8,0.30)",
+                  color: "#f59e0b",
+                }}
+              >
+                <Lock className="h-3.5 w-3.5" />
+                BETTING CLOSED
+                {winnerName && (
+                  <span className="ml-1 text-yellow-300 font-extrabold">· {winnerName} WON</span>
+                )}
+              </div>
+              <p className="text-center text-[10px] text-muted-foreground font-medium">
+                Check <span className="text-primary font-bold">My Bets</span> to see your winnings &amp; withdraw
+              </p>
+            </div>
+          ) : (
+            <Button
+              className="w-full h-12 text-sm font-extrabold tracking-[0.15em] transition-all"
+              style={{
+                background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)",
+                color: "#fff",
+                border: "none",
+                boxShadow: "0 4px 24px rgba(0,180,255,0.30)",
+              }}
+              onClick={() => onBet(match)}
+            >
+              BET &amp; PLAY
+            </Button>
+          )}
         </div>
       </motion.div>
 

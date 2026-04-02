@@ -275,7 +275,6 @@ const AdminMatches = () => {
       }
     }
     toast({ title: "Match cancelled. Bets refunded." });
-    await autoCleanupClosedMatches();
     fetchMatches();
   };
 

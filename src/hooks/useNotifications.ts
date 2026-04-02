@@ -1,15 +1,36 @@
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+const safeNotificationPermission = (): NotificationPermission | "denied" => {
+  try {
+    if (typeof Notification === "undefined") return "denied";
+    return Notification.permission;
+  } catch {
+    return "denied";
+  }
+};
+
+const safeLocalGet = (key: string): string | null => {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+};
+
 export const sendNotification = (title: string, body: string, icon?: string) => {
-  if (Notification.permission !== "granted") return;
-  if (localStorage.getItem("stb_notifications") !== "true") return;
-  new Notification(title, {
-    body,
-    icon: icon || "/favicon.ico",
-    badge: "/favicon.ico",
-    tag: "stb-notification",
-  });
+  if (safeNotificationPermission() !== "granted") return;
+  if (safeLocalGet("stb_notifications") !== "true") return;
+  try {
+    new Notification(title, {
+      body,
+      icon: icon || "/favicon.ico",
+      badge: "/favicon.ico",
+      tag: "stb-notification",
+    });
+  } catch {
+    // Notification API not supported — silently ignore
+  }
 };
 
 export const useNotifications = (userId: string | undefined) => {
@@ -18,8 +39,8 @@ export const useNotifications = (userId: string | undefined) => {
   useEffect(() => {
     if (!userId) return;
     const isEnabled = () =>
-      Notification.permission === "granted" &&
-      localStorage.getItem("stb_notifications") === "true";
+      safeNotificationPermission() === "granted" &&
+      safeLocalGet("stb_notifications") === "true";
 
     if (!isEnabled()) return;
 
@@ -65,5 +86,5 @@ export const useNotifications = (userId: string | undefined) => {
         channelRef.current = null;
       }
     };
-  }, [userId, Notification.permission]);
+  }, [userId]);
 };

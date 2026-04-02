@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Gamepad2, ArrowRight, Swords, Trophy, BookOpen } from "lucide-react";
+import { Gamepad2, ArrowRight, Swords, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const games = [
@@ -16,20 +16,6 @@ const games = [
     iconBg: "bg-red-500/10",
     href: "/matches",
     cta: "Bet Now",
-  },
-  {
-    title: "Leaderboard",
-    description: "See top winners and compete for the highest rankings. Climb to the #1 spot!",
-    badge: "🔥 Trending",
-    badgeClass: "bg-primary/20 text-primary border-primary/30",
-    gradient: "from-primary/15 via-cyan-600/10 to-primary/20",
-    border: "border-primary/20 hover:border-primary/50",
-    glow: "hover:shadow-neon",
-    icon: Trophy,
-    iconColor: "text-yellow-400",
-    iconBg: "bg-yellow-400/10",
-    href: "/leaderboard",
-    cta: "View Rankings",
   },
   {
     title: "Rules & Info",
@@ -68,11 +54,11 @@ const GameZone = () => {
             Get Ready for <span className="text-neon">Big Wins!</span>
           </h2>
           <p className="mx-auto max-w-lg text-muted-foreground text-sm">
-            Place bets on live matches, climb the leaderboard, and master the rules!
+            Place bets on live matches, win big, and master the rules!
           </p>
         </motion.div>
 
-        <div className="grid gap-5 sm:grid-cols-3 max-w-4xl mx-auto">
+        <div className="grid gap-5 sm:grid-cols-2 max-w-2xl mx-auto">
           {games.map((game, i) => {
             const IconComp = game.icon;
             return (

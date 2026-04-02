@@ -21,7 +21,6 @@ const Index = lazy(() => import("./pages/Index"));
 const Matches = lazy(() => import("./pages/Matches"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const MyBets = lazy(() => import("./pages/MyBets"));
-const Leaderboard = lazy(() => import("./pages/Leaderboard"));
 const Results = lazy(() => import("./pages/Results"));
 const Rules = lazy(() => import("./pages/Rules"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -79,7 +78,6 @@ const App = () => (
                 <Route path="/matches" element={<ProtectedRoute><Matches /></ProtectedRoute>} />
                 <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
                 <Route path="/my-bets" element={<ProtectedRoute><MyBets /></ProtectedRoute>} />
-                <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
                 <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />

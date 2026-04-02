@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Wallet, LogOut, User, Shield, LogIn, Eye, EyeOff, Coins, BookOpen, Home, Swords, Trophy, ListChecks, FileText } from "lucide-react";
+import { Menu, X, Wallet, LogOut, User, Shield, LogIn, Eye, EyeOff, Coins, BookOpen, Home, Swords, ListChecks, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -11,11 +11,10 @@ import AnnouncementBanner from "@/components/AnnouncementBanner";
 const TELEGRAM_URL = "https://t.me/Bittubhaji";
 
 const navLinks = [
-  { label: "Home",        href: "/",            icon: Home },
-  { label: "Matches",     href: "/matches",      icon: Swords },
-  { label: "Leaderboard", href: "/leaderboard",  icon: Trophy },
-  { label: "Results",     href: "/results",      icon: ListChecks },
-  { label: "Rules",       href: "/rules",        icon: BookOpen },
+  { label: "Home",    href: "/",        icon: Home },
+  { label: "Matches", href: "/matches", icon: Swords },
+  { label: "Results", href: "/results", icon: ListChecks },
+  { label: "Rules",   href: "/rules",   icon: BookOpen },
 ];
 
 const WalletShowcase = ({ balance }: { balance: number }) => {

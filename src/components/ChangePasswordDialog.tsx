@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { apiUrl } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ const ChangePasswordDialog = ({ open, userId }: ChangePasswordDialogProps) => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleChange = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -79,7 +81,7 @@ const ChangePasswordDialog = ({ open, userId }: ChangePasswordDialogProps) => {
 
       setTimeout(async () => {
         await supabase.auth.signOut();
-        window.location.href = "/login";
+        navigate("/login", { replace: true });
       }, 1500);
     } catch (err: any) {
       toast({ title: "Error", description: err.message, variant: "destructive" });

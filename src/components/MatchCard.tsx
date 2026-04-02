@@ -392,10 +392,10 @@ const MatchCard = ({ match, onBet }: MatchCardProps) => {
             {isClosed ? (
               <>
                 <Lock className="mr-2 h-4 w-4" />
-                PICKS CLOSED
+                BET CLOSED
               </>
             ) : (
-              "PICK & PLAY"
+              "BET & PLAY"
             )}
           </Button>
         </div>

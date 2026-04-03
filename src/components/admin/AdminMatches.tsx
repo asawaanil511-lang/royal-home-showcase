@@ -607,9 +607,9 @@ const AdminMatches = () => {
                       <>
                         <div><label className="text-xs text-muted-foreground mb-1 block">Match Date</label><Input type="datetime-local" value={editData.match_date || ""} onChange={(e) => setEditData({ ...editData, match_date: e.target.value })} className="bg-secondary border-border" /></div>
                         <div><label className="text-xs text-muted-foreground mb-1 block">🟢 Live Time</label><Input type="datetime-local" value={editData.live_time || ""} onChange={(e) => setEditData({ ...editData, live_time: e.target.value })} className="bg-secondary border-border" /></div>
-                        <div><label className="text-xs text-muted-foreground mb-1 block">🔴 Closing Time</label><Input type="datetime-local" value={editData.closing_time || ""} onChange={(e) => setEditData({ ...editData, closing_time: e.target.value })} className="bg-secondary border-border" /></div>
                       </>
                     )}
+                    <div><label className="text-xs text-muted-foreground mb-1 block">🔴 Closing Time</label><Input type="datetime-local" value={editData.closing_time || ""} onChange={(e) => setEditData({ ...editData, closing_time: e.target.value })} className="bg-secondary border-border" /></div>
                     <div className="sm:col-span-2"><label className="text-xs text-muted-foreground mb-1 block">Image URL</label><Input type="url" value={editData.image_url || ""} onChange={(e) => setEditData({ ...editData, image_url: e.target.value })} className="bg-secondary border-border" placeholder="https://..." /></div>
                     <div className="sm:col-span-2"><label className="text-xs text-muted-foreground mb-1 block">Match Title</label><Input value={editData.match_title || ""} onChange={(e) => setEditData({ ...editData, match_title: e.target.value })} className="bg-secondary border-border" placeholder="e.g. Indian Premier League 2026" /></div>
                   </div>

@@ -5,6 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MatchCard, { UserBet } from "@/components/MatchCard";
 import BetDialog from "@/components/BetDialog";
+import { apiUrl } from "@/lib/api";
 import { Match } from "@/data/matches";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -144,7 +145,7 @@ const Matches = () => {
       // Cancel ALL pending bets for this match in parallel
       const results = await Promise.all(
         betIds.map((id) =>
-          fetch("/api/cancel-bet", {
+          fetch(apiUrl("/api/cancel-bet"), {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify({ bet_id: id }),

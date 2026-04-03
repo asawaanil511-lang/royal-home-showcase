@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { apiUrl } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -278,7 +279,7 @@ const MyBets = () => {
       const token = session.data.session?.access_token;
       if (!token) { toast({ title: "Not authenticated", variant: "destructive" }); setCancelling(null); return; }
 
-      const res = await fetch("/api/cancel-bet", {
+      const res = await fetch(apiUrl("/api/cancel-bet"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bet_id: betId }),

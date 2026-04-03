@@ -8,8 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import {
   Trophy, XCircle, AlertCircle, Loader2, TrendingDown,
-  Search, Target, Zap, IndianRupee, TrendingUp, ArrowUpRight,
-  CalendarDays, Clock, Share2, CheckCircle2,
+  Search, Clock, Share2, CheckCircle2, Wallet, Target,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
@@ -31,14 +30,29 @@ type BetWithMatch = {
     team_b_name: string;
     status: string;
     match_date: string;
+    match_title?: string | null;
   } | null;
 };
 
-const STATUS = {
-  pending:   { label: "Live",      icon: Clock,       ring: "border-amber-400/40",   badge: "bg-amber-400/15 text-amber-500 border-amber-400/30",  strip: "bg-amber-400" },
-  won:       { label: "Won",       icon: Trophy,      ring: "border-emerald-500/40", badge: "bg-emerald-400/15 text-emerald-400 border-emerald-400/30", strip: "bg-gradient-to-r from-emerald-400 to-sky-400" },
-  lost:      { label: "Lost",      icon: XCircle,     ring: "border-red-400/30",     badge: "bg-red-400/10 text-red-400 border-red-400/30",          strip: "bg-red-400" },
-  cancelled: { label: "Cancelled", icon: AlertCircle, ring: "border-zinc-700/60",    badge: "bg-zinc-800 text-zinc-400 border-zinc-700/50",           strip: "bg-zinc-600" },
+const STATUS_CFG = {
+  pending:   { label: "LIVE",      icon: Clock,        badgeBg: "bg-amber-500/15",   badgeText: "text-amber-400",   badgeBorder: "border-amber-400/30", cardBorder: "border-zinc-800" },
+  won:       { label: "WON",       icon: Trophy,       badgeBg: "bg-emerald-500/15", badgeText: "text-emerald-400", badgeBorder: "border-emerald-500/30", cardBorder: "border-emerald-500/20" },
+  lost:      { label: "LOST",      icon: XCircle,      badgeBg: "bg-red-500/10",     badgeText: "text-red-400",     badgeBorder: "border-red-400/30", cardBorder: "border-red-400/20" },
+  cancelled: { label: "CANCELLED", icon: AlertCircle,  badgeBg: "bg-zinc-800",       badgeText: "text-zinc-400",    badgeBorder: "border-zinc-700/50", cardBorder: "border-zinc-800/60" },
+};
+
+const fmtAmount = (v: number) =>
+  "₹" + v.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const fmtTime = (iso: string) =>
+  new Date(iso).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" });
+
+const fmtGroupDate = (key: string) => {
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const yestKey  = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+  if (key === todayKey) return "TODAY";
+  if (key === yestKey)  return "YESTERDAY";
+  return new Date(key + "T00:00:00").toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short" }).toUpperCase();
 };
 
 const WinCard = ({ bet }: { bet: BetWithMatch }) => {
@@ -97,147 +111,119 @@ const BetCard = ({
   onShare: (bet: BetWithMatch) => void;
   cancelling: string | null;
 }) => {
-  const cfg = STATUS[bet.result] || STATUS.pending;
+  const cfg = STATUS_CFG[bet.result] || STATUS_CFG.pending;
   const StatusIcon = cfg.icon;
   const teamA = bet.matches?.team_a_name || "Team A";
   const teamB = bet.matches?.team_b_name || "Team B";
-  const teamPickedName = bet.team_picked === "A" ? teamA : teamB;
+  const pickedName = bet.team_picked === "A" ? teamA : teamB;
+  const league = bet.matches?.match_title || "";
   const matchOpen = bet.matches && (bet.matches.status === "live" || bet.matches.status === "upcoming");
   const canCancel = bet.result === "pending";
-  const profit = Number(bet.potential_win) - Number(bet.amount);
+  const isCancelling = cancelling === bet.id;
+  const winTotal = Number(bet.amount) + Number(bet.potential_win);
 
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.96 }}
-      className={`rounded-2xl overflow-hidden border ${cfg.ring} bg-zinc-900`}
+      exit={{ opacity: 0, scale: 0.97 }}
+      className={`rounded-2xl overflow-hidden border bg-zinc-900 ${cfg.cardBorder}`}
     >
-      <div className={`h-[3px] w-full ${cfg.strip}`} />
-
-      <div className="p-4 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${cfg.badge}`}>
+      {/* Header row */}
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-2">
+        <div className="flex items-center gap-2">
+          <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold ${cfg.badgeBg} ${cfg.badgeText} ${cfg.badgeBorder}`}>
             <StatusIcon className="h-3 w-3" />
             {cfg.label}
           </span>
-          <span className="flex items-center gap-1 text-[11px] text-zinc-500">
-            <CalendarDays className="h-3 w-3" />
-            {new Date(bet.created_at).toLocaleString("en-IN", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-          </span>
+          <span className="text-[12px] text-zinc-500">{fmtTime(bet.created_at)}</span>
         </div>
+        <span className="text-[15px] font-extrabold text-white">{fmtAmount(Number(bet.amount))}</span>
+      </div>
 
-        {/* VS panel */}
-        <div className="rounded-xl border border-zinc-800 bg-zinc-800/50 overflow-hidden">
-          <div className="flex items-center gap-2 px-3 py-3">
-            <div className={`flex-1 text-center py-2 px-1 rounded-lg ${bet.team_picked === "A" ? "bg-sky-500/10 border border-sky-500/30" : ""}`}>
-              <p className={`text-sm font-extrabold truncate ${bet.team_picked === "A" ? "text-sky-400" : "text-zinc-400"}`}>{teamA}</p>
-              {bet.team_picked === "A" && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-sky-400 mt-0.5">
-                  <Target className="h-2.5 w-2.5" /> YOUR PICK
-                </span>
-              )}
-            </div>
-            <div className="shrink-0">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full border border-zinc-700 bg-zinc-900 text-[10px] font-bold text-zinc-500">VS</div>
-            </div>
-            <div className={`flex-1 text-center py-2 px-1 rounded-lg ${bet.team_picked === "B" ? "bg-sky-500/10 border border-sky-500/30" : ""}`}>
-              <p className={`text-sm font-extrabold truncate ${bet.team_picked === "B" ? "text-sky-400" : "text-zinc-400"}`}>{teamB}</p>
-              {bet.team_picked === "B" && (
-                <span className="inline-flex items-center gap-0.5 text-[9px] font-bold text-sky-400 mt-0.5">
-                  <Target className="h-2.5 w-2.5" /> YOUR PICK
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* Match info */}
+      <div className="px-4 pb-3">
+        {league ? (
+          <p className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider mb-0.5">{league}</p>
+        ) : null}
+        <p className="text-[17px] font-extrabold text-white tracking-wide">
+          {teamA} <span className="text-zinc-500 font-semibold text-sm">vs</span> {teamB}
+        </p>
+        <p className="text-[13px] text-zinc-400 mt-1">
+          Pick: <span className="text-sky-400 font-bold">{pickedName}</span>
+          <span className="text-zinc-600 mx-1.5">·</span>
+          Rate <span className="font-semibold text-zinc-300">{bet.odds}x</span>
+        </p>
+      </div>
 
-        {/* Stats grid */}
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { icon: IndianRupee, label: "Amount", value: `₹${Number(bet.amount).toLocaleString()}`, color: "text-white" },
-            { icon: Zap, label: "Rate", value: `${bet.odds}x`, color: "text-emerald-400" },
-            {
-              icon: TrendingUp, label: "Profit",
-              value: bet.result === "cancelled" ? "—" : `₹${profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-              color: bet.result === "won" ? "text-emerald-400" : bet.result === "cancelled" ? "text-zinc-500" : "text-sky-400",
-            },
-            {
-              icon: ArrowUpRight, label: "Return",
-              value: bet.result === "cancelled" ? "Refunded" : `₹${Number(bet.potential_win).toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
-              color: bet.result === "won" ? "text-emerald-400" : bet.result === "cancelled" ? "text-zinc-500" : "text-white",
-            },
-          ].map((s) => (
-            <div key={s.label} className="rounded-xl border border-zinc-800 bg-zinc-800/40 px-3 py-2.5">
-              <p className="text-[10px] text-zinc-500 mb-0.5 flex items-center gap-1">
-                <s.icon className="h-2.5 w-2.5" /> {s.label}
-              </p>
-              <p className={`text-base font-extrabold ${s.color}`}>{s.value}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Result banners */}
-        {bet.result === "won" && (
-          <div className="rounded-xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-2.5 flex items-center justify-between">
+      {/* Bottom financials */}
+      <div className="border-t border-zinc-800 bg-zinc-900/80">
+        {bet.result === "cancelled" ? (
+          <div className="px-4 py-3 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Trophy className="h-4 w-4 text-emerald-400" />
-              <span className="text-sm font-bold text-emerald-400">You won this toss!</span>
+              <CheckCircle2 className="h-4 w-4 text-zinc-500" />
+              <span className="text-sm text-zinc-400 font-semibold">Refunded</span>
             </div>
-            <span className="text-base font-extrabold text-emerald-400">
-              +₹{Number(bet.potential_win).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-            </span>
+            <span className="text-base font-extrabold text-zinc-300">{fmtAmount(Number(bet.amount))}</span>
           </div>
-        )}
-        {bet.result === "lost" && (
-          <div className="rounded-xl bg-red-500/5 border border-red-500/20 px-4 py-2 flex items-center gap-2">
-            <XCircle className="h-4 w-4 text-red-400 shrink-0" />
-            <span className="text-sm text-red-400 font-medium">Toss lost — better luck next time</span>
-          </div>
-        )}
-        {bet.result === "cancelled" && (
-          <div className="rounded-xl bg-zinc-800/60 border border-zinc-700/50 px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4 text-zinc-400 shrink-0" />
-              <span className="text-sm font-bold text-zinc-300">Bet cancelled — refunded</span>
+        ) : bet.result === "won" ? (
+          <div className="px-4 py-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400">Profit</span>
+              <span className="text-sm font-bold text-emerald-400">{fmtAmount(Number(bet.potential_win))}</span>
             </div>
-            <span className="text-base font-extrabold text-zinc-300">
-              ₹{Number(bet.amount).toLocaleString()}
-            </span>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400 font-semibold">Total return</span>
+              <span className="text-[15px] font-extrabold text-emerald-400">{fmtAmount(winTotal)}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="px-4 py-3 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400">Potential win</span>
+              <span className="text-sm font-bold text-sky-400">{fmtAmount(Number(bet.potential_win))}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400 font-semibold">If you win</span>
+              <span className="text-[15px] font-extrabold text-white">{fmtAmount(winTotal)}</span>
+            </div>
           </div>
         )}
 
-        {/* Action buttons */}
-        <div className="space-y-2">
-          {bet.result === "won" && (
-            <Button
-              className="w-full font-bold gap-2 bg-sky-500 hover:bg-sky-400 text-white"
-              onClick={() => onShare(bet)}
-            >
-              <Share2 className="h-4 w-4" /> Share Win 🎉
-            </Button>
-          )}
-          {canCancel && matchOpen && (
-            <Button
-              variant="outline"
-              className="w-full gap-2 border-red-500/40 bg-red-500/5 text-red-400 hover:bg-red-500/15 hover:border-red-500/60 font-semibold"
-              onClick={() => onCancel(bet.id)}
-              disabled={cancelling === bet.id}
-            >
-              {cancelling === bet.id
-                ? <><Loader2 className="h-4 w-4 animate-spin" /> Cancelling...</>
-                : <><XCircle className="h-4 w-4" /> Cancel Bet</>}
-            </Button>
-          )}
-          {canCancel && !matchOpen && (
-            <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-800/20 px-3 py-2.5">
-              <AlertCircle className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
-              <p className="text-xs text-zinc-500">Cannot cancel — match is no longer active.</p>
-            </div>
-          )}
-        </div>
+        {/* Action row */}
+        {(canCancel || bet.result === "won") && (
+          <div className="px-4 pb-3.5 pt-1 space-y-2">
+            {bet.result === "won" && (
+              <Button
+                size="sm"
+                className="w-full font-bold gap-2 bg-sky-500 hover:bg-sky-400 text-white"
+                onClick={() => onShare(bet)}
+              >
+                <Share2 className="h-4 w-4" /> Share Win 🎉
+              </Button>
+            )}
+            {canCancel && matchOpen && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full gap-2 border-red-500/30 bg-red-500/5 text-red-400 hover:bg-red-500/10 hover:border-red-500/50 font-semibold"
+                onClick={() => onCancel(bet.id)}
+                disabled={isCancelling}
+              >
+                {isCancelling
+                  ? <><Loader2 className="h-4 w-4 animate-spin" /> Cancelling...</>
+                  : <><XCircle className="h-4 w-4" /> Cancel Bet</>}
+              </Button>
+            )}
+            {canCancel && !matchOpen && (
+              <div className="flex items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-800/20 px-3 py-2">
+                <AlertCircle className="h-3.5 w-3.5 text-zinc-500 shrink-0" />
+                <p className="text-xs text-zinc-500">Cannot cancel — match no longer active</p>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -259,7 +245,7 @@ const MyBets = () => {
     if (!silent) setLoading(true);
     const { data, error } = await (supabase as any)
       .from("bets")
-      .select("*, matches(team_a_name, team_b_name, status, match_date)")
+      .select("*, matches(team_a_name, team_b_name, status, match_date, match_title)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (!error) setBets((data as BetWithMatch[]) || []);
@@ -299,7 +285,7 @@ const MyBets = () => {
       });
 
       let json: any = {};
-      try { json = await res.json(); } catch { /* empty body */ }
+      try { json = await res.json(); } catch { }
 
       if (!res.ok || !json.success) {
         toast({ title: "Failed to cancel", description: json.error || "Could not cancel bet", variant: "destructive" });
@@ -307,12 +293,10 @@ const MyBets = () => {
         return;
       }
 
-      // Optimistic local update — instant UI feedback
       setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "cancelled" as const } : b));
-      // Silent DB sync + wallet refresh in parallel (don't block toast)
       fetchBets(true);
       refreshProfile();
-      toast({ title: "Bet Cancelled", description: `₹${Number(bet.amount).toLocaleString()} refunded to your wallet.` });
+      toast({ title: "Bet Cancelled", description: `${fmtAmount(Number(bet.amount))} refunded to your wallet.` });
     } catch (err: any) {
       toast({ title: "Failed to cancel", description: err.message, variant: "destructive" });
     }
@@ -362,8 +346,10 @@ const MyBets = () => {
     );
   }
 
-  const totalWins = bets.filter((b) => b.result === "won").length;
-  const totalLost = bets.filter((b) => b.result === "lost").length;
+  const totalWins      = bets.filter((b) => b.result === "won").length;
+  const totalLost      = bets.filter((b) => b.result === "lost").length;
+  const totalPending   = bets.filter((b) => b.result === "pending").length;
+  const totalInvested  = bets.reduce((s, b) => s + Number(b.amount), 0);
 
   const FILTERS: { key: "all" | "pending" | "won" | "lost" | "cancelled"; label: string }[] = [
     { key: "all",       label: "All" },
@@ -378,10 +364,20 @@ const MyBets = () => {
     const matchesFilter = filter === "all" || b.result === filter;
     const matchesSearch = !search || (
       b.matches?.team_a_name.toLowerCase().includes(searchLower) ||
-      b.matches?.team_b_name.toLowerCase().includes(searchLower)
+      b.matches?.team_b_name.toLowerCase().includes(searchLower) ||
+      (b.matches?.match_title || "").toLowerCase().includes(searchLower)
     );
     return matchesFilter && matchesSearch;
   });
+
+  // Group bets by calendar day (from created_at)
+  const groupedMap = new Map<string, BetWithMatch[]>();
+  for (const bet of filtered) {
+    const key = new Date(bet.created_at).toISOString().slice(0, 10);
+    if (!groupedMap.has(key)) groupedMap.set(key, []);
+    groupedMap.get(key)!.push(bet);
+  }
+  const groupKeys = [...groupedMap.keys()].sort((a, b) => b.localeCompare(a));
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950 pb-24 md:pb-0">
@@ -389,22 +385,20 @@ const MyBets = () => {
 
       <div className="container mx-auto px-4 py-5 max-w-lg">
 
-        {/* Stats row */}
-        <div className="grid grid-cols-2 gap-3 mb-5">
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-1">Total Wins</p>
-              <p className="text-3xl font-extrabold text-sky-400">{loading ? "—" : totalWins}</p>
+        {/* Stats row — 4 cards */}
+        <div className="grid grid-cols-4 gap-2 mb-5">
+          {[
+            { icon: Target,       label: "Live",     value: loading ? "—" : totalPending,  color: "text-amber-400" },
+            { icon: Trophy,       label: "Won",      value: loading ? "—" : totalWins,     color: "text-emerald-400" },
+            { icon: TrendingDown, label: "Lost",     value: loading ? "—" : totalLost,     color: "text-red-400" },
+            { icon: Wallet,       label: "Invested", value: loading ? "—" : `₹${totalInvested.toLocaleString("en-IN")}`, color: "text-sky-400" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl bg-zinc-900 border border-zinc-800 p-3 flex flex-col items-center gap-1">
+              <s.icon className={`h-5 w-5 ${s.color}`} strokeWidth={1.8} />
+              <p className={`text-base font-extrabold ${s.color} leading-none`}>{s.value}</p>
+              <p className="text-[10px] text-zinc-500 font-semibold uppercase tracking-wide">{s.label}</p>
             </div>
-            <Trophy className="h-8 w-8 text-zinc-600" strokeWidth={1.5} />
-          </div>
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase mb-1">Total Lost</p>
-              <p className="text-3xl font-extrabold text-red-400">{loading ? "—" : totalLost}</p>
-            </div>
-            <TrendingDown className="h-8 w-8 text-red-500/50" strokeWidth={1.5} />
-          </div>
+          ))}
         </div>
 
         {/* Search bar */}
@@ -427,7 +421,7 @@ const MyBets = () => {
               <button
                 key={f.key}
                 onClick={() => setFilter(f.key)}
-                className={`shrink-0 rounded-full px-4 py-1.5 text-sm font-semibold transition-all ${
+                className={`shrink-0 rounded-xl px-4 py-1.5 text-sm font-semibold transition-all ${
                   active
                     ? "bg-sky-500 text-white"
                     : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-600"
@@ -460,25 +454,35 @@ const MyBets = () => {
           </div>
         )}
 
-        {/* Bet cards */}
+        {/* Bet cards grouped by date */}
         {!loading && filtered.length > 0 && (
           <AnimatePresence mode="popLayout">
-            <div className="space-y-3">
-              {filtered.map((bet) => (
-                <BetCard
-                  key={bet.id}
-                  bet={bet}
-                  onCancel={handleCancel}
-                  onShare={handleShare}
-                  cancelling={cancelling}
-                />
+            <div className="space-y-5">
+              {groupKeys.map((key) => (
+                <div key={key}>
+                  {/* Date header */}
+                  <p className="text-[11px] font-bold tracking-widest text-zinc-500 uppercase mb-3">
+                    {fmtGroupDate(key)}
+                  </p>
+                  <div className="space-y-3">
+                    {groupedMap.get(key)!.map((bet) => (
+                      <BetCard
+                        key={bet.id}
+                        bet={bet}
+                        onCancel={handleCancel}
+                        onShare={handleShare}
+                        cancelling={cancelling}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </AnimatePresence>
         )}
       </div>
 
-      {/* Share modal */}
+      {/* Share / Win card modal */}
       <AnimatePresence>
         {shareModalBet && (
           <motion.div

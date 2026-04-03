@@ -718,6 +718,9 @@ const AdminMatches = () => {
                               <AlertTriangle className="h-3 w-3" /> Picks closed — settle the result:
                             </p>
                           )}
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => handleEdit(m)}>
+                            <Edit2 className="h-3 w-3" /> Edit
+                          </Button>
                           <Button size="sm" variant="outline" className="h-7 text-xs border-primary/30 text-primary hover:bg-primary/10 gap-1"
                             onClick={() => setConfirmAction({ type: "winA", matchId: m.id, label: `Settle: ${m.team_a_name} wins? This will pay out all winning bets.` })}>
                             <CheckCircle className="h-3 w-3" /> {m.team_a_name} Wins

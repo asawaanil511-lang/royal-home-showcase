@@ -26,6 +26,8 @@ type AuthContextType = {
   loading: boolean;
   walletChange: WalletChange | null;
   mustChangePassword: boolean;
+  isAdmin: boolean;
+  isOwner: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 };
@@ -37,6 +39,8 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   walletChange: null,
   mustChangePassword: false,
+  isAdmin: false,
+  isOwner: false,
   signOut: async () => {},
   refreshProfile: async () => {},
 });
@@ -50,7 +54,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [walletChange, setWalletChange] = useState<WalletChange | null>(null);
   const [mustChangePassword, setMustChangePassword] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
   const prevBalanceRef = useRef<number | null>(null);
+
+  const fetchRoles = async (userId: string) => {
+    const { data } = await (supabase as any)
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const roles: string[] = (data || []).map((r: any) => r.role);
+    setIsAdmin(roles.includes("admin"));
+    setIsOwner(roles.includes("owner"));
+  };
 
   const fetchProfile = async (userId: string) => {
     const { data } = await (supabase as any)
@@ -107,7 +123,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchProfile(session.user.id), 0);
+          setTimeout(() => {
+            fetchProfile(session.user.id);
+            fetchRoles(session.user.id);
+          }, 0);
           if (event === "SIGNED_IN" && session.access_token) {
             recordSession(session.access_token);
           }
@@ -115,6 +134,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(null);
           prevBalanceRef.current = null;
           setMustChangePassword(false);
+          setIsAdmin(false);
+          setIsOwner(false);
         }
         setLoading(false);
       }
@@ -125,6 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+        fetchRoles(session.user.id);
       }
       setLoading(false);
     });
@@ -172,10 +194,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setProfile(null);
     prevBalanceRef.current = null;
     setMustChangePassword(false);
+    setIsAdmin(false);
+    setIsOwner(false);
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, walletChange, mustChangePassword, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ session, user, profile, loading, walletChange, mustChangePassword, isAdmin, isOwner, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

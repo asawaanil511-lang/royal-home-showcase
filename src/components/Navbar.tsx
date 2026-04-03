@@ -1,9 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { Menu, X, Wallet, LogOut, User, Shield, LogIn, Eye, EyeOff, Coins, BookOpen, Home, Swords, ListChecks, FileText } from "lucide-react";
+import { Menu, X, Wallet, LogOut, User, Shield, Crown, LogIn, Eye, EyeOff, Coins, BookOpen, Home, Swords, ListChecks, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import betwicLogo from "@/assets/betwic-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
@@ -64,16 +63,9 @@ const WalletShowcase = ({ balance }: { balance: number }) => {
 
 const Navbar = () => {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { user, profile, signOut } = useAuth();
+  const { user, profile, signOut, isAdmin, isOwner } = useAuth();
   const location = useLocation();
-  const [isAdmin, setIsAdmin] = useState(false);
   const [showUsername, setShowUsername] = useState(true);
-
-  useEffect(() => {
-    if (!user) { setIsAdmin(false); return; }
-    (supabase as any).from("user_roles").select("role").eq("user_id", user.id).eq("role", "admin").maybeSingle()
-      .then(({ data }: any) => setIsAdmin(!!data));
-  }, [user]);
 
   useEffect(() => {
     setMobileOpen(false);
@@ -173,6 +165,14 @@ const Navbar = () => {
                   className="flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-50 px-3 py-1.5 text-sm font-semibold text-amber-700 transition-colors hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/30 dark:hover:bg-amber-500/20"
                 >
                   <Shield className="h-4 w-4" /> Admin
+                </Link>
+              )}
+              {isOwner && (
+                <Link
+                  to="/owner"
+                  className="flex items-center gap-1 rounded-full border border-violet-500/40 bg-violet-50 px-3 py-1.5 text-sm font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/30 dark:hover:bg-violet-500/20"
+                >
+                  <Crown className="h-4 w-4" /> Owner
                 </Link>
               )}
 

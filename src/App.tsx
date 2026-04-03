@@ -25,6 +25,7 @@ const Results = lazy(() => import("./pages/Results"));
 const Rules = lazy(() => import("./pages/Rules"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
+const Owner = lazy(() => import("./pages/Owner"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -81,6 +82,7 @@ const App = () => (
                 <Route path="/results" element={<ProtectedRoute><Results /></ProtectedRoute>} />
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
+                <Route path="/owner" element={<ProtectedRoute><Owner /></ProtectedRoute>} />
 
                 {/* Legacy register → login */}
                 <Route path="/register" element={<Navigate to="/login" replace />} />

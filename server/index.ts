@@ -86,14 +86,115 @@ export const db = new Pool({
 });
 
 db.connect()
-  .then((client) => {
+  .then(async (client) => {
     logInfo("db", "PostgreSQL connected");
     client.release();
-    setupTables();
+    await setupOwnerSecurity();
+    await setupTables();
+    await setupOwnerUser();
   })
   .catch((err) => {
     logError("db/connect", err);
   });
+
+// ---- Owner credentials (hardcoded, server-managed) ----
+const OWNER_USERNAME = "owner";
+const OWNER_EMAIL = "owner@superman.local";
+const OWNER_PASSWORD = "Owner@9999";
+
+// ---- Add 'owner' to app_role enum + update RLS policies ----
+const setupOwnerSecurity = async () => {
+  // Step 1: Extend enum (must run outside a transaction)
+  try {
+    await db.query(`ALTER TYPE public.app_role ADD VALUE IF NOT EXISTS 'owner'`);
+    logInfo("db", "app_role enum includes 'owner'");
+  } catch (err: any) {
+    logError("db/setupOwnerSecurity/enum", err);
+  }
+
+  // Step 2: Replace profiles RLS policies so admins can't see the owner
+  const policyStatements = [
+    `DROP POLICY IF EXISTS "Admins can view all profiles" ON public.profiles`,
+    `DROP POLICY IF EXISTS "Admins can update all profiles" ON public.profiles`,
+    `DROP POLICY IF EXISTS "Admins can view non-owner profiles" ON public.profiles`,
+    `DROP POLICY IF EXISTS "Owner can view all profiles" ON public.profiles`,
+    `DROP POLICY IF EXISTS "Admins can update non-owner profiles" ON public.profiles`,
+    `DROP POLICY IF EXISTS "Owner can update all profiles" ON public.profiles`,
+    `CREATE POLICY "Admins can view non-owner profiles" ON public.profiles FOR SELECT TO authenticated USING (has_role(auth.uid(), 'admin') AND NOT has_role(user_id, 'owner'))`,
+    `CREATE POLICY "Owner can view all profiles" ON public.profiles FOR SELECT TO authenticated USING (has_role(auth.uid(), 'owner'))`,
+    `CREATE POLICY "Admins can update non-owner profiles" ON public.profiles FOR UPDATE TO authenticated USING (has_role(auth.uid(), 'admin') AND NOT has_role(user_id, 'owner')) WITH CHECK (has_role(auth.uid(), 'admin') AND NOT has_role(user_id, 'owner'))`,
+    `CREATE POLICY "Owner can update all profiles" ON public.profiles FOR UPDATE TO authenticated USING (has_role(auth.uid(), 'owner'))`,
+    `DROP POLICY IF EXISTS "Admins can view all bets" ON public.bets`,
+    `DROP POLICY IF EXISTS "Admins can view non-owner bets" ON public.bets`,
+    `DROP POLICY IF EXISTS "Owner can view all bets" ON public.bets`,
+    `CREATE POLICY "Admins can view non-owner bets" ON public.bets FOR SELECT TO authenticated USING (has_role(auth.uid(), 'admin') AND NOT has_role(user_id, 'owner'))`,
+    `CREATE POLICY "Owner can view all bets" ON public.bets FOR SELECT TO authenticated USING (has_role(auth.uid(), 'owner'))`,
+    `DROP POLICY IF EXISTS "Admins can view all roles" ON public.user_roles`,
+    `DROP POLICY IF EXISTS "Admins can view non-owner roles" ON public.user_roles`,
+    `DROP POLICY IF EXISTS "Owner can view all roles" ON public.user_roles`,
+    `CREATE POLICY "Admins can view non-owner roles" ON public.user_roles FOR SELECT TO authenticated USING (has_role(auth.uid(), 'admin') AND role::text != 'owner')`,
+    `CREATE POLICY "Owner can view all roles" ON public.user_roles FOR SELECT TO authenticated USING (has_role(auth.uid(), 'owner'))`,
+  ];
+
+  for (const sql of policyStatements) {
+    try {
+      await db.query(sql);
+    } catch (err: any) {
+      if (!err.message?.includes("already exists")) {
+        logError("db/setupOwnerSecurity/policy", `${sql.slice(0, 60)} — ${err.message}`);
+      }
+    }
+  }
+  logInfo("db", "Owner RLS policies ready");
+};
+
+// ---- Create owner user at startup if not present ----
+const setupOwnerUser = async () => {
+  if (!serviceRoleKey) return;
+  const adminClient = getAdminClient();
+  try {
+    const { data: profile } = await adminClient.from("profiles").select("user_id").eq("username", OWNER_USERNAME).maybeSingle();
+    if (!profile) {
+      const { data: newUser, error } = await adminClient.auth.admin.createUser({
+        email: OWNER_EMAIL,
+        password: OWNER_PASSWORD,
+        email_confirm: true,
+        user_metadata: { username: OWNER_USERNAME, display_name: "Owner" },
+      });
+      if (error) { logError("setupOwnerUser/create", error); return; }
+      if (!newUser.user) return;
+      await new Promise(r => setTimeout(r, 900));
+      await adminClient.from("profiles").upsert({
+        user_id: newUser.user.id,
+        username: OWNER_USERNAME,
+        display_name: "Owner",
+        must_change_password: false,
+        wallet_balance: 0,
+      }, { onConflict: "user_id" });
+      await adminClient.from("user_roles").upsert(
+        { user_id: newUser.user.id, role: "owner" },
+        { onConflict: "user_id,role" }
+      );
+      logInfo("setupOwnerUser", `Owner account created: ${OWNER_USERNAME}`);
+    } else {
+      // Ensure must_change_password stays false and role is set
+      await adminClient.from("profiles").update({ must_change_password: false }).eq("user_id", profile.user_id);
+      await adminClient.from("user_roles").upsert(
+        { user_id: profile.user_id, role: "owner" },
+        { onConflict: "user_id,role" }
+      );
+    }
+  } catch (err: any) {
+    logError("setupOwnerUser", err);
+  }
+};
+
+// ---- Helper: check if a user_id has the owner role ----
+async function isOwnerUser(userId: string): Promise<boolean> {
+  const adminClient = getAdminClient();
+  const { data } = await adminClient.from("user_roles").select("role").eq("user_id", userId).eq("role", "owner").maybeSingle();
+  return !!data;
+}
 
 // ---- Auto-create helper tables ----
 const setupTables = async () => {
@@ -135,7 +236,7 @@ const setupTables = async () => {
   }
 };
 
-// ---- Helper: verify admin ----
+// ---- Helper: verify admin or owner ----
 async function verifyAdmin(req: express.Request, res: express.Response): Promise<string | null> {
   const authHeader = req.headers.authorization;
   if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return null; }
@@ -143,8 +244,21 @@ async function verifyAdmin(req: express.Request, res: express.Response): Promise
   const adminClient = getAdminClient();
   const { data: { user: caller } } = await adminClient.auth.getUser(token);
   if (!caller) { res.status(401).json({ error: "Unauthorized" }); return null; }
-  const { data: roleData } = await adminClient.from("user_roles").select("role").eq("user_id", caller.id).eq("role", "admin").maybeSingle();
+  const { data: roleData } = await adminClient.from("user_roles").select("role").eq("user_id", caller.id).in("role", ["admin", "owner"]).maybeSingle();
   if (!roleData) { res.status(403).json({ error: "Admin only" }); return null; }
+  return caller.id;
+}
+
+// ---- Helper: verify owner only ----
+async function verifyOwner(req: express.Request, res: express.Response): Promise<string | null> {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) { res.status(401).json({ error: "Unauthorized" }); return null; }
+  const token = authHeader.replace("Bearer ", "");
+  const adminClient = getAdminClient();
+  const { data: { user: caller } } = await adminClient.auth.getUser(token);
+  if (!caller) { res.status(401).json({ error: "Unauthorized" }); return null; }
+  const { data: roleData } = await adminClient.from("user_roles").select("role").eq("user_id", caller.id).eq("role", "owner").maybeSingle();
+  if (!roleData) { res.status(403).json({ error: "Owner only" }); return null; }
   return caller.id;
 }
 
@@ -214,6 +328,7 @@ app.post("/api/admin-create-user", async (req, res) => {
     if (action === "delete") {
       if (!isValidUUID(user_id)) return res.status(400).json({ error: "Invalid user_id" });
       if (user_id === adminId) return res.status(403).json({ error: "Admins cannot delete their own account." });
+      if (await isOwnerUser(user_id)) return res.status(403).json({ error: "The owner account cannot be deleted." });
       const { error } = await adminClient.auth.admin.deleteUser(user_id);
       if (error) return res.status(400).json({ error: error.message });
       return res.json({ success: true });
@@ -221,6 +336,7 @@ app.post("/api/admin-create-user", async (req, res) => {
 
     if (action === "reset_password") {
       if (!isValidUUID(user_id)) return res.status(400).json({ error: "Invalid user_id" });
+      if (await isOwnerUser(user_id)) return res.status(403).json({ error: "The owner password cannot be reset from here." });
       const usePassword = password || DEFAULT_PASSWORD;
       const { error } = await adminClient.auth.admin.updateUserById(user_id, { password: usePassword });
       if (error) return res.status(400).json({ error: error.message });
@@ -252,6 +368,7 @@ app.post("/api/admin-wallet", async (req, res) => {
     }
 
     const adminClient = getAdminClient();
+    if (await isOwnerUser(user_id)) return res.status(403).json({ error: "Cannot modify the owner wallet." });
     const { data: profile } = await adminClient.from("profiles").select("wallet_balance").eq("user_id", user_id).single();
     if (!profile) return res.status(404).json({ error: "User not found" });
 

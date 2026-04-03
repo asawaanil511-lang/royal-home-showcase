@@ -9,7 +9,6 @@ import { Match } from "@/data/matches";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiUrl } from "@/lib/api";
 
 type Tab = "live" | "closed";
 
@@ -145,7 +144,7 @@ const Matches = () => {
       // Cancel ALL pending bets for this match in parallel
       const results = await Promise.all(
         betIds.map((id) =>
-          fetch(apiUrl("/api/cancel-bet"), {
+          fetch("/api/cancel-bet", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             body: JSON.stringify({ bet_id: id }),

@@ -672,92 +672,79 @@ app.post("/api/cancel-bet", async (req, res) => {
       return res.status(400).json({ error: "bet_id required" });
     }
 
-    const adminClient = getAdminClient();
+    // Step 1: Cancel the bet atomically — only if it belongs to user AND is still pending
+    // Using raw SQL so we get the amount back in one round-trip, no settled_at dependency
+    const cancelResult = await db.query(
+      `UPDATE public.bets
+       SET result = 'cancelled'
+       WHERE id = $1 AND user_id = $2 AND result = 'pending'
+       RETURNING amount, match_id`,
+      [bet_id, userId]
+    );
 
-    // Step 1: Fetch the bet — verify it belongs to the user and is still pending
-    const { data: bet, error: betFetchErr } = await adminClient
-      .from("bets")
-      .select("id, user_id, amount, result, match_id")
-      .eq("id", bet_id)
-      .eq("user_id", userId)
-      .maybeSingle();
-
-    if (betFetchErr) {
-      logError("cancel-bet/fetch-bet", betFetchErr);
-      return res.status(500).json({ error: "Failed to look up bet" });
-    }
-    if (!bet) {
-      return res.status(404).json({ error: "Bet not found or does not belong to you" });
-    }
-    if (bet.result !== "pending") {
-      return res.status(400).json({ error: `Bet is already ${bet.result} — cannot cancel` });
+    if (cancelResult.rowCount === 0) {
+      // Either bet doesn't exist, belongs to another user, or is already settled
+      // Distinguish the cases to return a helpful message
+      const check = await db.query(
+        `SELECT result FROM public.bets WHERE id = $1 AND user_id = $2`,
+        [bet_id, userId]
+      );
+      if (check.rowCount === 0) {
+        return res.status(404).json({ error: "Bet not found or does not belong to you" });
+      }
+      const existingResult = check.rows[0].result;
+      return res.status(400).json({ error: `Bet is already ${existingResult} — cannot cancel` });
     }
 
-    // Step 2: Verify the match is still open (live or upcoming)
-    const { data: match, error: matchFetchErr } = await adminClient
-      .from("matches")
-      .select("id, status")
-      .eq("id", bet.match_id)
-      .maybeSingle();
+    const { amount, match_id } = cancelResult.rows[0];
 
-    if (matchFetchErr) {
-      logError("cancel-bet/fetch-match", matchFetchErr);
-      return res.status(500).json({ error: "Failed to look up match" });
-    }
-    if (!match || !["upcoming", "live"].includes(match.status)) {
+    // Step 2: Verify the match is still open (live or upcoming) — after cancellation for simplicity
+    // If match is closed we still honour the cancel so the user gets their money back
+    const matchCheck = await db.query(
+      `SELECT status FROM public.matches WHERE id = $1`,
+      [match_id]
+    );
+    const matchStatus = matchCheck.rows[0]?.status;
+    if (!matchStatus || !["upcoming", "live"].includes(matchStatus)) {
+      // Revert the cancellation
+      await db.query(
+        `UPDATE public.bets SET result = 'pending' WHERE id = $1`,
+        [bet_id]
+      );
       return res.status(400).json({ error: "Bet cannot be cancelled — match is no longer active" });
     }
 
-    // Step 3: Mark the bet as cancelled
-    const { error: cancelErr } = await adminClient
-      .from("bets")
-      .update({ result: "cancelled", settled_at: new Date().toISOString() })
-      .eq("id", bet_id)
-      .eq("user_id", userId)
-      .eq("result", "pending"); // double-guard against race conditions
+    const refundAmount = Number(amount);
 
-    if (cancelErr) {
-      logError("cancel-bet/update-bet", cancelErr);
-      return res.status(500).json({ error: "Failed to cancel bet: " + cancelErr.message });
-    }
+    // Step 3: Atomic wallet increment — no read-then-write race condition
+    const walletResult = await db.query(
+      `UPDATE public.profiles
+       SET wallet_balance = wallet_balance + $1
+       WHERE user_id = $2
+       RETURNING wallet_balance`,
+      [refundAmount, userId]
+    );
 
-    // Step 4: Refund the wallet atomically
-    const refundAmount = Number(bet.amount);
-    const { data: profile, error: profileFetchErr } = await adminClient
-      .from("profiles")
-      .select("wallet_balance")
-      .eq("user_id", userId)
-      .single();
-
-    if (profileFetchErr || !profile) {
-      logError("cancel-bet/fetch-profile", profileFetchErr);
+    if (walletResult.rowCount === 0) {
+      logError("cancel-bet/update-wallet", "Profile not found for user " + userId);
       return res.status(500).json({ error: "Bet cancelled but wallet refund failed — contact support" });
     }
 
-    const newBalance = Number(profile.wallet_balance) + refundAmount;
-    const { error: walletErr } = await adminClient
-      .from("profiles")
-      .update({ wallet_balance: newBalance })
-      .eq("user_id", userId);
+    const newBalance = Number(walletResult.rows[0].wallet_balance);
+    const balanceBefore = newBalance - refundAmount;
 
-    if (walletErr) {
-      logError("cancel-bet/update-wallet", walletErr);
-      return res.status(500).json({ error: "Bet cancelled but wallet refund failed: " + walletErr.message });
-    }
-
-    // Step 5: Log the transaction for audit trail
+    // Step 4: Log the transaction (non-fatal)
     try {
       await db.query(
         `INSERT INTO public.wallet_transactions (user_id, action, amount, balance_before, balance_after, note)
          VALUES ($1, 'refund', $2, $3, $4, 'Bet cancelled — refund')`,
-        [userId, refundAmount, Number(profile.wallet_balance), newBalance]
+        [userId, refundAmount, balanceBefore, newBalance]
       );
     } catch (txErr) {
       logError("cancel-bet/log-transaction", txErr);
-      // Non-fatal — don't fail the response over the audit log
     }
 
-    logInfo("cancel-bet", `User ${userId} cancelled bet ${bet_id}, refunded ${refundAmount}`);
+    logInfo("cancel-bet", `User ${userId} cancelled bet ${bet_id}, refunded ₹${refundAmount}`);
     return res.json({ success: true, refunded: refundAmount });
   } catch (err: any) {
     logError("cancel-bet", err);

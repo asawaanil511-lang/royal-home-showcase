@@ -5,7 +5,6 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { apiUrl } from "@/lib/api";
 import {
   Trophy, XCircle, AlertCircle, Loader2, TrendingDown,
   Search, Target, Zap, IndianRupee, TrendingUp, ArrowUpRight,
@@ -279,7 +278,7 @@ const MyBets = () => {
       const token = session.data.session?.access_token;
       if (!token) { toast({ title: "Not authenticated", variant: "destructive" }); setCancelling(null); return; }
 
-      const res = await fetch(apiUrl("/api/cancel-bet"), {
+      const res = await fetch("/api/cancel-bet", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ bet_id: betId }),

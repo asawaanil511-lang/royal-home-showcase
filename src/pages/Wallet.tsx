@@ -328,44 +328,52 @@ const Wallet = () => {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 }}
-              className="grid grid-cols-2 gap-3"
+              className="space-y-3"
             >
-              <Link
-                to="/my-bets"
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-sm font-semibold text-foreground transition-all hover:border-primary/30 hover:shadow-card-hover group"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <ArrowUpRight className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-bold">My Bets</p>
-                  <p className="text-xs text-muted-foreground">Bet history</p>
-                </div>
-              </Link>
+              {/* Transactions — featured full-width card */}
               <Link
                 to="/wallet-history"
-                className="flex items-center gap-3 rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4 text-sm font-semibold text-foreground transition-all hover:border-sky-500/40 hover:bg-sky-500/10 group"
+                className="group flex items-center justify-between gap-4 rounded-2xl border border-sky-500/30 bg-gradient-to-r from-sky-500/10 to-sky-400/5 p-4 transition-all hover:border-sky-500/60 hover:from-sky-500/15 hover:to-sky-400/10 active:scale-[0.98]"
               >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 group-hover:bg-sky-500/20 transition-colors">
-                  <TrendingUp className="h-4 w-4 text-sky-400" />
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-sky-500/20 border border-sky-500/30 group-hover:bg-sky-500/30 transition-colors">
+                    <TrendingUp className="h-5 w-5 text-sky-400" />
+                  </div>
+                  <div>
+                    <p className="font-extrabold text-foreground text-[15px]">Transaction History</p>
+                    <p className="text-xs text-sky-400/80 font-medium mt-0.5">Deposits · Bets · Wins · Withdrawals</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="font-bold">Transactions</p>
-                  <p className="text-xs text-muted-foreground">Full log & export</p>
-                </div>
+                <ArrowUpRight className="h-4 w-4 text-sky-400 shrink-0 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </Link>
-              <Link
-                to="/leaderboard"
-                className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 text-sm font-semibold text-foreground transition-all hover:border-yellow-500/30 group"
-              >
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-yellow-400/10 group-hover:bg-yellow-400/20 transition-colors">
-                  <Trophy className="h-4 w-4 text-yellow-400" />
-                </div>
-                <div>
-                  <p className="font-bold">Leaderboard</p>
-                  <p className="text-xs text-muted-foreground">Top players</p>
-                </div>
-              </Link>
+
+              {/* My Bets + Leaderboard — side by side */}
+              <div className="grid grid-cols-2 gap-3">
+                <Link
+                  to="/my-bets"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-primary/30 hover:shadow-card-hover group active:scale-[0.98]"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                    <ArrowUpRight className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-foreground">My Bets</p>
+                    <p className="text-xs text-muted-foreground">Bet history</p>
+                  </div>
+                </Link>
+                <Link
+                  to="/leaderboard"
+                  className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:border-yellow-500/30 group active:scale-[0.98]"
+                >
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-yellow-400/10 group-hover:bg-yellow-400/20 transition-colors">
+                    <Trophy className="h-4 w-4 text-yellow-400" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm text-foreground">Leaderboard</p>
+                    <p className="text-xs text-muted-foreground">Top players</p>
+                  </div>
+                </Link>
+              </div>
             </motion.div>
 
           </div>

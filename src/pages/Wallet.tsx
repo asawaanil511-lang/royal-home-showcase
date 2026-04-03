@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Wallet as WalletIcon, ArrowUpRight, Trophy, Plus, ArrowDownLeft, Info } from "lucide-react";
+import { Wallet as WalletIcon, ArrowUpRight, Trophy, Plus, ArrowDownLeft, Info, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
@@ -340,6 +340,18 @@ const Wallet = () => {
                 <div>
                   <p className="font-bold">My Bets</p>
                   <p className="text-xs text-muted-foreground">Bet history</p>
+                </div>
+              </Link>
+              <Link
+                to="/wallet-history"
+                className="flex items-center gap-3 rounded-2xl border border-sky-500/20 bg-sky-500/5 p-4 text-sm font-semibold text-foreground transition-all hover:border-sky-500/40 hover:bg-sky-500/10 group"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 group-hover:bg-sky-500/20 transition-colors">
+                  <TrendingUp className="h-4 w-4 text-sky-400" />
+                </div>
+                <div>
+                  <p className="font-bold">Transactions</p>
+                  <p className="text-xs text-muted-foreground">Full log & export</p>
                 </div>
               </Link>
               <Link

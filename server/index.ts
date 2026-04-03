@@ -410,6 +410,75 @@ app.get("/api/wallet-history/:userId", async (req, res) => {
   }
 });
 
+// ---- User: own wallet history (bets + admin transactions) ----
+app.get("/api/my-wallet-history", async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Unauthorized" });
+    const token = authHeader.slice(7);
+    const adminClient = getAdminClient();
+    const { data: { user }, error: authErr } = await adminClient.auth.getUser(token);
+    if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
+
+    const { from_date, to_date } = req.query as Record<string, string>;
+
+    let dateFilter = "";
+    const params: any[] = [user.id];
+    if (from_date) { params.push(from_date); dateFilter += ` AND created_at >= $${params.length}`; }
+    if (to_date) { params.push(to_date); dateFilter += ` AND created_at < ($${params.length}::date + interval '1 day')`; }
+
+    const result = await db.query(
+      `SELECT * FROM (
+        SELECT
+          wt.id,
+          wt.action AS type,
+          wt.amount,
+          wt.balance_before,
+          wt.balance_after,
+          wt.note,
+          wt.created_at,
+          NULL::text AS match_name,
+          NULL::text AS team_picked,
+          NULL::numeric AS odds,
+          NULL::text AS result
+        FROM public.wallet_transactions wt
+        WHERE wt.user_id = $1${dateFilter}
+        UNION ALL
+        SELECT
+          b.id,
+          CASE
+            WHEN b.result = 'pending' THEN 'placed'
+            WHEN b.result = 'won'     THEN 'won'
+            WHEN b.result = 'lost'    THEN 'lost'
+            WHEN b.result = 'cancelled' THEN 'refunded'
+            ELSE b.result
+          END AS type,
+          CASE
+            WHEN b.result = 'won' THEN b.potential_win
+            ELSE b.amount
+          END AS amount,
+          NULL::numeric AS balance_before,
+          NULL::numeric AS balance_after,
+          NULL::text AS note,
+          COALESCE(b.settled_at, b.created_at) AS created_at,
+          CONCAT(m.team_a_name, ' vs ', m.team_b_name) AS match_name,
+          b.team_picked::text,
+          b.odds,
+          b.result::text
+        FROM public.bets b
+        JOIN public.matches m ON b.match_id = m.id
+        WHERE b.user_id = $1${dateFilter}
+      ) combined
+      ORDER BY created_at DESC
+      LIMIT 500`,
+      params
+    );
+    return res.json({ transactions: result.rows });
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Demo login ----
 app.post("/api/demo-login", async (req, res) => {
   try {

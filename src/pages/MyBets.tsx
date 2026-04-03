@@ -120,7 +120,8 @@ const BetCard = ({
   const matchOpen = bet.matches && (bet.matches.status === "live" || bet.matches.status === "upcoming");
   const canCancel = bet.result === "pending";
   const isCancelling = cancelling === bet.id;
-  const winTotal = Number(bet.amount) + Number(bet.potential_win);
+  const profit = Number(bet.potential_win) - Number(bet.amount);
+  const totalReturn = Number(bet.potential_win);
 
   return (
     <motion.div
@@ -171,22 +172,22 @@ const BetCard = ({
           <div className="px-4 py-3 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-sm text-zinc-400">Profit</span>
-              <span className="text-sm font-bold text-emerald-400">{fmtAmount(Number(bet.potential_win))}</span>
+              <span className="text-sm font-bold text-emerald-400">{fmtAmount(profit)}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm text-zinc-400 font-semibold">Total return</span>
-              <span className="text-[15px] font-extrabold text-emerald-400">{fmtAmount(winTotal)}</span>
+              <span className="text-[15px] font-extrabold text-emerald-400">{fmtAmount(totalReturn)}</span>
             </div>
           </div>
         ) : (
           <div className="px-4 py-3 space-y-1.5">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400">Potential win</span>
-              <span className="text-sm font-bold text-sky-400">{fmtAmount(Number(bet.potential_win))}</span>
+              <span className="text-sm text-zinc-400">Profit if win</span>
+              <span className="text-sm font-bold text-sky-400">{fmtAmount(profit)}</span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400 font-semibold">If you win</span>
-              <span className="text-[15px] font-extrabold text-white">{fmtAmount(winTotal)}</span>
+              <span className="text-sm text-zinc-400 font-semibold">Total return</span>
+              <span className="text-[15px] font-extrabold text-white">{fmtAmount(totalReturn)}</span>
             </div>
           </div>
         )}

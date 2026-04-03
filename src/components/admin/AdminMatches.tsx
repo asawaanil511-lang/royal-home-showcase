@@ -161,8 +161,8 @@ const AdminMatches = () => {
   };
 
   const handleCreate = async () => {
-    if (!teamA || !teamB || !matchDate) {
-      toast({ title: "Fill required fields (Team A, Team B, Match Date)", variant: "destructive" });
+    if (!teamA || !teamB) {
+      toast({ title: "Fill required fields (Team A, Team B)", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -171,7 +171,7 @@ const AdminMatches = () => {
       team_a_name: teamA, team_b_name: teamB,
       odds_a: Number(oddsA), odds_b: Number(oddsB),
       max_bet: Number(maxBet),
-      match_date: new Date(matchDate).toISOString(),
+      match_date: matchDate ? new Date(matchDate).toISOString() : new Date().toISOString(),
       status: "upcoming",
     };
     if (liveTime) insertData.live_time = new Date(liveTime).toISOString();
@@ -243,6 +243,7 @@ const AdminMatches = () => {
     if (!editingId) return;
     const update: any = { ...editData };
     if (update.match_date) update.match_date = new Date(update.match_date).toISOString();
+    else delete update.match_date;
     if (update.live_time) update.live_time = new Date(update.live_time).toISOString();
     else delete update.live_time;
     if (update.closing_time) update.closing_time = new Date(update.closing_time).toISOString();
@@ -486,7 +487,7 @@ const AdminMatches = () => {
                     <Input type="number" value={maxBet} onChange={(e) => setMaxBet(e.target.value)} className="bg-secondary border-border" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Match Date & Time *</label>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Match Date & Time <span className="text-muted-foreground/50 normal-case">(optional)</span></label>
                     <Input type="datetime-local" value={matchDate} onChange={(e) => setMatchDate(e.target.value)} className="bg-secondary border-border" />
                   </div>
                 </div>
@@ -602,9 +603,13 @@ const AdminMatches = () => {
                     <div><label className="text-xs text-muted-foreground mb-1 block">Odds A</label><Input type="number" step="0.05" value={editData.odds_a || ""} onChange={(e) => setEditData({ ...editData, odds_a: Number(e.target.value) })} className="bg-secondary border-border" /></div>
                     <div><label className="text-xs text-muted-foreground mb-1 block">Odds B</label><Input type="number" step="0.05" value={editData.odds_b || ""} onChange={(e) => setEditData({ ...editData, odds_b: Number(e.target.value) })} className="bg-secondary border-border" /></div>
                     <div><label className="text-xs text-muted-foreground mb-1 block">Max Bet</label><Input type="number" value={editData.max_bet || ""} onChange={(e) => setEditData({ ...editData, max_bet: Number(e.target.value) })} className="bg-secondary border-border" /></div>
-                    <div><label className="text-xs text-muted-foreground mb-1 block">Match Date</label><Input type="datetime-local" value={editData.match_date || ""} onChange={(e) => setEditData({ ...editData, match_date: e.target.value })} className="bg-secondary border-border" /></div>
-                    <div><label className="text-xs text-muted-foreground mb-1 block">🟢 Live Time</label><Input type="datetime-local" value={editData.live_time || ""} onChange={(e) => setEditData({ ...editData, live_time: e.target.value })} className="bg-secondary border-border" /></div>
-                    <div><label className="text-xs text-muted-foreground mb-1 block">🔴 Closing Time</label><Input type="datetime-local" value={editData.closing_time || ""} onChange={(e) => setEditData({ ...editData, closing_time: e.target.value })} className="bg-secondary border-border" /></div>
+                    {m.status !== "live" && (
+                      <>
+                        <div><label className="text-xs text-muted-foreground mb-1 block">Match Date</label><Input type="datetime-local" value={editData.match_date || ""} onChange={(e) => setEditData({ ...editData, match_date: e.target.value })} className="bg-secondary border-border" /></div>
+                        <div><label className="text-xs text-muted-foreground mb-1 block">🟢 Live Time</label><Input type="datetime-local" value={editData.live_time || ""} onChange={(e) => setEditData({ ...editData, live_time: e.target.value })} className="bg-secondary border-border" /></div>
+                        <div><label className="text-xs text-muted-foreground mb-1 block">🔴 Closing Time</label><Input type="datetime-local" value={editData.closing_time || ""} onChange={(e) => setEditData({ ...editData, closing_time: e.target.value })} className="bg-secondary border-border" /></div>
+                      </>
+                    )}
                     <div className="sm:col-span-2"><label className="text-xs text-muted-foreground mb-1 block">Image URL</label><Input type="url" value={editData.image_url || ""} onChange={(e) => setEditData({ ...editData, image_url: e.target.value })} className="bg-secondary border-border" placeholder="https://..." /></div>
                     <div className="sm:col-span-2"><label className="text-xs text-muted-foreground mb-1 block">Match Title</label><Input value={editData.match_title || ""} onChange={(e) => setEditData({ ...editData, match_title: e.target.value })} className="bg-secondary border-border" placeholder="e.g. Indian Premier League 2026" /></div>
                   </div>

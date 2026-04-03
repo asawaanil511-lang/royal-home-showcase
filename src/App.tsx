@@ -26,6 +26,7 @@ const Rules = lazy(() => import("./pages/Rules"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Admin = lazy(() => import("./pages/Admin"));
 const Owner = lazy(() => import("./pages/Owner"));
+const WalletHistory = lazy(() => import("./pages/WalletHistory"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -83,6 +84,7 @@ const App = () => (
                 <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                 <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
                 <Route path="/owner" element={<ProtectedRoute><Owner /></ProtectedRoute>} />
+                <Route path="/wallet-history" element={<ProtectedRoute><WalletHistory /></ProtectedRoute>} />
 
                 {/* Legacy register → login */}
                 <Route path="/register" element={<Navigate to="/login" replace />} />

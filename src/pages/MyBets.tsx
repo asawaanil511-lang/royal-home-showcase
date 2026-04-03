@@ -197,6 +197,17 @@ const BetCard = ({
             <span className="text-sm text-red-400 font-medium">Toss lost — better luck next time</span>
           </div>
         )}
+        {bet.result === "cancelled" && (
+          <div className="rounded-xl bg-zinc-800/60 border border-zinc-700/50 px-4 py-2.5 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-4 w-4 text-zinc-400 shrink-0" />
+              <span className="text-sm font-bold text-zinc-300">Bet cancelled — refunded</span>
+            </div>
+            <span className="text-base font-extrabold text-zinc-300">
+              ₹{Number(bet.amount).toLocaleString()}
+            </span>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="space-y-2">
@@ -243,16 +254,16 @@ const MyBets = () => {
   const [capturing, setCapturing] = useState(false);
   const { toast } = useToast();
 
-  const fetchBets = async () => {
+  const fetchBets = async (silent = false) => {
     if (!user) return;
-    setLoading(true);
+    if (!silent) setLoading(true);
     const { data, error } = await (supabase as any)
       .from("bets")
       .select("*, matches(team_a_name, team_b_name, status, match_date)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     if (!error) setBets((data as BetWithMatch[]) || []);
-    setLoading(false);
+    if (!silent) setLoading(false);
   };
 
   useEffect(() => {
@@ -260,7 +271,9 @@ const MyBets = () => {
     if (!user) return;
     const channel = (supabase as any)
       .channel(`my-bets-${user.id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "bets", filter: `user_id=eq.${user.id}` }, () => fetchBets())
+      .on("postgres_changes", { event: "*", schema: "public", table: "bets", filter: `user_id=eq.${user.id}` }, () => {
+        fetchBets(true);
+      })
       .subscribe();
     return () => { (supabase as any).removeChannel(channel); };
   }, [user]);
@@ -294,8 +307,11 @@ const MyBets = () => {
         return;
       }
 
+      // Optimistic local update — instant UI feedback
       setBets((prev) => prev.map((b) => b.id === betId ? { ...b, result: "cancelled" as const } : b));
-      await refreshProfile();
+      // Silent DB sync + wallet refresh in parallel (don't block toast)
+      fetchBets(true);
+      refreshProfile();
       toast({ title: "Bet Cancelled", description: `₹${Number(bet.amount).toLocaleString()} refunded to your wallet.` });
     } catch (err: any) {
       toast({ title: "Failed to cancel", description: err.message, variant: "destructive" });

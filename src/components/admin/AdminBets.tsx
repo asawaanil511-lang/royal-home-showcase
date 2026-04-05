@@ -203,7 +203,10 @@ const AdminBets = () => {
                 <TableCell className="text-muted-foreground text-sm">{b.odds}x</TableCell>
                 <TableCell className="text-primary font-semibold text-sm">₹{Number(b.potential_win).toLocaleString()}</TableCell>
                 <TableCell>{resultBadge(b.result)}</TableCell>
-                <TableCell className="text-xs text-muted-foreground">{new Date(b.created_at).toLocaleDateString()}</TableCell>
+                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                  <div>{new Date(b.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}</div>
+                  <div className="text-[10px] text-muted-foreground/70 mt-0.5">{new Date(b.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}</div>
+                </TableCell>
               </motion.tr>
             ))}
             {paged.length === 0 && (

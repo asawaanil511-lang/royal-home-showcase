@@ -199,7 +199,7 @@ const Wallet = () => {
                 {/* Withdraw */}
                 <div className="flex gap-2">
                   <a
-                    href={tgLink("🦚❤️ BETWIC TOSS BOOK ❤️ 🦚\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nTELEGRAM @bittubhaji\nWHATSAPP +917668700467\n\nDROP FORM AFTER - WAIT 30-60 MIN")}
+                    href={tgLink("🦚❤️ BETWIC ID TOSS BOOK ❤️ 🦚\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\nUPI ID ==\nQR CODE ==\n\nA/C HOLDER NAME ==\n\nIt is compulsory to send two things\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nTELEGRAM @bittubhaji\nWHATSAPP +917668700467\n\nWITHDRAWAL  TIME 12PM TO 8PM ANYTIME DROP FORM AFTER - WAIT 30-60 MIN\n\n8PM AFTER DROP FORM TILL WAIT 3AM NIGHT ALL CLEAR NO AGAIN MSG")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
@@ -209,7 +209,7 @@ const Wallet = () => {
                     Withdraw via TG
                   </a>
                   <a
-                    href={waLink("🦚❤️ BETWIC TOSS BOOK ❤️ 🦚\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nTELEGRAM @bittubhaji\nWHATSAPP +917668700467\n\nDROP FORM AFTER - WAIT 30-60 MIN")}
+                    href={waLink("🦚❤️ BETWIC ID TOSS BOOK ❤️ 🦚\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\nUPI ID ==\nQR CODE ==\n\nA/C HOLDER NAME ==\n\nIt is compulsory to send two things\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nTELEGRAM @bittubhaji\nWHATSAPP +917668700467\n\nWITHDRAWAL  TIME 12PM TO 8PM ANYTIME DROP FORM AFTER - WAIT 30-60 MIN\n\n8PM AFTER DROP FORM TILL WAIT 3AM NIGHT ALL CLEAR NO AGAIN MSG")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"

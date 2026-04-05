@@ -349,8 +349,9 @@ const AdminMatches = () => {
   });
 
   const statusTabs = ["all", "upcoming", "live", "closed", "cancelled"];
-  const counts = { all: matches.length, upcoming: 0, live: 0, closed: 0, cancelled: 0 };
-  matches.forEach((m) => { if (counts[m.status as keyof typeof counts] !== undefined) counts[m.status as keyof typeof counts]++; });
+  const baseCounted = dateFilter ? matches.filter(m => m.match_date.slice(0, 10) === dateFilter) : matches;
+  const counts = { all: baseCounted.length, upcoming: 0, live: 0, closed: 0, cancelled: 0 };
+  baseCounted.forEach((m) => { if (counts[m.status as keyof typeof counts] !== undefined) counts[m.status as keyof typeof counts]++; });
 
   return (
     <div>

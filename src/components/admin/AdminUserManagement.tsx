@@ -112,7 +112,9 @@ const AdminUserManagement = () => {
   const [resetting, setResetting] = useState(false);
   const [recentActions, setRecentActions] = useState<{ action: string; detail: string; time: string }[]>([]);
   const [lastCreatedPwd, setLastCreatedPwd] = useState<string | null>(null);
+  const [lastCreatedUser, setLastCreatedUser] = useState<string | null>(null);
   const [lastResetPwd, setLastResetPwd] = useState<string | null>(null);
+  const [lastResetUser, setLastResetUser] = useState<string | null>(null);
 
   useEffect(() => {
     supabase.from("profiles").select("user_id, username, display_name").order("created_at", { ascending: false })
@@ -143,8 +145,8 @@ const AdminUserManagement = () => {
       return;
     }
     const pwd = res.data?.default_password as string | undefined;
-    if (pwd) setLastCreatedPwd(pwd);
-    toast({ title: "User created!", description: `${createUsername} — check password below` });
+    if (pwd) { setLastCreatedPwd(pwd); setLastCreatedUser(createUsername.trim()); }
+    toast({ title: "User created!", description: `${createUsername} — check credentials below` });
     addAction("Created", createUsername.trim());
     setCreateUsername("");
     refreshUsers();
@@ -180,8 +182,8 @@ const AdminUserManagement = () => {
       return;
     }
     const pwd = res.data?.default_password as string | undefined;
-    if (pwd) setLastResetPwd(pwd);
-    toast({ title: "Password reset — check password below" });
+    if (pwd) { setLastResetPwd(pwd); setLastResetUser(resetUsername || resetUserId.slice(0, 8)); }
+    toast({ title: "Password reset — check credentials below" });
     addAction("Reset Password", resetUsername || resetUserId.slice(0, 8));
     setResetUserId(""); setResetUsername("");
   };
@@ -206,11 +208,28 @@ const AdminUserManagement = () => {
               {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
               Create User
             </Button>
-            {lastCreatedPwd && (
-              <div className="flex items-center gap-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2 text-xs">
-                <span className="text-muted-foreground">Password:</span>
-                <span className="font-mono font-bold text-emerald-400">{lastCreatedPwd}</span>
-                <CopyButton text={lastCreatedPwd} />
+            {lastCreatedPwd && lastCreatedUser && (
+              <div className="rounded-lg bg-emerald-500/10 border border-emerald-500/25 px-3 py-2.5 text-xs space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Username</span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono font-bold text-emerald-400">{lastCreatedUser}</span>
+                    <CopyButton text={lastCreatedUser} />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Password</span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono font-bold text-emerald-400">{lastCreatedPwd}</span>
+                    <CopyButton text={lastCreatedPwd} />
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(`Username: ${lastCreatedUser}\nPassword: ${lastCreatedPwd}`)}
+                  className="w-full mt-1 flex items-center justify-center gap-1.5 rounded-lg bg-emerald-500/20 border border-emerald-500/30 py-1.5 text-[11px] font-bold text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                >
+                  <Copy className="h-3 w-3" /> Copy Username + Password
+                </button>
               </div>
             )}
           </div>
@@ -272,11 +291,28 @@ const AdminUserManagement = () => {
               {resetting ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
               Reset {resetUsername || "Password"}
             </Button>
-            {lastResetPwd && (
-              <div className="flex items-center gap-2 rounded-lg bg-amber-500/10 border border-amber-500/25 px-3 py-2 text-xs">
-                <span className="text-muted-foreground">New pwd:</span>
-                <span className="font-mono font-bold text-amber-400">{lastResetPwd}</span>
-                <CopyButton text={lastResetPwd} />
+            {lastResetPwd && lastResetUser && (
+              <div className="rounded-lg bg-amber-500/10 border border-amber-500/25 px-3 py-2.5 text-xs space-y-1.5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Username</span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono font-bold text-amber-400">{lastResetUser}</span>
+                    <CopyButton text={lastResetUser} />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">New Password</span>
+                  <div className="flex items-center gap-1">
+                    <span className="font-mono font-bold text-amber-400">{lastResetPwd}</span>
+                    <CopyButton text={lastResetPwd} />
+                  </div>
+                </div>
+                <button
+                  onClick={() => navigator.clipboard.writeText(`Username: ${lastResetUser}\nPassword: ${lastResetPwd}`)}
+                  className="w-full mt-1 flex items-center justify-center gap-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 py-1.5 text-[11px] font-bold text-amber-400 hover:bg-amber-500/30 transition-colors"
+                >
+                  <Copy className="h-3 w-3" /> Copy Username + Password
+                </button>
               </div>
             )}
           </div>

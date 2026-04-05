@@ -196,7 +196,7 @@ const Matches = () => {
       return 0;
     });
 
-  const filtered = tab === "closed" ? filteredRaw.slice(0, 10) : filteredRaw;
+  const filtered = filteredRaw;
   const liveCount = matches.filter((m) => m.status === "live").length;
   const upcomingCount = matches.filter((m) => m.status === "upcoming").length;
   const closedCount = matches.filter((m) => m.status === "closed").length;

@@ -243,7 +243,7 @@ const AdminUsers = () => {
                                 <div key={b.id} className="flex items-center justify-between rounded-lg bg-secondary/30 px-3 py-2 text-xs">
                                   <div className="flex-1 min-w-0">
                                     <p className="text-foreground truncate font-medium">{b.matchName}</p>
-                                    <p className="text-[10px] text-muted-foreground">Team {b.team_picked} · {b.odds}x · {new Date(b.created_at).toLocaleDateString()}</p>
+                                    <p className="text-[10px] text-muted-foreground">Team {b.team_picked} · {b.odds}x · {new Date(b.created_at).toLocaleDateString("en-IN", { day: "2-digit", month: "short" })} {new Date(b.created_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })}</p>
                                   </div>
                                   <div className="flex items-center gap-2 shrink-0 ml-2">
                                     <span className="text-amber-400 font-bold">₹{Number(b.amount).toLocaleString()}</span>

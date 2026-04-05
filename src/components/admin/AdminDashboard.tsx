@@ -17,7 +17,7 @@ type Stats = {
   totalUsers: number; totalMatches: number; totalBets: number;
   totalBetVolume: number; liveMatches: number; pendingBets: number;
   totalWinnings: number; totalPlatformRevenue: number;
-  todayBets: number; todayVolume: number;
+  todayBets: number; todayVolume: number; exposure: number;
 };
 
 type ActivityItem = { id: string; description: string; amount?: number; time: string };
@@ -70,13 +70,14 @@ const AdminDashboard = () => {
     const totalWinnings = betsArr.filter((b: any) => b.result === "won").reduce((s: number, b: any) => s + Number(b.potential_win || 0), 0);
     const todayBets = betsArr.filter((b: any) => new Date(b.created_at) >= today);
     const todayVolume = todayBets.reduce((s: number, b: any) => s + Number(b.amount || 0), 0);
+    const exposure = betsArr.filter((b: any) => b.result === "pending").reduce((s: number, b: any) => s + Number(b.potential_win || 0), 0);
 
     setStats({
       totalUsers: users.count || (users.data || []).length,
       totalMatches: matchesArr.length, totalBets: betsArr.length, totalBetVolume,
       liveMatches, pendingBets, totalWinnings,
       totalPlatformRevenue: totalBetVolume - totalWinnings,
-      todayBets: todayBets.length, todayVolume,
+      todayBets: todayBets.length, todayVolume, exposure,
     });
 
     const days: DailyVolume[] = Array.from({ length: 7 }, (_, i) => {
@@ -149,18 +150,19 @@ const AdminDashboard = () => {
   };
 
   const mainCards = stats ? [
-    { label: "Total Users",   value: stats.totalUsers,                              icon: Users,      color: "text-primary",  bg: "bg-primary/10",  border: "border-primary/20" },
-    { label: "Total Matches", value: stats.totalMatches,                            icon: Trophy,     color: "text-amber-400",  bg: "bg-amber-400/10",  border: "border-amber-400/20" },
-    { label: "Total Bets",    value: stats.totalBets,                               icon: TrendingUp, color: "text-cyan-400",   bg: "bg-cyan-400/10",   border: "border-cyan-400/20" },
-    { label: "Bet Volume",    value: `₹${stats.totalBetVolume.toLocaleString()}`,   icon: Coins,      color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20" },
-    { label: "Live Matches",  value: stats.liveMatches,                             icon: Activity,   color: "text-red-400",    bg: "bg-red-400/10",    border: "border-red-400/20" },
-    { label: "Pending Bets",  value: stats.pendingBets,                             icon: Clock,      color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20" },
+    { label: "Players",         value: stats.totalUsers,                              icon: Users,      color: "text-primary",    bg: "bg-primary/10",    border: "border-primary/20",    sub: "registered users" },
+    { label: "Total Matches",   value: stats.totalMatches,                            icon: Trophy,     color: "text-amber-400",  bg: "bg-amber-400/10",  border: "border-amber-400/20",  sub: "all time" },
+    { label: "Total Bets",      value: stats.totalBets,                               icon: TrendingUp, color: "text-cyan-400",   bg: "bg-cyan-400/10",   border: "border-cyan-400/20",   sub: "all time" },
+    { label: "Money Staked",    value: `₹${stats.totalBetVolume.toLocaleString()}`,   icon: Coins,      color: "text-yellow-400", bg: "bg-yellow-400/10", border: "border-yellow-400/20", sub: "total bet amount" },
+    { label: "Live Now",        value: stats.liveMatches,                             icon: Activity,   color: "text-red-400",    bg: "bg-red-400/10",    border: "border-red-400/20",    sub: "active matches" },
+    { label: "Open Bets",       value: stats.pendingBets,                             icon: Clock,      color: "text-purple-400", bg: "bg-purple-400/10", border: "border-purple-400/20", sub: "awaiting result" },
   ] : [];
 
   const secondaryCards = stats ? [
-    { label: "Winnings Paid Out",  value: `₹${stats.totalWinnings.toLocaleString()}`,        icon: ArrowUpRight,   color: "text-emerald-400", sub: "total paid to winners" },
-    { label: "Platform Revenue",   value: `₹${stats.totalPlatformRevenue.toLocaleString()}`, icon: ArrowDownRight, color: "text-primary",      sub: "volume minus winnings" },
-    { label: "Today's Activity",   value: stats.todayBets,                                   icon: TrendingUp,     color: "text-cyan-400",    sub: `₹${stats.todayVolume.toLocaleString()} volume today` },
+    { label: "Paid to Winners", value: `₹${stats.totalWinnings.toLocaleString()}`,        icon: ArrowUpRight,   color: "text-emerald-400", sub: "total given out to users" },
+    { label: "House Profit",    value: `₹${stats.totalPlatformRevenue.toLocaleString()}`, icon: ArrowDownRight, color: "text-primary",      sub: "staked minus paid out" },
+    { label: "Today",           value: stats.todayBets,                                   icon: TrendingUp,     color: "text-cyan-400",    sub: `₹${stats.todayVolume.toLocaleString()} staked today` },
+    { label: "Exposure",        value: `₹${stats.exposure.toLocaleString()}`,             icon: AlertTriangle,  color: "text-orange-400",  sub: "max payout if all open bets win" },
   ] : [];
 
   const rankColors = [
@@ -235,13 +237,14 @@ const AdminDashboard = () => {
           : mainCards.map((c) => (
               <Card key={c.label} className={`border ${c.border} bg-card/60 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5`}>
                 <CardContent className="p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{c.label}</p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">{c.label}</p>
                     <div className={`${c.bg} ${c.border} border rounded-lg p-2`}>
                       <c.icon className={`h-4 w-4 ${c.color}`} />
                     </div>
                   </div>
                   <p className={`text-2xl font-extrabold ${c.color} tabular-nums`}>{c.value}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">{(c as any).sub}</p>
                 </CardContent>
               </Card>
             ))
@@ -249,7 +252,7 @@ const AdminDashboard = () => {
       </div>
 
       {/* Secondary cards */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {!stats
           ? Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} className="border border-border/40 bg-card/60">

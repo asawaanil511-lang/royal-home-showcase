@@ -9,7 +9,7 @@ import {
   Plus, CheckCircle, Trash2, X, Edit2, Save, AlertTriangle,
   Eye, EyeOff, Clock, Image as ImageIcon, Database, Copy, Upload,
   Loader2, Trophy, TrendingUp, Users as UsersIcon, ChevronDown, ChevronUp,
-  Zap, Calendar, BarChart2, CheckSquare, Square,
+  Zap, Calendar, BarChart2, CheckSquare, Square, Search,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -61,6 +61,7 @@ const AdminMatches = () => {
   const [editData, setEditData] = useState<Partial<DBMatch>>({});
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [dateFilter, setDateFilter] = useState<string>("");
+  const [searchQuery, setSearchQuery] = useState<string>("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [confirmAction, setConfirmAction] = useState<{ type: string; matchId: string; label: string } | null>(null);
   const [showMigrationPanel, setShowMigrationPanel] = useState(false);
@@ -345,7 +346,9 @@ const AdminMatches = () => {
   const filteredMatches = matches.filter((m) => {
     const statusOk = statusFilter === "all" || m.status === statusFilter;
     const dateOk = !dateFilter || m.match_date.slice(0, 10) === dateFilter;
-    return statusOk && dateOk;
+    const q = searchQuery.trim().toLowerCase();
+    const searchOk = !q || m.team_a_name.toLowerCase().includes(q) || m.team_b_name.toLowerCase().includes(q) || (m.match_title || "").toLowerCase().includes(q);
+    return statusOk && dateOk && searchOk;
   });
 
   const statusTabs = ["all", "upcoming", "live", "closed", "cancelled"];
@@ -405,16 +408,30 @@ const AdminMatches = () => {
             })}
           </div>
 
-          {/* Date filter */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-3 py-2">
+          {/* Search + Date filter row */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative flex-1 min-w-[180px]">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search team or title…"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-8 h-9 bg-secondary/50 border-border/50 text-xs"
+              />
+              {searchQuery && (
+                <button onClick={() => setSearchQuery("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2 rounded-xl border border-border/50 bg-secondary/50 px-3 py-2 h-9">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)}
                 className="bg-transparent text-xs text-foreground outline-none cursor-pointer" />
             </div>
-            {dateFilter && (
+            {(dateFilter || searchQuery) && (
               <>
-                <button onClick={() => setDateFilter("")} className="text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-lg border border-border/50 bg-secondary/50 transition-colors">Clear</button>
+                <button onClick={() => { setDateFilter(""); setSearchQuery(""); }} className="text-xs text-muted-foreground hover:text-foreground px-2.5 py-1.5 rounded-lg border border-border/50 bg-secondary/50 transition-colors h-9">Clear</button>
                 <span className="text-xs text-primary font-semibold">{filteredMatches.length} match{filteredMatches.length !== 1 ? "es" : ""}</span>
               </>
             )}

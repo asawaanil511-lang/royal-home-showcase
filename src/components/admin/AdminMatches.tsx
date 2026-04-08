@@ -263,36 +263,37 @@ const AdminMatches = () => {
   };
 
   const handleSetWinner = async (id: string, winner: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    const res = await fetch(apiUrl("/api/admin/settle-match"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ match_id: id, winner }),
-    });
-    const result = await res.json();
-    if (!res.ok || result.error) {
-      toast({ title: "Failed to settle match", description: result.error, variant: "destructive" });
-      return;
+    await (supabase as any).from("matches").update({ winner, status: "closed" }).eq("id", id);
+    const { data: bets } = await (supabase as any).from("bets").select("*").eq("match_id", id).eq("result", "pending");
+    if (bets) {
+      for (const bet of bets as any[]) {
+        const won = bet.team_picked === winner;
+        await (supabase as any).from("bets").update({ result: won ? "won" : "lost", settled_at: new Date().toISOString() }).eq("id", bet.id);
+        if (won) {
+          const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", bet.user_id).single();
+          if (profile) {
+            await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + bet.potential_win }).eq("user_id", bet.user_id);
+          }
+        }
+      }
     }
-    toast({ title: `Match settled! ${result.settled} bet(s) resolved.` });
+    toast({ title: "Match settled!" });
     fetchMatches();
   };
 
   const handleCancel = async (id: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    const res = await fetch(apiUrl("/api/admin/cancel-match"), {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ match_id: id }),
-    });
-    const result = await res.json();
-    if (!res.ok || result.error) {
-      toast({ title: "Failed to cancel match", description: result.error, variant: "destructive" });
-      return;
+    await (supabase as any).from("matches").update({ status: "cancelled", winner: null }).eq("id", id);
+    const { data: bets } = await (supabase as any).from("bets").select("*").eq("match_id", id).eq("result", "pending");
+    if (bets) {
+      for (const bet of bets as any[]) {
+        await (supabase as any).from("bets").update({ result: "cancelled", settled_at: new Date().toISOString() }).eq("id", bet.id);
+        const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", bet.user_id).single();
+        if (profile) {
+          await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + Number(bet.amount) }).eq("user_id", bet.user_id);
+        }
+      }
     }
-    toast({ title: `Match cancelled. ${result.refunded} bet(s) refunded.` });
+    toast({ title: "Match cancelled. Bets refunded." });
     fetchMatches();
   };
 

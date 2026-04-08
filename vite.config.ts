@@ -25,8 +25,7 @@ const API_URL_OVERRIDE =
 
 export default defineConfig(({ mode }) => {
   const API_URL =
-    API_URL_OVERRIDE ||
-    (mode === "production" ? "https://api.betwictossbook.com" : "");
+    API_URL_OVERRIDE || "";
 
   return {
     server: {

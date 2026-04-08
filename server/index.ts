@@ -1015,3 +1015,14 @@ const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   logInfo("startup", `API server running on port ${PORT}`);
 });
+
+// ---- Self-ping to prevent Render free tier from sleeping ----
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+setInterval(async () => {
+  try {
+    const res = await fetch(`${SELF_URL}/api/health`);
+    logInfo("self-ping", `status ${res.status}`);
+  } catch (err) {
+    logError("self-ping", err);
+  }
+}, 4 * 60 * 1000); // every 4 minutes

@@ -1017,7 +1017,15 @@ app.listen(PORT, () => {
 });
 
 // ---- Self-ping to prevent Render free tier from sleeping ----
-const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+// Use the .onrender.com URL directly to bypass the custom domain + Cloudflare.
+// RENDER_EXTERNAL_URL resolves to the custom domain when one is configured,
+// so we build the internal URL from RENDER_SERVICE_NAME instead.
+const RENDER_SERVICE_NAME = process.env.RENDER_SERVICE_NAME || "";
+const SELF_URL = RENDER_SERVICE_NAME
+  ? `https://${RENDER_SERVICE_NAME}.onrender.com`
+  : `http://localhost:${PORT}`;
+
+logInfo("self-ping", `target → ${SELF_URL}/api/health`);
 
 const selfPing = async () => {
   try {

@@ -847,6 +847,71 @@ app.post("/api/admin/settle-match", async (req, res) => {
   }
 });
 
+// ---- Place bet atomically (deduct wallet + insert bet in one transaction) ----
+app.post("/api/place-bet", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+
+    const { match_id, team_picked, amount } = req.body;
+    if (!isValidUUID(match_id)) return res.status(400).json({ error: "Invalid match_id" });
+    if (!["A", "B"].includes(team_picked)) return res.status(400).json({ error: "team_picked must be A or B" });
+    if (!isValidAmount(amount) || Number(amount) < 100) return res.status(400).json({ error: "Minimum bet is ₹100" });
+
+    const betAmount = Number(amount);
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      // Fetch match (lock row to prevent concurrent edits)
+      const matchResult = await client.query(
+        `SELECT id, status, odds_a, odds_b, max_bet FROM public.matches WHERE id = $1 FOR SHARE`,
+        [match_id]
+      );
+      if (matchResult.rowCount === 0) { await client.query("ROLLBACK"); return res.status(404).json({ error: "Match not found" }); }
+      const match = matchResult.rows[0];
+      if (!["upcoming", "live"].includes(match.status)) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Match is not open for betting" }); }
+      if (betAmount > Number(match.max_bet)) { await client.query("ROLLBACK"); return res.status(400).json({ error: `Maximum stake is ₹${match.max_bet}` }); }
+
+      const odds = team_picked === "A" ? Number(match.odds_a) : Number(match.odds_b);
+      const potentialWin = betAmount * odds;
+
+      // Atomically deduct wallet — fails if balance insufficient
+      const walletResult = await client.query(
+        `UPDATE public.profiles
+         SET wallet_balance = wallet_balance - $1
+         WHERE user_id = $2 AND wallet_balance >= $1
+         RETURNING wallet_balance`,
+        [betAmount, userId]
+      );
+      if (walletResult.rowCount === 0) { await client.query("ROLLBACK"); return res.status(400).json({ error: "Insufficient balance" }); }
+
+      // Insert the bet
+      const betResult = await client.query(
+        `INSERT INTO public.bets (user_id, match_id, team_picked, amount, odds, potential_win)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+        [userId, match_id, team_picked, betAmount, odds, potentialWin]
+      );
+
+      await client.query("COMMIT");
+      return res.json({
+        success: true,
+        bet_id: betResult.rows[0].id,
+        wallet_balance: Number(walletResult.rows[0].wallet_balance),
+        odds,
+        potential_win: potentialWin,
+      });
+    } catch (err) {
+      await client.query("ROLLBACK");
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    return res.status(500).json({ error: err.message });
+  }
+});
+
 // ---- Cancel bet (uses Supabase admin client to bypass RLS safely) ----
 app.post("/api/cancel-bet", async (req, res) => {
   try {

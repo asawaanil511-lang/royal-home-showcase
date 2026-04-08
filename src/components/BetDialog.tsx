@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Wallet, RotateCcw,
@@ -136,22 +137,28 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
     if (betAmount > balance) { toast({ title: "Insufficient balance", variant: "destructive" }); return; }
 
     setPlacing(true);
-    await supabase.from("profiles").update({ wallet_balance: balance - betAmount }).eq("user_id", user.id);
-    const potentialWin = betAmount * selectedOdds;
-    const { error } = await supabase.from("bets").insert({
-      user_id: user.id, match_id: match.id, team_picked: selectedTeam,
-      amount: betAmount, odds: selectedOdds, potential_win: potentialWin,
-    });
-    if (error) {
-      await supabase.from("profiles").update({ wallet_balance: balance }).eq("user_id", user.id);
-      toast({ title: "Play failed", description: error.message, variant: "destructive" });
-      setPlacing(false); return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      const res = await fetch(apiUrl("/api/place-bet"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ match_id: match.id, team_picked: selectedTeam, amount: betAmount }),
+      });
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        toast({ title: "Play failed", description: result.error, variant: "destructive" });
+        setPlacing(false); return;
+      }
+      await refreshProfile();
+      onBetPlaced?.();
+      setPlacing(false);
+      setConfirmedBet({ team: selectedTeam, teamName: selectedTeamName, amount: betAmount, potentialWin: result.potential_win, odds: result.odds });
+      setStep(3);
+    } catch (err: any) {
+      toast({ title: "Play failed", description: err.message, variant: "destructive" });
+      setPlacing(false);
     }
-    await refreshProfile();
-    onBetPlaced?.();
-    setPlacing(false);
-    setConfirmedBet({ team: selectedTeam, teamName: selectedTeamName, amount: betAmount, potentialWin, odds: selectedOdds });
-    setStep(3);
   };
 
   const amountOk = betAmount >= 100 && betAmount <= balance && betAmount <= match.maxBet;

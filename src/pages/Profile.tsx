@@ -212,16 +212,27 @@ const Profile = () => {
   const handleChangePassword = async () => {
     if (!newPw || !confirmPw) { toast({ title: "Fill in all fields", variant: "destructive" }); return; }
     if (newPw !== confirmPw) { toast({ title: "Passwords don't match", variant: "destructive" }); return; }
-    if (newPw.length < 6) { toast({ title: "Password must be at least 6 characters", variant: "destructive" }); return; }
+    if (newPw.length < 8) { toast({ title: "Password must be at least 8 characters", variant: "destructive" }); return; }
 
     setChangingPw(true);
-    const { error } = await supabase.auth.updateUser({ password: newPw });
-    if (error) {
-      toast({ title: "Failed to change password", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Password changed!", description: "You'll be signed out shortly." });
-      setPasswordDialogOpen(false);
-      setTimeout(async () => { await supabase.auth.signOut(); navigate("/login"); }, 1500);
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const token = currentSession?.access_token;
+      const res = await fetch(apiUrl("/api/change-password"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ new_password: newPw }),
+      });
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        toast({ title: "Failed to change password", description: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "Password changed!", description: "You'll be signed out shortly." });
+        setPasswordDialogOpen(false);
+        setTimeout(async () => { await supabase.auth.signOut(); navigate("/login"); }, 1500);
+      }
+    } catch (err: any) {
+      toast({ title: "Failed to change password", description: err.message, variant: "destructive" });
     }
     setChangingPw(false);
   };

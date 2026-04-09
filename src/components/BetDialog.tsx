@@ -149,6 +149,10 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
     }
     await refreshProfile();
     onBetPlaced?.();
+    toast({
+      title: "Bet placed successfully!",
+      description: `You bet ₹${betAmount.toLocaleString()} on ${selectedTeamName}`,
+    });
     setPlacing(false);
     setConfirmedBet({ team: selectedTeam, teamName: selectedTeamName, amount: betAmount, potentialWin, odds: selectedOdds });
     setStep(3);

@@ -63,7 +63,7 @@ const Login = () => {
         return;
       }
       localStorage.setItem("stb_remember_user", username);
-      toast({ title: "Welcome! 🏆", description: `Logged in as ${username}` });
+      toast({ title: "Login successful", description: "You have been logged in successfully." });
       navigate("/matches", { replace: true });
     } catch (err: any) {
       toast({ title: "Something went wrong", description: err.message, variant: "destructive" });

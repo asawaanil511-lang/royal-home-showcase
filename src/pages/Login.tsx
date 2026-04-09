@@ -111,9 +111,9 @@ const Login = () => {
 
       {/* ── Main card ── */}
       <motion.div
-        initial={{ opacity: 0, y: 40, scale: 0.96 }}
+        initial={{ opacity: 0, y: 20, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         className="relative w-full max-w-xs z-10"
       >
         <div className="rounded-3xl border border-white/25 bg-white/90 dark:bg-[hsl(270_80%_8%_/_0.94)] backdrop-blur-2xl p-4 shadow-2xl">
@@ -122,9 +122,9 @@ const Login = () => {
           <div className="flex flex-col items-center mb-3">
             {/* Live badge */}
             <motion.div
-              initial={{ opacity: 0, y: -10 }}
+              initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.05 }}
               className="mb-2 flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-bold tracking-widest text-primary"
             >
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
@@ -156,9 +156,9 @@ const Login = () => {
 
             {/* Brand name */}
             <motion.div
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
+              transition={{ delay: 0.08 }}
               className="text-center"
             >
               <h1 className="text-xl font-extrabold tracking-tight leading-none mb-0.5 text-foreground">
@@ -343,7 +343,7 @@ const Login = () => {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+          transition={{ delay: 0.15 }}
           className="text-center text-[10px] mt-4 tracking-widest font-medium text-white/70"
         >
           BETWIC TOSS BOOK © 2026 · PLAY RESPONSIBLY

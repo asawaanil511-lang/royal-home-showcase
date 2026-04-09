@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Radio, Wifi, RefreshCw, Clock, Swords, XCircle } from "lucide-react";
+import { Radio, Wifi, RefreshCw, Swords } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import MatchCard, { UserBet } from "@/components/MatchCard";
@@ -11,17 +11,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-type Tab = "live" | "closed";
-
 const Matches = () => {
-  const [tab, setTab] = useState<Tab>("live");
   const [betMatch, setBetMatch] = useState<Match | null>(null);
   const [betTeam, setBetTeam] = useState<"A" | "B" | undefined>(undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
-  const [userBets, setUserBets] = useState<Map<string, UserBet>>(new Map()); // matchId → UserBet
+  const [userBets, setUserBets] = useState<Map<string, UserBet>>(new Map());
   const [cancellingBetId, setCancellingBetId] = useState<string | null>(null);
   const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
@@ -72,7 +69,6 @@ const Matches = () => {
             potential_win: Number(b.potential_win),
           });
         } else {
-          // Aggregate multiple pending bets on same match — sum amounts and collect all IDs
           const existing = map.get(b.match_id)!;
           map.set(b.match_id, {
             ...existing,
@@ -109,7 +105,6 @@ const Matches = () => {
     fetchUserBets();
     if (!user) return;
 
-    // Realtime on bets table so match card updates when bet is placed/cancelled
     const ch = (supabase as any)
       .channel(`user-bets-matches-${user.id}`)
       .on("postgres_changes", {
@@ -135,14 +130,12 @@ const Matches = () => {
     const betIds = betEntry.ids;
     const totalAmount = betEntry.amount;
 
-    // Use first bet ID for the loading indicator (isCancellingThis checks ids.includes)
     setCancellingBetId(betIds[0]);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token;
       if (!token) { toast({ title: "Not authenticated", variant: "destructive" }); return; }
 
-      // Cancel ALL pending bets for this match in parallel
       const results = await Promise.all(
         betIds.map((id) =>
           fetch(apiUrl("/api/cancel-bet"), {
@@ -164,7 +157,6 @@ const Matches = () => {
         return;
       }
 
-      // Remove entire match entry from local map — realtime will re-fetch for the remaining state
       setUserBets((prev) => {
         const next = new Map(prev);
         next.delete(matchId);
@@ -183,23 +175,18 @@ const Matches = () => {
     }
   };
 
-  const filteredRaw = matches
-    .filter((m) => tab === "live" ? m.status === "live" || m.status === "upcoming" : m.status === "closed")
+  // Only show live + upcoming — closed matches are hidden
+  const filtered = matches
+    .filter((m) => m.status === "live" || m.status === "upcoming")
     .sort((a, b) => {
-      if (tab === "live") {
-        const aTime = a.closingTime ? new Date(a.closingTime).getTime() : Infinity;
-        const bTime = b.closingTime ? new Date(b.closingTime).getTime() : Infinity;
-        if (aTime !== bTime) return aTime - bTime;
-        const statusOrder: Record<string, number> = { live: 0, upcoming: 1 };
-        return (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
-      }
-      return 0;
+      const aTime = a.closingTime ? new Date(a.closingTime).getTime() : Infinity;
+      const bTime = b.closingTime ? new Date(b.closingTime).getTime() : Infinity;
+      if (aTime !== bTime) return aTime - bTime;
+      const statusOrder: Record<string, number> = { live: 0, upcoming: 1 };
+      return (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
     });
 
-  const filtered = filteredRaw;
   const liveCount = matches.filter((m) => m.status === "live").length;
-  const upcomingCount = matches.filter((m) => m.status === "upcoming").length;
-  const closedCount = matches.filter((m) => m.status === "closed").length;
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
@@ -210,65 +197,51 @@ const Matches = () => {
         <div className="pointer-events-none absolute -right-40 bottom-0 h-[280px] w-[280px] rounded-full bg-accent/6 blur-[100px]" />
 
         <div className="relative container mx-auto px-4">
-          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
-              <Radio className="h-4 w-4" />
-              Live Toss Arena
-              {realtimeConnected && (
-                <span className="flex items-center gap-1 text-xs text-emerald-400">
-                  <Wifi className="h-3 w-3" /> Live
-                </span>
-              )}
-            </div>
-            <h1 className="mb-2 text-3xl font-extrabold text-foreground md:text-4xl">
-              Real-Time <span className="text-neon">Action</span>
-            </h1>
-            <p className="mx-auto max-w-md text-muted-foreground text-sm">
-              Live odds, instant updates. Your next win is one match away.
-            </p>
-          </motion.div>
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-4 py-1.5 text-sm font-medium text-primary">
+            <Radio className="h-4 w-4" />
+            Live Toss Arena
+            {realtimeConnected && (
+              <span className="flex items-center gap-1 text-xs text-emerald-400">
+                <Wifi className="h-3 w-3" /> Live
+              </span>
+            )}
+          </div>
+          <h1 className="mb-2 text-3xl font-extrabold text-foreground md:text-4xl">
+            Real-Time <span className="text-neon">Action</span>
+          </h1>
+          <p className="mx-auto max-w-md text-muted-foreground text-sm">
+            Live odds, instant updates. Your next win is one match away.
+          </p>
         </div>
       </section>
 
       <div className="container mx-auto px-4 pb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-          className="mb-6 flex items-center justify-center gap-2"
-        >
-          {[
-            { key: "live" as Tab, icon: Swords, label: "Active", count: liveCount + upcomingCount, live: liveCount > 0 },
-            { key: "closed" as Tab, icon: XCircle, label: "Closed", count: closedCount, live: false },
-          ].map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`relative flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-bold transition-all ${
-                tab === t.key
-                  ? "gradient-neon-primary text-primary-foreground shadow-neon"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-              }`}
-            >
-              <t.icon className="h-4 w-4" />
-              {t.label}
-              {t.count > 0 && (
-                <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full text-[10px] font-bold px-1 ${
-                  tab === t.key ? "bg-white/20 text-white" : "bg-destructive text-white"
-                }`}>
-                  {t.count}
-                </span>
-              )}
-              {t.live && tab === t.key && (
-                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" />
-              )}
-            </button>
-          ))}
+        {/* Status bar — shows counts and refresh, no closed tab */}
+        <div className="mb-6 flex items-center justify-center gap-3">
+          <div className="flex items-center gap-2 rounded-xl border border-primary/25 bg-primary/8 px-5 py-2.5">
+            <Swords className="h-4 w-4 text-primary" />
+            <span className="text-sm font-bold text-foreground">Active Matches</span>
+            {filtered.length > 0 && (
+              <span className={`flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                liveCount > 0 ? "bg-red-500 text-white" : "bg-primary/20 text-primary"
+              }`}>
+                {filtered.length}
+              </span>
+            )}
+            {liveCount > 0 && (
+              <span className="flex items-center gap-1 text-[11px] font-bold text-red-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-red-500 animate-pulse" />
+                {liveCount} LIVE
+              </span>
+            )}
+          </div>
           <button
             onClick={() => { fetchMatches(); fetchUserBets(); }}
             className="flex items-center justify-center rounded-xl p-2.5 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground border border-border/50"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
-        </motion.div>
+        </div>
 
         {loading ? (
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -282,10 +255,11 @@ const Matches = () => {
               {filtered.map((match, i) => (
                 <motion.div
                   key={match.id}
-                  initial={{ opacity: 0, y: 20, scale: 0.97 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, scale: 0.95 }}
-                  transition={{ delay: i * 0.05, type: "spring", stiffness: 130 }}
+                  transition={{ delay: i * 0.03, duration: 0.2 }}
+                  className="will-change-transform"
                 >
                   <MatchCard
                     match={match}
@@ -300,20 +274,17 @@ const Matches = () => {
           </AnimatePresence>
         ) : (
           <motion.div
-            initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2 }}
             className="flex flex-col items-center justify-center py-24 gap-5"
           >
             <div className="flex h-20 w-20 items-center justify-center rounded-2xl border border-border/50 bg-card text-5xl shadow-card">
               🏏
             </div>
             <div className="text-center">
-              <h3 className="text-xl font-bold text-foreground mb-2">
-                {tab === "live" ? "No Active Matches" : "No Closed Matches"}
-              </h3>
+              <h3 className="text-xl font-bold text-foreground mb-2">No Active Matches</h3>
               <p className="text-muted-foreground text-sm max-w-xs">
-                {tab === "live"
-                  ? "No live or upcoming matches right now. Check back soon!"
-                  : "No closed matches to display yet."}
+                No live or upcoming matches right now. Check back soon!
               </p>
             </div>
           </motion.div>

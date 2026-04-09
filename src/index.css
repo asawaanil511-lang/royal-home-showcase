@@ -216,15 +216,25 @@
 
   html {
     scroll-behavior: smooth;
+    /* Prevent 300ms tap delay on mobile */
+    touch-action: manipulation;
   }
 
   body {
     @apply bg-background text-foreground antialiased;
     font-family: 'Space Grotesk', system-ui, sans-serif;
+    /* Promote body to its own composite layer for smoother scrolling */
+    -webkit-overflow-scrolling: touch;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Rajdhani', 'Space Grotesk', system-ui, sans-serif;
+  }
+
+  /* Instant tap response on all interactive elements */
+  button, a, [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
   }
 }
 

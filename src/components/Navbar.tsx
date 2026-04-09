@@ -75,7 +75,7 @@ const Navbar = () => {
 
   return (
     <>
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 dark:bg-zinc-950/95 backdrop-blur-xl shadow-sm">
+    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-xl shadow-sm">
       <div className="h-0.5 w-full bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
       <div className="container mx-auto flex h-16 items-center justify-between px-4">

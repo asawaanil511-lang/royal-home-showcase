@@ -116,7 +116,7 @@ const Login = () => {
         transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
         className="relative w-full max-w-xs z-10"
       >
-        <div className="rounded-3xl border border-white/25 bg-white/88 dark:bg-zinc-900/90 backdrop-blur-2xl p-4 shadow-2xl">
+        <div className="rounded-3xl border border-white/25 bg-white/90 dark:bg-[hsl(270_80%_8%_/_0.94)] backdrop-blur-2xl p-4 shadow-2xl">
 
           {/* ── Logo + Brand ── */}
           <div className="flex flex-col items-center mb-3">

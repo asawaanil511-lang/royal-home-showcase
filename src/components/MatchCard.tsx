@@ -81,7 +81,7 @@ const ImageLightbox = ({ src, onClose }: { src: string; onClose: () => void }) =
     >
       <motion.div
         initial={{ scale: 0.85, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.85, opacity: 0 }}
-        transition={{ type: "spring", stiffness: 280, damping: 22 }}
+        transition={{ type: "spring", stiffness: 300, damping: 24 }}
         className="relative max-w-2xl w-full"
         onClick={(e) => e.stopPropagation()}
       >
@@ -98,8 +98,6 @@ const ImageLightbox = ({ src, onClose }: { src: string; onClose: () => void }) =
     document.body
   );
 };
-
-// ─── Notification Bell Menu ──────────────────────────────────────────────────
 
 type NotifState = { notifyLive: boolean; notifyResult: boolean };
 
@@ -129,7 +127,7 @@ const BellMenu = ({ match, onClose }: { match: Match; onClose: () => void }) => 
       initial={{ opacity: 0, scale: 0.9, y: -6 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: -6 }}
-      transition={{ duration: 0.15 }}
+      transition={{ duration: 0.12 }}
       className="absolute right-0 top-10 z-50 w-52 rounded-2xl border border-border/70 bg-popover shadow-2xl overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
@@ -138,18 +136,8 @@ const BellMenu = ({ match, onClose }: { match: Match; onClose: () => void }) => 
       </div>
 
       {[
-        {
-          icon: Bell,
-          label: "Notify when Live",
-          sub: "Alert when betting opens",
-          field: "notifyLive" as keyof NotifState,
-        },
-        {
-          icon: Trophy,
-          label: "Notify on Result",
-          sub: "Alert when toss is settled",
-          field: "notifyResult" as keyof NotifState,
-        },
+        { icon: Bell, label: "Notify when Live", sub: "Alert when betting opens", field: "notifyLive" as keyof NotifState },
+        { icon: Trophy, label: "Notify on Result", sub: "Alert when toss is settled", field: "notifyResult" as keyof NotifState },
       ].map((item) => (
         <button
           key={item.field}
@@ -187,8 +175,6 @@ const BellMenu = ({ match, onClose }: { match: Match; onClose: () => void }) => 
   );
 };
 
-// ─── MatchCard ─────────────────────────────────────────────────────────────────
-
 const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: MatchCardProps) => {
   const isClosed = match.status === "closed";
   const isLive = match.status === "live";
@@ -210,26 +196,29 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
 
   const hasBet = !!userBet && isOpen;
   const isCancellingThis = !!(cancellingBetId && userBet?.ids?.includes(cancellingBetId));
-  const pickedTeamName = userBet?.team_picked === "A" ? match.teamA.name : match.teamB.name;
   const potentialWin = userBet ? Number(userBet.potential_win) : 0;
   const profit = potentialWin - (userBet ? Number(userBet.amount) : 0);
 
   const tossRate = match.oddsA === match.oddsB ? `${match.oddsA}x` : `${match.oddsA}x / ${match.oddsB}x`;
   const endTimeLabel = match.closingTime ? formatEndTime(match.closingTime) : match.time ? match.time.toUpperCase() : "—";
-  const accentColor = isLive ? "#ef4444" : hasBet ? "#00d4aa" : "#00b4ff";
+
+  // ── Purple-only accent system ───────────────────────────────────
+  // Live = red glow, everything else = purple palette
+  const glowColor = isLive ? "rgba(239,68,68,0.20)" : "rgba(157,76,204,0.15)";
   const borderColor = isLive
-    ? hasBet ? "rgba(0,212,170,0.35)" : "rgba(239,68,68,0.22)"
+    ? hasBet ? "rgba(157,76,204,0.45)" : "rgba(239,68,68,0.28)"
     : isUpcoming
-    ? hasBet ? "rgba(0,212,170,0.25)" : "rgba(0,180,255,0.14)"
+    ? hasBet ? "rgba(157,76,204,0.40)" : "rgba(157,76,204,0.22)"
     : "hsl(var(--border))";
+  const topLineGradient = isLive
+    ? "linear-gradient(90deg, transparent, rgba(239,68,68,0.70), transparent)"
+    : "linear-gradient(90deg, transparent, rgba(157,76,204,0.65), transparent)";
 
   // Close bell menu on outside click
   useEffect(() => {
     if (!bellOpen) return;
     const handler = (e: MouseEvent) => {
-      if (bellRef.current && !bellRef.current.contains(e.target as Node)) {
-        setBellOpen(false);
-      }
+      if (bellRef.current && !bellRef.current.contains(e.target as Node)) setBellOpen(false);
     };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
@@ -244,27 +233,25 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
   return (
     <>
       <motion.div
-        whileHover={!isClosed ? { y: -3, scale: 1.004 } : {}}
-        transition={{ type: "spring", stiffness: 300, damping: 24 }}
-        className={`relative overflow-hidden rounded-2xl ${isClosed ? "opacity-70" : ""}`}
+        whileHover={!isClosed ? { y: -3, scale: 1.003 } : {}}
+        transition={{ type: "spring", stiffness: 400, damping: 28 }}
+        className={`relative overflow-hidden rounded-2xl will-change-transform ${isClosed ? "opacity-65" : ""}`}
         style={{
           background: "hsl(var(--card))",
           border: `1px solid ${borderColor}`,
-          boxShadow: !isClosed ? `0 0 28px ${accentColor}0d` : "none",
+          boxShadow: !isClosed ? `0 0 32px ${glowColor}` : "none",
         }}
       >
-        {/* top accent line */}
-        <div className="h-[2px] w-full" style={{
-          background: `linear-gradient(90deg, transparent, ${accentColor}99, transparent)`,
-        }} />
+        {/* Top accent line — purple or red for live */}
+        <div className="h-[2px] w-full" style={{ background: topLineGradient }} />
 
-        {/* ── Timer + Bell row ─────────────────────────────── */}
+        {/* ── Timer + Bell row ───────────────────────────── */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
           {closingMs !== null && closingMs > 0 ? (
             <motion.span
               key={closingSoon ? "urgent" : "normal"}
               className="flex items-center gap-1.5 text-[13px] font-bold tracking-widest tabular-nums"
-              style={{ color: closingSoon ? "#ef4444" : "#e91e8c" }}
+              style={{ color: closingSoon ? "#ef4444" : "hsl(var(--primary))" }}
               animate={closingSoon ? { opacity: [1, 0.5, 1] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
             >
@@ -272,7 +259,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
               {formatCountdown(closingMs)}
             </motion.span>
           ) : isLive ? (
-            <span className="flex items-center gap-2 text-[13px] font-bold" style={{ color: "#ef4444" }}>
+            <span className="flex items-center gap-2 text-[13px] font-bold text-red-500">
               <span className="relative flex h-2 w-2">
                 <span className="absolute h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
                 <span className="relative h-2 w-2 rounded-full bg-red-500" />
@@ -280,7 +267,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
               LIVE NOW
             </span>
           ) : isUpcoming ? (
-            <span className="flex items-center gap-1.5 text-[13px] font-bold" style={{ color: "#00b4ff" }}>
+            <span className="flex items-center gap-1.5 text-[13px] font-bold text-primary">
               <Clock className="h-3.5 w-3.5" />
               UPCOMING
             </span>
@@ -309,14 +296,14 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           </div>
         </div>
 
-        {/* ── Match title ────────────────────────────────── */}
+        {/* ── Match title ─────────────────────────────────── */}
         {match.matchTitle && (
           <div className="px-4 pb-2">
             <p className="text-sm font-extrabold tracking-wide leading-snug text-foreground">{match.matchTitle}</p>
           </div>
         )}
 
-        {/* ── Match image thumbnail ──────────────────────── */}
+        {/* ── Match image thumbnail ────────────────────────── */}
         {hasImage && (
           <div className="px-4 pb-3">
             <div
@@ -342,7 +329,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           </div>
         )}
 
-        {/* ── Team pills ─────────────────────────────────── */}
+        {/* ── Team pills ──────────────────────────────────── */}
         <div className="space-y-2 px-4 pb-3">
           {[
             { team: "A" as const, name: match.teamA.name },
@@ -357,19 +344,19 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
                 <div
                   role={!isClosed && !hasBet ? "button" : undefined}
                   onClick={!isClosed && !hasBet ? () => onBet(match, t.team) : undefined}
-                  className={`flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-200 ${
+                  className={`flex items-center justify-between rounded-xl px-4 py-3 transition-all duration-150 ${
                     isLoser ? "opacity-25" : ""
-                  } ${!isClosed && !hasBet ? "cursor-pointer hover:border-blue-400/40 hover:bg-blue-500/10 active:scale-[0.98]" : ""}`}
+                  } ${!isClosed && !hasBet ? "cursor-pointer hover:border-primary/40 hover:bg-primary/8 active:scale-[0.98]" : ""}`}
                   style={{
                     background: isWinner
                       ? "rgba(234,179,8,0.11)"
                       : isPicked
-                      ? "rgba(0,212,170,0.10)"
+                      ? "rgba(157,76,204,0.12)"
                       : "hsl(var(--secondary))",
                     border: isWinner
                       ? "1px solid rgba(234,179,8,0.30)"
                       : isPicked
-                      ? "1px solid rgba(0,212,170,0.35)"
+                      ? "1px solid rgba(157,76,204,0.40)"
                       : "1px solid hsl(var(--border)/0.5)",
                   }}
                 >
@@ -378,8 +365,14 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
                       {t.name}
                     </span>
                     {isPicked && (
-                      <span className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-                        style={{ background: "rgba(0,212,170,0.2)", color: "#00d4aa", border: "1px solid rgba(0,212,170,0.3)" }}>
+                      <span
+                        className="shrink-0 inline-flex items-center gap-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-full"
+                        style={{
+                          background: "rgba(157,76,204,0.20)",
+                          color: "hsl(var(--primary))",
+                          border: "1px solid rgba(157,76,204,0.35)",
+                        }}
+                      >
                         YOUR PICK
                       </span>
                     )}
@@ -388,23 +381,40 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
                     <Trophy className="h-4 w-4 shrink-0 text-yellow-400 drop-shadow-[0_0_6px_rgba(234,179,8,0.7)]" />
                   ) : isPicked ? (
                     <div className="flex items-center gap-1 shrink-0">
-                      <IndianRupee className="h-3 w-3 text-[#00d4aa]" />
-                      <span className="text-sm font-extrabold tabular-nums" style={{ color: "#00d4aa" }}>
+                      <IndianRupee className="h-3 w-3 text-primary" />
+                      <span className="text-sm font-extrabold tabular-nums text-primary">
                         {Number(userBet!.amount).toLocaleString()}
                       </span>
                     </div>
                   ) : !isClosed && !hasBet ? (
-                    <span className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full shrink-0"
-                      style={{ background: "linear-gradient(135deg,#00b4ff,#0055ff)", boxShadow: "0 2px 8px rgba(0,180,255,0.35)" }}>
+                    <span
+                      className="text-[10px] font-bold text-white px-2.5 py-1 rounded-full shrink-0"
+                      style={{
+                        background: "linear-gradient(135deg, hsl(277 54% 55%), hsl(273 74% 29%))",
+                        boxShadow: "0 2px 10px rgba(157,76,204,0.40)",
+                      }}
+                    >
                       Choose
                     </span>
                   ) : null}
                 </div>
+
+                {/* VS divider — purple */}
                 {idx === 0 && (
                   <div className="flex justify-center py-1">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full"
-                      style={{ border: "1.5px solid rgba(0,180,255,0.35)", background: "rgba(0,180,255,0.08)" }}>
-                      <span className="text-[11px] font-bold" style={{ color: "rgba(0,180,255,0.70)" }}>vs</span>
+                    <div
+                      className="flex h-7 w-7 items-center justify-center rounded-full"
+                      style={{
+                        border: "1.5px solid rgba(157,76,204,0.38)",
+                        background: "rgba(157,76,204,0.10)",
+                      }}
+                    >
+                      <span
+                        className="text-[11px] font-bold"
+                        style={{ color: "rgba(157,76,204,0.75)" }}
+                      >
+                        vs
+                      </span>
                     </div>
                   </div>
                 )}
@@ -413,7 +423,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           })}
         </div>
 
-        {/* ── Bet summary strip (when user has a bet) ─────── */}
+        {/* ── Bet summary strip ───────────────────────────── */}
         <AnimatePresence>
           {hasBet && userBet && (
             <motion.div
@@ -424,19 +434,22 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
             >
               <div
                 className="rounded-xl px-3 py-2.5 flex items-center justify-between gap-2"
-                style={{ background: "rgba(0,212,170,0.10)", border: "1px solid rgba(0,212,170,0.30)" }}
+                style={{
+                  background: "rgba(157,76,204,0.10)",
+                  border: "1px solid rgba(157,76,204,0.30)",
+                }}
               >
                 <div className="flex items-center gap-3 min-w-0">
-                  <Lock className="h-3.5 w-3.5 text-[#00d4aa] shrink-0" />
+                  <Lock className="h-3.5 w-3.5 text-primary shrink-0" />
                   <div className="min-w-0">
-                    <p className="text-[10px] font-bold text-[#00d4aa]/70 uppercase tracking-widest">Bet Locked</p>
-                    <p className="text-xs font-extrabold text-[#00d4aa] truncate">
+                    <p className="text-[10px] font-bold text-primary/60 uppercase tracking-widest">Bet Locked</p>
+                    <p className="text-xs font-extrabold text-primary truncate">
                       ₹{Number(userBet.amount).toLocaleString()} · Win ₹{potentialWin.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                     </p>
                   </div>
                 </div>
                 <div className="shrink-0 text-right">
-                  <p className="text-[10px] text-zinc-500">Profit</p>
+                  <p className="text-[10px] text-muted-foreground">Profit</p>
                   <p className="text-xs font-extrabold text-emerald-400">+₹{profit.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
@@ -444,15 +457,17 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           )}
         </AnimatePresence>
 
-        {/* ── Winner banner ──────────────────────────────── */}
+        {/* ── Winner banner ───────────────────────────────── */}
         <AnimatePresence>
           {winnerName && (
             <motion.div
               initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden px-4 pb-3"
             >
-              <div className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5"
-                style={{ background: "rgba(234,179,8,0.09)", border: "1px solid rgba(234,179,8,0.22)" }}>
+              <div
+                className="flex items-center justify-center gap-2 rounded-xl px-4 py-2.5"
+                style={{ background: "rgba(234,179,8,0.09)", border: "1px solid rgba(234,179,8,0.22)" }}
+              >
                 <Trophy className="h-4 w-4 shrink-0 text-yellow-400" />
                 <p className="text-xs font-extrabold text-yellow-600 dark:text-yellow-300 tracking-wide">
                   <span className="text-yellow-600/55 font-medium mr-1">Won the toss:</span>
@@ -476,7 +491,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           ))}
         </div>
 
-        {/* ── CTA / Bet Actions ─────────────────────────── */}
+        {/* ── CTA / Bet Actions ───────────────────────────── */}
         <div className="px-4 pb-4 space-y-2">
           {isClosed ? (
             <div className="space-y-1.5">
@@ -496,7 +511,12 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
             <div className="flex gap-2">
               <Button
                 className="flex-1 h-11 text-xs font-extrabold gap-1.5 tracking-wide"
-                style={{ background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)", color: "#fff", border: "none", boxShadow: "0 4px 20px rgba(0,180,255,0.25)" }}
+                style={{
+                  background: "linear-gradient(135deg, hsl(277 54% 55%), hsl(273 74% 29%))",
+                  color: "#fff",
+                  border: "none",
+                  boxShadow: "0 4px 20px rgba(157,76,204,0.35)",
+                }}
                 onClick={() => onBet(match, userBet!.team_picked)}
               >
                 <Plus className="h-4 w-4" /> BET MORE
@@ -515,7 +535,12 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           ) : (
             <Button
               className="w-full h-12 text-sm font-extrabold tracking-[0.12em] transition-all"
-              style={{ background: "linear-gradient(135deg, #00b4ff 0%, #0055ff 100%)", color: "#fff", border: "none", boxShadow: "0 4px 24px rgba(0,180,255,0.28)" }}
+              style={{
+                background: "linear-gradient(135deg, hsl(277 54% 55%) 0%, hsl(273 74% 29%) 100%)",
+                color: "#fff",
+                border: "none",
+                boxShadow: "0 4px 24px rgba(157,76,204,0.40)",
+              }}
               onClick={() => onBet(match)}
             >
               BET &amp; PLAY

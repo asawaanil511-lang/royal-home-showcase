@@ -24,7 +24,7 @@ const safeSet = (key: string, value: string) => {
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    return (safeGet("stb_theme") as Theme) || "light";
+    return (safeGet("stb_theme") as Theme) || "dark";
   });
 
   useEffect(() => {

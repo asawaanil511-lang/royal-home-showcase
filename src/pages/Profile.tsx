@@ -23,6 +23,18 @@ import betwicLogo from "@/assets/betwic-logo.jpg";
 
 const DEMO_USERNAME = "demo";
 
+const formatLastSeen = (iso: string) => {
+  const ms = Date.now() - new Date(iso).getTime();
+  const min = Math.floor(ms / 60000);
+  if (min < 2) return "Active now";
+  if (min < 60) return `Last active about ${min} minute${min === 1 ? "" : "s"} ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `Last active about ${hr} hour${hr === 1 ? "" : "s"} ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `Last active about ${day} day${day === 1 ? "" : "s"} ago`;
+  return `Last active on ${new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`;
+};
+
 const getBrowserInfo = () => {
   const ua = navigator.userAgent;
   let browser = "Browser";
@@ -116,6 +128,7 @@ const Profile = () => {
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
   const [revokingAll, setRevokingAll] = useState(false);
+  const [showAllSessions, setShowAllSessions] = useState(false);
 
   const fetchSessions = async () => {
     if (!user) return;
@@ -374,93 +387,120 @@ const Profile = () => {
             </button>
           </div>
 
-          <div className="rounded-2xl border border-border/50 bg-card overflow-hidden divide-y divide-border/40">
-            {/* Session list */}
-            {sessionsLoading ? (
-              <div className="flex items-center justify-center py-6">
-                <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
-                <span className="ml-2 text-xs text-muted-foreground">Loading sessions…</span>
-              </div>
-            ) : sessions.length === 0 ? (
-              <div className="px-4 py-5 text-center">
-                <p className="text-xs text-muted-foreground">No recorded sessions yet. Sessions are recorded when you log in.</p>
-              </div>
-            ) : (
-              sessions.map((s) => {
-                const isMob = s.device_type === "Mobile";
-                const lastSeen = new Date(s.last_seen);
-                const now = new Date();
-                const diffMs = now.getTime() - lastSeen.getTime();
-                const diffMin = Math.floor(diffMs / 60000);
-                const diffHr = Math.floor(diffMin / 60);
-                const lastSeenLabel = diffMin < 2
-                  ? "Active now"
-                  : diffMin < 60
-                  ? `${diffMin}m ago`
-                  : diffHr < 24
-                  ? `${diffHr}h ago`
-                  : lastSeen.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+          {(() => {
+            if (sessionsLoading) {
+              return (
+                <div className="rounded-2xl border border-border/50 bg-card flex items-center justify-center py-6">
+                  <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-xs text-muted-foreground">Loading sessions…</span>
+                </div>
+              );
+            }
+            if (sessions.length === 0) {
+              return (
+                <div className="rounded-2xl border border-border/50 bg-card px-4 py-5 text-center">
+                  <p className="text-xs text-muted-foreground">No recorded sessions yet. Sessions are recorded when you log in.</p>
+                </div>
+              );
+            }
 
-                return (
-                  <div
-                    key={s.id}
-                    className={`flex items-center gap-3 px-4 py-3 ${s.is_current ? "border-l-2 border-primary" : ""}`}
-                  >
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary">
-                      {isMob
-                        ? <Smartphone className="h-4 w-4 text-muted-foreground" />
-                        : <Monitor className="h-4 w-4 text-muted-foreground" />
-                      }
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm font-semibold text-foreground truncate">
-                          {s.browser} on {s.os}
-                        </p>
-                        {s.is_current && (
+            const current = sessions.find((s) => s.is_current);
+            const others = sessions.filter((s) => !s.is_current);
+
+            const SessionIcon = ({ s }: { s: SessionRecord }) => {
+              const isMob = s.device_type === "Mobile";
+              return (
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary border border-border/40">
+                  {isMob
+                    ? <Smartphone className="h-4 w-4 text-muted-foreground" />
+                    : <Monitor className="h-4 w-4 text-muted-foreground" />
+                  }
+                </div>
+              );
+            };
+
+            return (
+              <div className="space-y-3">
+                {/* Current device — highlighted card */}
+                {current && (
+                  <div className="relative rounded-2xl border border-border/50 bg-card overflow-hidden">
+                    <div className="absolute left-0 top-3 bottom-3 w-1 rounded-r-full bg-blue-500" />
+                    <div className="flex items-center gap-3 px-4 py-3.5 pl-5">
+                      <SessionIcon s={current} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-[15px] font-bold text-foreground truncate">
+                            {current.browser} on {current.os}
+                          </p>
                           <span className="text-[10px] font-bold bg-blue-500 text-white px-2.5 py-0.5 rounded-full shrink-0 tracking-wider shadow-[0_2px_8px_rgba(59,130,246,0.35)]">
                             THIS DEVICE
                           </span>
-                        )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">Active now</p>
                       </div>
-                      <p className={`text-xs mt-0.5 ${diffMin < 2 ? "text-emerald-400" : "text-muted-foreground"}`}>
-                        {lastSeenLabel}
+                    </div>
+                  </div>
+                )}
+
+                {/* View all sessions toggle */}
+                {others.length > 0 && (
+                  <button
+                    onClick={() => setShowAllSessions((v) => !v)}
+                    className="w-full flex items-center justify-between rounded-2xl border border-border/50 bg-card px-4 py-3.5 hover:bg-secondary/50 transition-colors"
+                  >
+                    <span className="text-sm font-semibold text-foreground">
+                      {showAllSessions ? "Hide all sessions" : "View all sessions"}
+                    </span>
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-blue-500">{others.length}</span>
+                      <ChevronRight
+                        className={`h-4 w-4 text-muted-foreground transition-transform ${showAllSessions ? "rotate-90" : ""}`}
+                      />
+                    </span>
+                  </button>
+                )}
+
+                {/* Past sessions list */}
+                {showAllSessions && others.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center gap-3 rounded-2xl border border-border/50 bg-card px-4 py-3.5"
+                  >
+                    <SessionIcon s={s} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[15px] font-bold text-foreground truncate">
+                        {s.browser} on {s.os}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {formatLastSeen(s.last_seen)}
                       </p>
                     </div>
-                    {!s.is_current && (
-                      <button
-                        onClick={() => revokeSession(s.id)}
-                        disabled={revokingId === s.id}
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/15 transition-colors disabled:opacity-40"
-                        title="Revoke this session"
-                      >
-                        {revokingId === s.id
-                          ? <RefreshCw className="h-3 w-3 animate-spin" />
-                          : <Trash2 className="h-3 w-3" />
-                        }
-                      </button>
-                    )}
+                    <button
+                      onClick={() => revokeSession(s.id)}
+                      disabled={revokingId === s.id}
+                      className="shrink-0 text-[11px] font-extrabold tracking-wider text-red-500 hover:text-red-600 disabled:opacity-40 transition-colors px-1"
+                    >
+                      {revokingId === s.id ? "REVOKING…" : "TERMINATE"}
+                    </button>
                   </div>
-                );
-              })
-            )}
+                ))}
 
-            {/* Revoke all others */}
-            {sessions.filter((s) => !s.is_current).length > 0 && (
-              <div className="px-4 py-3">
-                <button
-                  onClick={revokeAllOther}
-                  disabled={revokingAll}
-                  className="flex items-center gap-2 text-xs font-semibold text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
-                >
-                  {revokingAll
-                    ? <><RefreshCw className="h-3 w-3 animate-spin" /> Revoking…</>
-                    : <><AlertTriangle className="h-3 w-3" /> Revoke all other sessions</>
-                  }
-                </button>
+                {/* Revoke all others */}
+                {showAllSessions && others.length > 1 && (
+                  <button
+                    onClick={revokeAllOther}
+                    disabled={revokingAll}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl border border-red-500/25 bg-red-500/5 px-4 py-3 text-xs font-bold text-red-500 hover:bg-red-500/10 transition-colors disabled:opacity-40"
+                  >
+                    {revokingAll
+                      ? <><RefreshCw className="h-3 w-3 animate-spin" /> Terminating all…</>
+                      : <><AlertTriangle className="h-3 w-3" /> Terminate all other sessions</>
+                    }
+                  </button>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
         </motion.div>
 
         {/* Logout */}

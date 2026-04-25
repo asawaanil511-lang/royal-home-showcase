@@ -36,6 +36,7 @@ type DBMatch = {
 type MatchBetStats = {
   total: number; volume: number; teamA: number; teamB: number;
   volumeA: number; volumeB: number; payoutA: number; payoutB: number;
+  pendingCount: number;
 };
 
 const MIGRATION_SQL = `ALTER TABLE matches
@@ -49,6 +50,7 @@ const STATUS_CONFIG: Record<string, { label: string; dot: string; bg: string; te
   live: { label: "LIVE", dot: "bg-red-500 animate-pulse", bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/30" },
   closed: { label: "CLOSED", dot: "bg-gray-500", bg: "bg-secondary", text: "text-muted-foreground", border: "border-border/50" },
   cancelled: { label: "CANCELLED", dot: "bg-purple-500", bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/30" },
+  pending: { label: "PENDING", dot: "bg-amber-500 animate-pulse", bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/40" },
 };
 
 const AdminMatches = () => {
@@ -92,9 +94,10 @@ const AdminMatches = () => {
     setMatches((matchesData as DBMatch[]) || []);
     const statsMap = new Map<string, MatchBetStats>();
     (betsData || []).filter((b: any) => b.result !== "cancelled").forEach((b: any) => {
-      const e = statsMap.get(b.match_id) || { total: 0, volume: 0, teamA: 0, teamB: 0, volumeA: 0, volumeB: 0, payoutA: 0, payoutB: 0 };
+      const e = statsMap.get(b.match_id) || { total: 0, volume: 0, teamA: 0, teamB: 0, volumeA: 0, volumeB: 0, payoutA: 0, payoutB: 0, pendingCount: 0 };
       e.total += 1;
       e.volume += Number(b.amount || 0);
+      if (b.result === "pending") e.pendingCount += 1;
       if (b.team_picked === "A") { e.teamA += 1; e.volumeA += Number(b.amount || 0); e.payoutA += Number(b.potential_win || 0); }
       else { e.teamB += 1; e.volumeB += Number(b.amount || 0); e.payoutB += Number(b.potential_win || 0); }
       statsMap.set(b.match_id, e);
@@ -343,18 +346,33 @@ const AdminMatches = () => {
     setConfirmAction(null);
   };
 
+  // A match is "pending settlement" if it has unsettled bets and no winner declared yet
+  const isPendingSettlement = (m: DBMatch) => {
+    if (m.status === "cancelled") return false;
+    if (m.winner) return false;
+    return (betStats.get(m.id)?.pendingCount ?? 0) > 0;
+  };
+
   const filteredMatches = matches.filter((m) => {
-    const statusOk = statusFilter === "all" || m.status === statusFilter;
+    const statusOk =
+      statusFilter === "all"
+        ? true
+        : statusFilter === "pending"
+          ? isPendingSettlement(m)
+          : m.status === statusFilter;
     const dateOk = !dateFilter || m.match_date.slice(0, 10) === dateFilter;
     const q = searchQuery.trim().toLowerCase();
     const searchOk = !q || m.team_a_name.toLowerCase().includes(q) || m.team_b_name.toLowerCase().includes(q) || (m.match_title || "").toLowerCase().includes(q);
     return statusOk && dateOk && searchOk;
   });
 
-  const statusTabs = ["all", "upcoming", "live", "closed", "cancelled"];
+  const statusTabs = ["all", "pending", "upcoming", "live", "closed", "cancelled"];
   const baseCounted = dateFilter ? matches.filter(m => m.match_date.slice(0, 10) === dateFilter) : matches;
-  const counts = { all: baseCounted.length, upcoming: 0, live: 0, closed: 0, cancelled: 0 };
-  baseCounted.forEach((m) => { if (counts[m.status as keyof typeof counts] !== undefined) counts[m.status as keyof typeof counts]++; });
+  const counts = { all: baseCounted.length, pending: 0, upcoming: 0, live: 0, closed: 0, cancelled: 0 };
+  baseCounted.forEach((m) => {
+    if (counts[m.status as keyof typeof counts] !== undefined) counts[m.status as keyof typeof counts]++;
+    if (isPendingSettlement(m)) counts.pending++;
+  });
 
   return (
     <div>

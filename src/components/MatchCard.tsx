@@ -1,8 +1,8 @@
 import { Match } from "@/data/matches";
 import { Button } from "@/components/ui/button";
 import {
-  Bell, BellRing, Clock, Lock, Timer, Trophy, X, ZoomIn,
-  Plus, XCircle, Loader2, Share2, IndianRupee, CheckCircle2,
+  Bell, BellRing, BellOff, Clock, Lock, Timer, Trophy, X, ZoomIn,
+  Plus, XCircle, Loader2, IndianRupee, CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useRef } from "react";
@@ -99,26 +99,56 @@ const ImageLightbox = ({ src, onClose }: { src: string; onClose: () => void }) =
   );
 };
 
-type NotifState = { notifyLive: boolean; notifyResult: boolean };
+type ReminderState = { offsetMinutes: number | null; fired?: boolean };
 
-const BellMenu = ({ match, onClose }: { match: Match; onClose: () => void }) => {
-  const key = `notif_${match.id}`;
-  const [state, setState] = useState<NotifState>(() => {
-    try { return JSON.parse(localStorage.getItem(key) || "{}"); } catch { return {}; }
-  });
+const REMINDER_OPTIONS = [5, 10, 15];
 
-  const toggle = (field: keyof NotifState) => {
-    const next = { ...state, [field]: !state[field] };
-    setState(next);
-    try { localStorage.setItem(key, JSON.stringify(next)); } catch { }
-  };
+const reminderKey = (matchId: string) => `reminder_${matchId}`;
 
-  const handleShare = async () => {
-    const text = `🏏 ${match.teamA.name} vs ${match.teamB.name} — Bet now on Betwic Toss Book!`;
-    try {
-      if (navigator.share) { await navigator.share({ title: "Betwic Toss Book", text }); }
-      else { await navigator.clipboard.writeText(text); }
-    } catch { }
+const readReminder = (matchId: string): ReminderState => {
+  try {
+    const raw = localStorage.getItem(reminderKey(matchId));
+    if (!raw) return { offsetMinutes: null };
+    const parsed = JSON.parse(raw);
+    return { offsetMinutes: parsed.offsetMinutes ?? null, fired: !!parsed.fired };
+  } catch { return { offsetMinutes: null }; }
+};
+
+const writeReminder = (matchId: string, state: ReminderState) => {
+  try {
+    if (state.offsetMinutes == null) localStorage.removeItem(reminderKey(matchId));
+    else localStorage.setItem(reminderKey(matchId), JSON.stringify(state));
+  } catch { /* ignore */ }
+};
+
+const BellMenu = ({
+  match,
+  state,
+  onChange,
+  onClose,
+}: {
+  match: Match;
+  state: ReminderState;
+  onChange: (next: ReminderState) => void;
+  onClose: () => void;
+}) => {
+  const hasClosingTime = !!match.closingTime;
+  const closingMs = hasClosingTime ? new Date(match.closingTime!).getTime() : null;
+  const nowMs = Date.now();
+
+  const setOffset = async (offsetMinutes: number | null) => {
+    if (offsetMinutes !== null) {
+      try {
+        if (typeof Notification !== "undefined" && Notification.permission === "default") {
+          await Notification.requestPermission();
+        }
+      } catch { /* ignore */ }
+    }
+    const next: ReminderState = offsetMinutes == null
+      ? { offsetMinutes: null }
+      : { offsetMinutes, fired: false };
+    writeReminder(match.id, next);
+    onChange(next);
     onClose();
   };
 
@@ -128,51 +158,78 @@ const BellMenu = ({ match, onClose }: { match: Match; onClose: () => void }) => 
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: -6 }}
       transition={{ duration: 0.12 }}
-      className="absolute right-0 top-10 z-50 w-52 rounded-2xl border border-border/70 bg-popover shadow-2xl overflow-hidden"
+      className="absolute right-0 top-10 z-50 w-56 rounded-2xl border border-border/70 bg-popover shadow-2xl overflow-hidden"
       onClick={(e) => e.stopPropagation()}
     >
       <div className="px-3 py-2 border-b border-border/50">
-        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Match Alerts</p>
+        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Set Reminder</p>
       </div>
 
-      {[
-        { icon: Bell, label: "Notify when Live", sub: "Alert when betting opens", field: "notifyLive" as keyof NotifState },
-        { icon: Trophy, label: "Notify on Result", sub: "Alert when toss is settled", field: "notifyResult" as keyof NotifState },
-      ].map((item) => (
-        <button
-          key={item.field}
-          onClick={() => toggle(item.field)}
-          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/60 transition-colors text-left"
-        >
-          <div className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition-colors ${
-            state[item.field] ? "bg-primary/20 border border-primary/40" : "bg-secondary/80 border border-border/60"
-          }`}>
-            <item.icon className={`h-3.5 w-3.5 ${state[item.field] ? "text-primary" : "text-muted-foreground"}`} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`text-xs font-semibold ${state[item.field] ? "text-primary" : "text-foreground"}`}>{item.label}</p>
-            <p className="text-[10px] text-muted-foreground leading-tight">{item.sub}</p>
-          </div>
-          {state[item.field] && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
-        </button>
-      ))}
+      {!hasClosingTime ? (
+        <div className="px-3 py-4 text-[11px] text-muted-foreground text-center">
+          No end time set for this match.
+        </div>
+      ) : (
+        <>
+          {REMINDER_OPTIONS.map((min) => {
+            const targetMs = closingMs! - min * 60_000;
+            const past = targetMs <= nowMs;
+            const active = state.offsetMinutes === min && !state.fired;
+            return (
+              <button
+                key={min}
+                onClick={() => !past && setOffset(min)}
+                disabled={past}
+                className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                  past ? "opacity-40 cursor-not-allowed" : "hover:bg-secondary/60"
+                }`}
+              >
+                <div className={`flex h-7 w-7 items-center justify-center rounded-full shrink-0 transition-colors ${
+                  active ? "bg-primary/20 border border-primary/40" : "bg-secondary/80 border border-border/60"
+                }`}>
+                  <Bell className={`h-3.5 w-3.5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-xs font-semibold ${active ? "text-primary" : "text-foreground"}`}>
+                    {min} min before end
+                  </p>
+                  {past && <p className="text-[10px] text-muted-foreground leading-tight">Time already passed</p>}
+                </div>
+                {active && <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />}
+              </button>
+            );
+          })}
+        </>
+      )}
 
       <div className="border-t border-border/50">
         <button
-          onClick={handleShare}
-          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-secondary/60 transition-colors text-left"
+          onClick={() => setOffset(null)}
+          disabled={state.offsetMinutes == null}
+          className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+            state.offsetMinutes == null ? "opacity-50 cursor-not-allowed" : "hover:bg-secondary/60"
+          }`}
         >
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-secondary/80 border border-border/60 shrink-0">
-            <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <BellOff className="h-3.5 w-3.5 text-muted-foreground" />
           </div>
-          <div className="flex-1">
-            <p className="text-xs font-semibold text-foreground">Share Match</p>
-            <p className="text-[10px] text-muted-foreground">Copy or share this match</p>
-          </div>
+          <p className="text-xs font-semibold text-muted-foreground">Clear reminder</p>
         </button>
       </div>
     </motion.div>
   );
+};
+
+const fireReminderNotification = (match: Match, minutes: number) => {
+  try {
+    if (typeof Notification === "undefined") return;
+    if (Notification.permission !== "granted") return;
+    new Notification("⏰ Match closing soon", {
+      body: `${match.teamA.name} vs ${match.teamB.name} closes in ${minutes} min`,
+      icon: "/favicon.ico",
+      tag: `reminder-${match.id}`,
+    });
+  } catch { /* ignore */ }
 };
 
 const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: MatchCardProps) => {
@@ -224,11 +281,23 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
     return () => document.removeEventListener("mousedown", handler);
   }, [bellOpen]);
 
-  const notifKey = `notif_${match.id}`;
-  const notifState: NotifState = (() => {
-    try { return JSON.parse(localStorage.getItem(notifKey) || "{}"); } catch { return {}; }
-  })();
-  const hasNotif = notifState.notifyLive || notifState.notifyResult;
+  const [reminder, setReminder] = useState<ReminderState>(() => readReminder(match.id));
+  const hasReminder = reminder.offsetMinutes != null && !reminder.fired;
+
+  // Fire reminder notification when target time reached
+  useEffect(() => {
+    if (!hasReminder || !match.closingTime || closingMs == null) return;
+    const offsetMs = (reminder.offsetMinutes ?? 0) * 60_000;
+    const closeAt = new Date(match.closingTime).getTime();
+    const triggerAt = closeAt - offsetMs;
+    const nowTs = Date.now();
+    if (nowTs >= triggerAt && nowTs < closeAt) {
+      fireReminderNotification(match, reminder.offsetMinutes!);
+      const next: ReminderState = { ...reminder, fired: true };
+      writeReminder(match.id, next);
+      setReminder(next);
+    }
+  }, [closingMs, hasReminder, reminder, match]);
 
   return (
     <>
@@ -282,16 +351,28 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           <div className="relative" ref={bellRef}>
             <button
               onClick={() => setBellOpen((v) => !v)}
-              className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+              className={`relative flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
                 bellOpen ? "bg-primary/15 text-primary" : "hover:bg-secondary text-muted-foreground"
               }`}
             >
-              {hasNotif
+              {hasReminder
                 ? <BellRing className="h-4 w-4 text-primary" />
                 : <Bell className="h-4 w-4" />}
+              {hasReminder && (
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-sky-500 px-1 text-[10px] font-bold text-white shadow-md">
+                  1
+                </span>
+              )}
             </button>
             <AnimatePresence>
-              {bellOpen && <BellMenu match={match} onClose={() => setBellOpen(false)} />}
+              {bellOpen && (
+                <BellMenu
+                  match={match}
+                  state={reminder}
+                  onChange={setReminder}
+                  onClose={() => setBellOpen(false)}
+                />
+              )}
             </AnimatePresence>
           </div>
         </div>

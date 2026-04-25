@@ -363,23 +363,23 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
               className="p-5 flex flex-col items-center text-center gap-4"
             >
               <div
-                className="absolute inset-0 pointer-events-none opacity-8"
-                style={{ background: `radial-gradient(ellipse at 50% 30%, ${tc1} 0%, transparent 65%)` }}
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: `radial-gradient(ellipse at 50% 25%, ${tc1}26 0%, transparent 60%)`, opacity: 0.55 }}
               />
 
               <motion.div
                 initial={{ scale: 0, rotate: -20 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 300, damping: 18, delay: 0.1 }}
-                className="relative flex h-16 w-16 items-center justify-center rounded-full"
+                className="relative z-10 flex h-16 w-16 items-center justify-center rounded-full"
                 style={{ background: `linear-gradient(135deg, ${tc1}20, ${tc2}15)`, border: `2px solid ${tc1}40` }}
               >
                 <PartyPopper className="h-8 w-8" style={{ color: tc1 }} />
               </motion.div>
 
-              <div>
+              <div className="relative z-10">
                 <p className="text-xl font-extrabold text-foreground">Pick Placed! 🎉</p>
-                <p className="text-xs text-muted-foreground mt-1">{match.teamA.name} vs {match.teamB.name}</p>
+                <p className="text-xs font-semibold text-foreground/75 mt-1">{match.teamA.name} vs {match.teamB.name}</p>
               </div>
 
               <div className="w-full rounded-2xl border border-border/50 bg-secondary/30 overflow-hidden">

@@ -319,15 +319,17 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           {closingMs !== null && closingMs > 0 ? (
             <motion.span
               key={closingSoon ? "urgent" : "normal"}
-              className="flex items-center gap-2 text-[13px] font-bold tracking-widest tabular-nums"
-              style={{ color: closingSoon ? "#ef4444" : "#f0abfc" }}
+              className={`flex items-center gap-2 text-[13px] font-bold tracking-widest tabular-nums ${
+                closingSoon ? "text-red-500" : "text-fuchsia-600 dark:text-fuchsia-300"
+              }`}
               animate={closingSoon ? { opacity: [1, 0.5, 1] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
             >
               <span className="relative inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
                 <span
-                  className="absolute inset-0 rounded-full"
-                  style={{ background: closingSoon ? "#ef4444" : "#f0abfc" }}
+                  className={`absolute inset-0 rounded-full ${
+                    closingSoon ? "bg-red-500" : "bg-fuchsia-600 dark:bg-fuchsia-300"
+                  }`}
                 />
                 <span
                   className="absolute right-0 top-0 h-[7px] w-[7px]"

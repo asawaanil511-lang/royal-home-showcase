@@ -82,23 +82,23 @@
 /* ── .dark = same rich dark purple theme ── */
 @layer base {
   .dark {
-    --background: 270 95% 5%;
-    --foreground: 270 50% 93%;
+    --background: 270 8% 4%;
+    --foreground: 0 0% 95%;
 
-    --card: 270 80% 8%;
-    --card-foreground: 270 50% 93%;
+    --card: 270 8% 7%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 270 80% 8%;
-    --popover-foreground: 270 50% 93%;
+    --popover: 270 8% 7%;
+    --popover-foreground: 0 0% 95%;
 
     --primary: 277 54% 55%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 270 55% 13%;
-    --secondary-foreground: 270 35% 78%;
+    --secondary: 270 8% 12%;
+    --secondary-foreground: 0 0% 88%;
 
-    --muted: 270 50% 11%;
-    --muted-foreground: 270 20% 52%;
+    --muted: 270 6% 11%;
+    --muted-foreground: 270 5% 60%;
 
     --accent: 271 94% 81%;
     --accent-foreground: 270 100% 12%;
@@ -106,8 +106,8 @@
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 270 45% 17%;
-    --input: 270 45% 15%;
+    --border: 270 8% 16%;
+    --input: 270 8% 14%;
     --ring: 277 54% 55%;
 
     --neon-green: 142 70% 45%;
@@ -119,7 +119,7 @@
     --gradient-neon-primary: linear-gradient(135deg, hsl(273 74% 29%), hsl(277 54% 55%));
     --gradient-neon-accent:  linear-gradient(135deg, hsl(271 94% 81%), hsl(277 54% 55%));
     --gradient-neon-purple:  linear-gradient(135deg, hsl(270 100% 20%), hsl(279 52% 46%));
-    --gradient-dark-card:    linear-gradient(135deg, hsl(270 80% 8%), hsl(270 80% 11%));
+    --gradient-dark-card:    linear-gradient(135deg, hsl(270 8% 7%), hsl(270 8% 10%));
 
     --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
@@ -133,13 +133,13 @@
     --shadow-neon:       0 0 28px hsl(277 54% 55% / 0.55);
     --shadow-gold:       0 0 24px hsl(45 100% 55% / 0.35);
 
-    --sidebar-background:          270 80% 6%;
-    --sidebar-foreground:          270 35% 78%;
+    --sidebar-background:          270 8% 6%;
+    --sidebar-foreground:          0 0% 88%;
     --sidebar-primary:             277 54% 55%;
     --sidebar-primary-foreground:  0 0% 100%;
-    --sidebar-accent:              270 55% 13%;
-    --sidebar-accent-foreground:   270 50% 93%;
-    --sidebar-border:              270 45% 15%;
+    --sidebar-accent:              270 8% 12%;
+    --sidebar-accent-foreground:   0 0% 95%;
+    --sidebar-border:              270 8% 14%;
     --sidebar-ring:                277 54% 55%;
   }
 }

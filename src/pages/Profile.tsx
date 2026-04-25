@@ -19,6 +19,7 @@ import { motion } from "framer-motion";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
+import betwicLogo from "@/assets/betwic-logo.jpg";
 
 const DEMO_USERNAME = "demo";
 
@@ -259,8 +260,13 @@ const Profile = () => {
           className="flex flex-col items-center gap-3 mb-8"
         >
           <div className="relative">
-            <div className="h-20 w-20 rounded-full bg-gradient-to-br from-primary/80 to-cyan-400/80 flex items-center justify-center text-2xl font-extrabold text-background shadow-neon border-2 border-primary/50">
-              {initials}
+            <div className="h-20 w-20 rounded-full overflow-hidden bg-card shadow-neon border-2 border-primary/50">
+              <img
+                src={profile?.avatar_url || betwicLogo}
+                alt={username}
+                className="h-full w-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = betwicLogo; }}
+              />
             </div>
             <div className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary border-2 border-background">
               <Edit3 className="h-3 w-3 text-background" />

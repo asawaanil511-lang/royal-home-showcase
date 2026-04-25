@@ -18,7 +18,6 @@ const tgLink = (text: string) =>
 const waLink = (text: string) =>
   `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
 
-const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000, 20000];
 
 const TelegramIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -236,39 +235,6 @@ const Wallet = () => {
               <p className="text-xs text-muted-foreground mb-4">
                 Pick an amount — tap a button to refill via Telegram or WhatsApp.
               </p>
-
-              {/* Quick amounts grid */}
-              <div className="grid grid-cols-3 gap-2 mb-5">
-                {QUICK_AMOUNTS.map((amt) => {
-                  const label = `₹${amt >= 1000 ? `${amt / 1000}K` : amt}`;
-                  const fullLabel = `₹${amt.toLocaleString()}`;
-                  return (
-                    <div key={amt} className="flex flex-col gap-1">
-                      <p className="text-[10px] font-bold text-center text-muted-foreground">{label}</p>
-                      <a
-                        href={tgLink(`Refill Rs.${amt}`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-white transition-all active:scale-95"
-                        style={{ background: "linear-gradient(135deg, #229ED9, #1a85bb)" }}
-                      >
-                        <TelegramIcon className="h-3 w-3" />
-                        Telegram
-                      </a>
-                      <a
-                        href={waLink(`Refill ${fullLabel}`)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-1 rounded-lg py-2 text-[11px] font-bold text-white transition-all active:scale-95"
-                        style={{ background: "linear-gradient(135deg, #25D366, #1da851)" }}
-                      >
-                        <WhatsAppIcon className="h-3 w-3" />
-                        WhatsApp
-                      </a>
-                    </div>
-                  );
-                })}
-              </div>
 
               {/* Custom Amount */}
               <div>

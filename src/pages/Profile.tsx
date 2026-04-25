@@ -130,6 +130,8 @@ const Profile = () => {
   const [revokingAll, setRevokingAll] = useState(false);
   const [showAllSessions, setShowAllSessions] = useState(false);
 
+  const getDeviceToken = () => localStorage.getItem("device_session_token") || "";
+
   const fetchSessions = async () => {
     if (!user) return;
     setSessionsLoading(true);
@@ -137,7 +139,9 @@ const Profile = () => {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
       if (!token) return;
-      const res = await fetch(apiUrl("/api/sessions"), { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(apiUrl("/api/sessions"), {
+        headers: { Authorization: `Bearer ${token}`, "x-session-token": getDeviceToken() },
+      });
       if (res.ok) {
         const data = await res.json();
         setSessions(data.sessions || []);
@@ -152,7 +156,10 @@ const Profile = () => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
-      await fetch(apiUrl(`/api/sessions/${id}`), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      await fetch(apiUrl(`/api/sessions/${id}`), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "x-session-token": getDeviceToken() },
+      });
       setSessions((prev) => prev.filter((s) => s.id !== id));
       toast({ title: "Session revoked" });
     } finally {
@@ -165,7 +172,10 @@ const Profile = () => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const token = currentSession?.access_token;
-      await fetch(apiUrl("/api/sessions"), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      await fetch(apiUrl("/api/sessions"), {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}`, "x-session-token": getDeviceToken() },
+      });
       setSessions((prev) => prev.filter((s) => s.is_current));
       toast({ title: "All other sessions revoked" });
     } finally {

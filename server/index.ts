@@ -694,9 +694,7 @@ app.get("/api/sessions", async (req, res) => {
   try {
     const userId = await verifyUser(req, res);
     if (!userId) return;
-    const currentToken = (req.headers.authorization || "").replace("Bearer ", "");
-    // hash the current token for comparison (first 20 chars used as identifier)
-    const currentTokenPrefix = currentToken.slice(0, 20);
+    const deviceToken = (req.headers["x-session-token"] as string) || "";
 
     const result = await db.query(
       `SELECT id, browser, os, device_type, session_token, created_at, last_seen
@@ -705,7 +703,7 @@ app.get("/api/sessions", async (req, res) => {
     );
     const sessions = result.rows.map((row: any) => ({
       ...row,
-      is_current: row.session_token === currentTokenPrefix,
+      is_current: !!deviceToken && row.session_token === deviceToken,
     }));
     return res.json({ sessions });
   } catch (err: any) {
@@ -734,11 +732,10 @@ app.delete("/api/sessions", async (req, res) => {
   try {
     const userId = await verifyUser(req, res);
     if (!userId) return;
-    const currentToken = (req.headers.authorization || "").replace("Bearer ", "");
-    const currentTokenPrefix = currentToken.slice(0, 20);
+    const deviceToken = (req.headers["x-session-token"] as string) || "";
     await db.query(
       `DELETE FROM public.user_sessions WHERE user_id = $1 AND session_token != $2`,
-      [userId, currentTokenPrefix]
+      [userId, deviceToken]
     );
     return res.json({ success: true });
   } catch (err: any) {

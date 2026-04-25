@@ -108,7 +108,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       else if (ua.includes("Mac")) os = "macOS";
       else if (ua.includes("Linux")) os = "Linux";
       const isMobile = /Android|iPhone|iPad/i.test(ua);
-      const sessionToken = accessToken.slice(0, 20);
+
+      // Use a stable per-device token so token rotations don't fragment sessions
+      let sessionToken = localStorage.getItem("device_session_token");
+      if (!sessionToken) {
+        sessionToken = (crypto.randomUUID && crypto.randomUUID()) ||
+          `dev-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+        localStorage.setItem("device_session_token", sessionToken);
+      }
+
       await fetch(apiUrl("/api/sessions/record"), {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${accessToken}` },
@@ -127,7 +135,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             fetchProfile(session.user.id);
             fetchRoles(session.user.id);
           }, 0);
-          if (event === "SIGNED_IN" && session.access_token) {
+          if (session.access_token && event !== "SIGNED_OUT") {
             recordSession(session.access_token);
           }
         } else {

@@ -319,12 +319,24 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
           {closingMs !== null && closingMs > 0 ? (
             <motion.span
               key={closingSoon ? "urgent" : "normal"}
-              className="flex items-center gap-1.5 text-[13px] font-bold tracking-widest tabular-nums"
-              style={{ color: closingSoon ? "#ef4444" : "hsl(var(--primary))" }}
+              className="flex items-center gap-2 text-[13px] font-bold tracking-widest tabular-nums"
+              style={{ color: closingSoon ? "#ef4444" : "#f0abfc" }}
               animate={closingSoon ? { opacity: [1, 0.5, 1] } : {}}
               transition={{ duration: 1, repeat: Infinity }}
             >
-              <Timer className="h-3.5 w-3.5 shrink-0" />
+              <span className="relative inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                <span
+                  className="absolute inset-0 rounded-full"
+                  style={{ background: closingSoon ? "#ef4444" : "#f0abfc" }}
+                />
+                <span
+                  className="absolute right-0 top-0 h-[7px] w-[7px]"
+                  style={{
+                    background: "hsl(var(--card))",
+                    borderBottomLeftRadius: "100%",
+                  }}
+                />
+              </span>
               {formatCountdown(closingMs)}
             </motion.span>
           ) : isLive ? (
@@ -480,19 +492,26 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
                   ) : null}
                 </div>
 
-                {/* VS divider — purple */}
+                {/* VS divider — cyan with horizontal line */}
                 {idx === 0 && (
-                  <div className="flex justify-center py-1">
+                  <div className="relative flex items-center justify-center py-1.5">
                     <div
-                      className="flex h-7 w-7 items-center justify-center rounded-full"
+                      className="absolute left-2 right-2 h-px"
                       style={{
-                        border: "1.5px solid rgba(157,76,204,0.38)",
-                        background: "rgba(157,76,204,0.10)",
+                        background:
+                          "linear-gradient(90deg, transparent, rgba(56,189,248,0.32) 20%, rgba(56,189,248,0.32) 80%, transparent)",
+                      }}
+                    />
+                    <div
+                      className="relative z-10 flex h-7 w-7 items-center justify-center rounded-full"
+                      style={{
+                        border: "1.5px solid rgba(56,189,248,0.55)",
+                        background: "hsl(var(--card))",
                       }}
                     >
                       <span
-                        className="text-[11px] font-bold"
-                        style={{ color: "rgba(157,76,204,0.75)" }}
+                        className="text-[10px] font-bold uppercase tracking-wider"
+                        style={{ color: "rgb(125,211,252)" }}
                       >
                         vs
                       </span>

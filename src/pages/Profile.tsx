@@ -362,7 +362,7 @@ const Profile = () => {
         >
           <div className="flex items-center justify-between px-1 mb-2">
             <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">
-              Active Sessions
+              Security &amp; Sessions
             </p>
             <button
               onClick={fetchSessions}
@@ -375,18 +375,6 @@ const Profile = () => {
           </div>
 
           <div className="rounded-2xl border border-border/50 bg-card overflow-hidden divide-y divide-border/40">
-            {/* Account secured row */}
-            <div className="flex items-center gap-4 px-4 py-3">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
-                <Shield className="h-4 w-4 text-emerald-400" />
-              </div>
-              <div className="flex-1">
-                <p className="text-sm font-semibold text-foreground">Account Secured</p>
-                <p className="text-xs text-muted-foreground mt-0.5">Password protected</p>
-              </div>
-              <CheckCircle className="h-4 w-4 text-emerald-400" />
-            </div>
-
             {/* Session list */}
             {sessionsLoading ? (
               <div className="flex items-center justify-center py-6">
@@ -430,7 +418,7 @@ const Profile = () => {
                           {s.browser} on {s.os}
                         </p>
                         {s.is_current && (
-                          <span className="text-[9px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full shrink-0">
+                          <span className="text-[10px] font-bold bg-blue-500 text-white px-2.5 py-0.5 rounded-full shrink-0 tracking-wider shadow-[0_2px_8px_rgba(59,130,246,0.35)]">
                             THIS DEVICE
                           </span>
                         )}
@@ -483,11 +471,15 @@ const Profile = () => {
         >
           <button
             onClick={signOut}
-            className="w-full flex items-center justify-center gap-2 rounded-2xl border border-red-500/20 bg-red-500/8 py-4 text-sm font-bold text-red-400 transition-all hover:bg-red-500/15 hover:border-red-500/40 hover:shadow-[0_0_20px_hsl(0deg_80%_55%/0.1)]"
+            className="w-full flex items-center justify-center gap-2.5 rounded-2xl border border-border/50 bg-card py-4 text-sm font-bold text-red-500 dark:text-red-400 transition-all hover:bg-red-500/5 hover:border-red-500/30"
           >
             <LogOut className="h-4 w-4" />
             Logout
           </button>
+
+          <p className="mt-6 text-center text-[11px] font-bold tracking-[0.22em] text-muted-foreground/70 uppercase">
+            Version 0.1.0
+          </p>
         </motion.div>
       </div>
 

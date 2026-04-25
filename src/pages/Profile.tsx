@@ -487,54 +487,84 @@ const Profile = () => {
 
       {/* Change Password Dialog */}
       <Dialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-card border-border/60">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-foreground">
-              <KeyRound className="h-5 w-5 text-primary" />
-              Change Password
+        <DialogContent className="sm:max-w-md bg-card border-border/60 p-6">
+          <DialogHeader className="space-y-2 text-left">
+            <DialogTitle className="text-2xl font-extrabold text-foreground tracking-tight">
+              Change password
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground">
-              Enter your new password below.
+            <DialogDescription className="text-[15px] leading-relaxed text-muted-foreground">
+              Choose a strong password you have not used elsewhere.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type={showNewPw ? "text" : "password"}
-                placeholder="New password"
-                value={newPw}
-                onChange={(e) => setNewPw(e.target.value)}
-                className="pl-10 pr-10 bg-secondary/50 border-border h-11"
-              />
-              <button type="button" onClick={() => setShowNewPw(!showNewPw)}
-                className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground transition-colors">
-                {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+
+          <div className="space-y-5 pt-3">
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                New password
+              </label>
+              <div className="relative">
+                <Input
+                  type={showNewPw ? "text" : "password"}
+                  placeholder="New password"
+                  value={newPw}
+                  onChange={(e) => setNewPw(e.target.value)}
+                  className="h-12 pr-10 bg-background border-border/70 rounded-xl text-[15px] focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowNewPw(!showNewPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
-            <div className="relative">
-              <Lock className="absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                type={showConfirmPw ? "text" : "password"}
-                placeholder="Confirm new password"
-                value={confirmPw}
-                onChange={(e) => setConfirmPw(e.target.value)}
-                className="pl-10 pr-10 bg-secondary/50 border-border h-11"
-              />
-              <button type="button" onClick={() => setShowConfirmPw(!showConfirmPw)}
-                className="absolute right-3 top-3.5 text-muted-foreground hover:text-foreground transition-colors">
-                {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
+
+            <div className="space-y-1.5">
+              <label className="block text-[11px] font-bold uppercase tracking-[0.14em] text-muted-foreground">
+                Confirm password
+              </label>
+              <div className="relative">
+                <Input
+                  type={showConfirmPw ? "text" : "password"}
+                  placeholder="Confirm password"
+                  value={confirmPw}
+                  onChange={(e) => setConfirmPw(e.target.value)}
+                  className="h-12 pr-10 bg-background border-border/70 rounded-xl text-[15px] focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:border-primary/50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPw(!showConfirmPw)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  {showConfirmPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
-            <Button onClick={handleChangePassword} disabled={changingPw || !newPw || !confirmPw}
-              className="w-full gradient-neon-primary text-primary-foreground font-bold h-11 shadow-neon">
-              {changingPw ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
-                  Updating...
-                </span>
-              ) : "Update Password"}
-            </Button>
+
+            <div className="flex items-center gap-3 pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setPasswordDialogOpen(false)}
+                disabled={changingPw}
+                className="flex-1 h-12 rounded-xl bg-secondary hover:bg-secondary/80 text-muted-foreground hover:text-foreground font-semibold text-[15px]"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleChangePassword}
+                disabled={changingPw || !newPw || !confirmPw}
+                className="flex-1 h-12 rounded-xl gradient-neon-primary text-primary-foreground font-bold text-[15px] shadow-neon"
+              >
+                {changingPw ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-4 w-4 rounded-full border-2 border-primary-foreground/30 border-t-primary-foreground animate-spin" />
+                    Updating...
+                  </span>
+                ) : "Update password"}
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

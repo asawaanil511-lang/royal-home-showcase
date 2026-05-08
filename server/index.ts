@@ -298,6 +298,50 @@ const setupTables = async () => {
       await db.query(`DROP POLICY IF EXISTS "${policy}" ON public.matches`);
     }
     logInfo("db", "Matches table mutations locked to server-only");
+
+    // ---- Lock bets: block UPDATE and DELETE from authenticated users ----
+    for (const policy of [
+      "Users can update own bets", "Allow authenticated bet update",
+      "Users can delete own bets", "Allow authenticated bet delete",
+      "Enable update for authenticated users only", "Enable delete for authenticated users only",
+    ]) {
+      await db.query(`DROP POLICY IF EXISTS "${policy}" ON public.bets`);
+    }
+    logInfo("db", "Bets UPDATE/DELETE locked to server-only");
+
+    // ---- Lock user_roles: no authenticated user can mutate roles ----
+    await db.query(`ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY`);
+    for (const policy of [
+      "Users can insert own roles", "Users can update own roles", "Users can delete own roles",
+      "Authenticated users can insert roles", "Enable insert for authenticated users only",
+      "Enable update for authenticated users only", "Enable delete for authenticated users only",
+      "Admins can insert roles", "Admins can update roles", "Admins can delete roles",
+    ]) {
+      await db.query(`DROP POLICY IF EXISTS "${policy}" ON public.user_roles`);
+    }
+    logInfo("db", "user_roles mutations locked to server-only");
+
+    // ---- Lock wallet_transactions: no authenticated user can insert/update/delete ----
+    await db.query(`ALTER TABLE public.wallet_transactions ENABLE ROW LEVEL SECURITY`);
+    for (const policy of [
+      "Users can insert transactions", "Users can update transactions", "Users can delete transactions",
+      "Authenticated users can insert transactions", "Enable insert for authenticated users only",
+    ]) {
+      await db.query(`DROP POLICY IF EXISTS "${policy}" ON public.wallet_transactions`);
+    }
+    logInfo("db", "wallet_transactions mutations locked to server-only");
+
+    // ---- Lock profiles: ensure RLS enabled, block INSERT/DELETE from authenticated ----
+    await db.query(`ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY`);
+    for (const policy of [
+      "Users can insert own profile", "Anyone can insert profiles",
+      "Users can delete own profile", "Enable delete for users based on user_id",
+    ]) {
+      await db.query(`DROP POLICY IF EXISTS "${policy}" ON public.profiles`);
+    }
+    logInfo("db", "profiles INSERT/DELETE locked to server-only");
+
+    logInfo("db", "All table security policies applied");
   } catch (err: any) {
     logError("db/setupTables", err);
   }
@@ -434,28 +478,45 @@ app.post("/api/admin-wallet", async (req, res) => {
       return res.status(400).json({ error: "Note too long (max 500 chars)" });
     }
 
-    const adminClient = getAdminClient();
     if (await isOwnerUser(user_id)) return res.status(403).json({ error: "Cannot modify the owner wallet." });
-    const { data: profile } = await adminClient.from("profiles").select("wallet_balance").eq("user_id", user_id).single();
-    if (!profile) return res.status(404).json({ error: "User not found" });
 
-    const currentBalance = Number(profile.wallet_balance);
-    let newBalance: number;
-    if (action === "set") newBalance = Number(amount);
-    else if (action === "add") newBalance = currentBalance + Number(amount);
-    else if (action === "deduct") newBalance = Math.max(0, currentBalance - Number(amount));
-    else return res.status(400).json({ error: "Invalid action" });
+    // Verify user exists
+    const existsCheck = await db.query(`SELECT wallet_balance FROM public.profiles WHERE user_id = $1`, [user_id]);
+    if (existsCheck.rowCount === 0) return res.status(404).json({ error: "User not found" });
 
-    const { error: updateError } = await adminClient.from("profiles").update({ wallet_balance: newBalance }).eq("user_id", user_id);
-    if (updateError) return res.status(400).json({ error: updateError.message });
+    // Atomic wallet update — no read-then-write race condition
+    let walletResult: any;
+    const amt = Number(amount);
+    if (action === "set") {
+      walletResult = await db.query(
+        `UPDATE public.profiles SET wallet_balance = $1 WHERE user_id = $2 RETURNING wallet_balance`,
+        [amt, user_id]
+      );
+    } else if (action === "add") {
+      walletResult = await db.query(
+        `UPDATE public.profiles SET wallet_balance = wallet_balance + $1 WHERE user_id = $2 RETURNING wallet_balance`,
+        [amt, user_id]
+      );
+    } else if (action === "deduct") {
+      walletResult = await db.query(
+        `UPDATE public.profiles SET wallet_balance = GREATEST(0, wallet_balance - $1) WHERE user_id = $2 RETURNING wallet_balance`,
+        [amt, user_id]
+      );
+    } else {
+      return res.status(400).json({ error: "Invalid action (use: set, add, deduct)" });
+    }
+
+    const newBalance = Number(walletResult.rows[0].wallet_balance);
+    const prevBalance = Number(existsCheck.rows[0].wallet_balance);
 
     await db.query(
       `INSERT INTO public.wallet_transactions (user_id, admin_user_id, action, amount, balance_before, balance_after, note)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [user_id, adminId, action, Number(amount), currentBalance, newBalance, note || null]
+      [user_id, adminId, action, amt, prevBalance, newBalance, note || null]
     );
 
-    return res.json({ success: true, balance_before: currentBalance, balance_after: newBalance });
+    logInfo("admin-wallet", `Admin ${adminId} ${action} ₹${amt} for user ${user_id} → balance ₹${newBalance}`);
+    return res.json({ success: true, balance_before: prevBalance, balance_after: newBalance });
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }

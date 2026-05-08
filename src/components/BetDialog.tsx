@@ -4,6 +4,7 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   X, Wallet, RotateCcw,
@@ -136,26 +137,40 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
     if (betAmount > balance) { toast({ title: "Insufficient balance", variant: "destructive" }); return; }
 
     setPlacing(true);
-    await supabase.from("profiles").update({ wallet_balance: balance - betAmount }).eq("user_id", user.id);
-    const potentialWin = betAmount * selectedOdds;
-    const { error } = await supabase.from("bets").insert({
-      user_id: user.id, match_id: match.id, team_picked: selectedTeam,
-      amount: betAmount, odds: selectedOdds, potential_win: potentialWin,
-    });
-    if (error) {
-      await supabase.from("profiles").update({ wallet_balance: balance }).eq("user_id", user.id);
-      toast({ title: "Play failed", description: error.message, variant: "destructive" });
-      setPlacing(false); return;
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) { toast({ title: "Session expired. Please log in again.", variant: "destructive" }); setPlacing(false); return; }
+
+      const res = await fetch(apiUrl("/api/place-bet"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ match_id: match.id, team_picked: selectedTeam, amount: betAmount }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast({ title: "Bet failed", description: data.error || "Something went wrong", variant: "destructive" });
+        setPlacing(false); return;
+      }
+
+      // Use server-confirmed odds & potential_win (never trust client values)
+      const confirmedOdds = data.odds ?? selectedOdds;
+      const potentialWin = data.potential_win ?? betAmount * confirmedOdds;
+
+      await refreshProfile();
+      onBetPlaced?.();
+      toast({
+        title: "Bet placed successfully!",
+        description: `You bet ₹${betAmount.toLocaleString()} on ${selectedTeamName}`,
+      });
+      setConfirmedBet({ team: selectedTeam, teamName: selectedTeamName, amount: betAmount, potentialWin, odds: confirmedOdds });
+      setStep(3);
+    } catch (err: any) {
+      toast({ title: "Network error", description: "Could not reach server. Try again.", variant: "destructive" });
+    } finally {
+      setPlacing(false);
     }
-    await refreshProfile();
-    onBetPlaced?.();
-    toast({
-      title: "Bet placed successfully!",
-      description: `You bet ₹${betAmount.toLocaleString()} on ${selectedTeamName}`,
-    });
-    setPlacing(false);
-    setConfirmedBet({ team: selectedTeam, teamName: selectedTeamName, amount: betAmount, potentialWin, odds: selectedOdds });
-    setStep(3);
   };
 
   const amountOk = betAmount >= 100 && betAmount <= balance && betAmount <= match.maxBet;

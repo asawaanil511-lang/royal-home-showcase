@@ -231,6 +231,39 @@ const setupTables = async () => {
       );
     `);
     logInfo("db", "Helper tables ready");
+
+    // ---- Security: lock down direct bet inserts and wallet updates from browser ----
+    // 1. Ensure RLS is enabled on bets
+    await db.query(`ALTER TABLE public.bets ENABLE ROW LEVEL SECURITY`);
+
+    // 2. Remove any policy that lets authenticated users INSERT bets directly
+    await db.query(`DROP POLICY IF EXISTS "Users can insert own bets" ON public.bets`);
+    await db.query(`DROP POLICY IF EXISTS "Allow authenticated bet insert" ON public.bets`);
+    await db.query(`DROP POLICY IF EXISTS "Authenticated users can insert bets" ON public.bets`);
+    await db.query(`DROP POLICY IF EXISTS "Enable insert for authenticated users only" ON public.bets`);
+
+    // 3. Create a trigger that prevents direct wallet_balance changes from the browser (authenticated role)
+    await db.query(`
+      CREATE OR REPLACE FUNCTION public.prevent_direct_wallet_update()
+      RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+      BEGIN
+        IF NEW.wallet_balance IS DISTINCT FROM OLD.wallet_balance THEN
+          IF current_user = 'authenticated' THEN
+            RAISE EXCEPTION 'Direct wallet_balance updates are not permitted. Use the official app API.';
+          END IF;
+        END IF;
+        RETURN NEW;
+      END;
+      $$;
+    `);
+    await db.query(`DROP TRIGGER IF EXISTS guard_wallet_balance ON public.profiles`);
+    await db.query(`
+      CREATE TRIGGER guard_wallet_balance
+      BEFORE UPDATE ON public.profiles
+      FOR EACH ROW EXECUTE FUNCTION public.prevent_direct_wallet_update()
+    `);
+
+    logInfo("db", "Bet + wallet security policies applied");
   } catch (err: any) {
     logError("db/setupTables", err);
   }
@@ -841,6 +874,97 @@ app.post("/api/admin/settle-match", async (req, res) => {
     }
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
+  }
+});
+
+// ---- Place bet (server-side, atomic, validates match status + odds from DB) ----
+app.post("/api/place-bet", async (req, res) => {
+  try {
+    const userId = await verifyUser(req, res);
+    if (!userId) return;
+
+    const { match_id, team_picked, amount } = req.body;
+
+    // Input validation
+    if (!isValidUUID(match_id)) return res.status(400).json({ error: "Invalid match_id" });
+    if (!["A", "B"].includes(team_picked)) return res.status(400).json({ error: "team_picked must be A or B" });
+    const betAmount = Number(amount);
+    if (!Number.isFinite(betAmount) || betAmount < 100) return res.status(400).json({ error: "Minimum bet is ₹100" });
+    if (betAmount > 10000000) return res.status(400).json({ error: "Bet amount too large" });
+
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+
+      // 1. Lock & fetch match — verify it's open and get real odds from DB (never trust client)
+      const matchResult = await client.query(
+        `SELECT id, status, odds_a, odds_b, max_bet FROM public.matches WHERE id = $1 FOR UPDATE`,
+        [match_id]
+      );
+      if (matchResult.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: "Match not found" });
+      }
+      const match = matchResult.rows[0];
+      if (!["live", "upcoming"].includes(match.status)) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "This match is closed and is not accepting bets" });
+      }
+
+      // 2. Validate bet amount against match's max_bet
+      const maxBet = Number(match.max_bet || 10000000);
+      if (betAmount > maxBet) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: `Maximum bet for this match is ₹${maxBet.toLocaleString("en-IN")}` });
+      }
+
+      // 3. Get odds from DB — client-supplied odds are ignored entirely
+      const odds = team_picked === "A" ? Number(match.odds_a) : Number(match.odds_b);
+      const potentialWin = Math.round(betAmount * odds * 100) / 100;
+
+      // 4. Atomic wallet deduction — fails cleanly if balance is insufficient
+      const walletResult = await client.query(
+        `UPDATE public.profiles
+         SET wallet_balance = wallet_balance - $1
+         WHERE user_id = $2 AND wallet_balance >= $1
+         RETURNING wallet_balance`,
+        [betAmount, userId]
+      );
+      if (walletResult.rowCount === 0) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({ error: "Insufficient wallet balance" });
+      }
+
+      // 5. Insert the bet
+      const betResult = await client.query(
+        `INSERT INTO public.bets (user_id, match_id, team_picked, amount, odds, potential_win, result)
+         VALUES ($1, $2, $3, $4, $5, $6, 'pending')
+         RETURNING id, created_at`,
+        [userId, match_id, team_picked, betAmount, odds, potentialWin]
+      );
+
+      await client.query("COMMIT");
+
+      const newBalance = Number(walletResult.rows[0].wallet_balance);
+      const bet = betResult.rows[0];
+
+      logInfo("place-bet", `User ${userId} placed ₹${betAmount} on team ${team_picked} in match ${match_id} @ ${odds}x`);
+      return res.json({
+        success: true,
+        bet_id: bet.id,
+        odds,
+        potential_win: potentialWin,
+        new_balance: newBalance,
+      });
+    } catch (txErr: any) {
+      await client.query("ROLLBACK");
+      throw txErr;
+    } finally {
+      client.release();
+    }
+  } catch (err: any) {
+    logError("place-bet", err);
+    return res.status(500).json({ error: err?.message || "Unexpected server error" });
   }
 });
 

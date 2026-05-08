@@ -48,7 +48,28 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: "2mb" }));
+// Body size: 512kb for all routes; upload endpoint uses its own 10mb override
+app.use((req, res, next) => {
+  if (req.path === "/api/upload-match-image") {
+    express.json({ limit: "10mb" })(req, res, next);
+  } else {
+    express.json({ limit: "512kb" })(req, res, next);
+  }
+});
+
+// ---- Simple in-memory rate limiter (per IP) ----
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+function rateLimit(ip: string, maxReqs: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(ip);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
+    return true;
+  }
+  if (entry.count >= maxReqs) return false;
+  entry.count++;
+  return true;
+}
 
 // ---- Request logger ----
 app.use((req, _res, next) => {
@@ -264,6 +285,19 @@ const setupTables = async () => {
     `);
 
     logInfo("db", "Bet + wallet security policies applied");
+
+    // ---- Lock down matches table: block direct mutations from browser clients ----
+    await db.query(`ALTER TABLE public.matches ENABLE ROW LEVEL SECURITY`);
+    // Drop any policies that allow authenticated users to mutate matches directly
+    for (const policy of [
+      "Admin can create matches", "Admin can update matches", "Admin can delete matches",
+      "Enable all for admins", "Anyone can create matches",
+      "Authenticated users can insert matches", "Users can update matches",
+      "Enable insert for authenticated users only", "Enable update for admin",
+    ]) {
+      await db.query(`DROP POLICY IF EXISTS "${policy}" ON public.matches`);
+    }
+    logInfo("db", "Matches table mutations locked to server-only");
   } catch (err: any) {
     logError("db/setupTables", err);
   }
@@ -433,6 +467,7 @@ app.get("/api/wallet-history/:userId", async (req, res) => {
     const adminId = await verifyAdmin(req, res);
     if (!adminId) return;
     const { userId } = req.params;
+    if (!isValidUUID(userId)) return res.status(400).json({ error: "Invalid user_id" });
     const result = await db.query(
       `SELECT * FROM public.wallet_transactions WHERE user_id = $1 ORDER BY created_at DESC LIMIT 50`,
       [userId]
@@ -454,11 +489,18 @@ app.get("/api/my-wallet-history", async (req, res) => {
     if (authErr || !user) return res.status(401).json({ error: "Invalid token" });
 
     const { from_date, to_date } = req.query as Record<string, string>;
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
 
     let dateFilter = "";
     const params: any[] = [user.id];
-    if (from_date) { params.push(from_date); dateFilter += ` AND created_at >= $${params.length}`; }
-    if (to_date) { params.push(to_date); dateFilter += ` AND created_at < ($${params.length}::date + interval '1 day')`; }
+    if (from_date) {
+      if (!dateRe.test(from_date)) return res.status(400).json({ error: "Invalid from_date" });
+      params.push(from_date); dateFilter += ` AND created_at >= $${params.length}`;
+    }
+    if (to_date) {
+      if (!dateRe.test(to_date)) return res.status(400).json({ error: "Invalid to_date" });
+      params.push(to_date); dateFilter += ` AND created_at < ($${params.length}::date + interval '1 day')`;
+    }
 
     const result = await db.query(
       `SELECT * FROM (
@@ -514,6 +556,10 @@ app.get("/api/my-wallet-history", async (req, res) => {
 
 // ---- Demo login ----
 app.post("/api/demo-login", async (req, res) => {
+  const ip = req.ip || "unknown";
+  if (!rateLimit(`demo:${ip}`, 5, 60_000)) {
+    return res.status(429).json({ error: "Too many requests. Please wait a moment." });
+  }
   try {
     if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured" });
     const adminClient = getAdminClient();
@@ -875,6 +921,125 @@ app.post("/api/admin/settle-match", async (req, res) => {
   } catch (err: any) {
     return res.status(500).json({ error: err.message });
   }
+});
+
+// ---- Admin: create match ----
+app.post("/api/admin/create-match", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { team_a_name, team_b_name, odds_a, odds_b, max_bet, match_date, live_time, closing_time, image_url, match_title } = req.body;
+    if (!team_a_name?.trim() || !team_b_name?.trim()) return res.status(400).json({ error: "team_a_name and team_b_name required" });
+    const oA = Number(odds_a); const oB = Number(odds_b);
+    if (!Number.isFinite(oA) || oA <= 0 || !Number.isFinite(oB) || oB <= 0) return res.status(400).json({ error: "Invalid odds" });
+    const mb = Number(max_bet || 50000);
+    if (!Number.isFinite(mb) || mb <= 0 || mb > 10000000) return res.status(400).json({ error: "Invalid max_bet" });
+
+    const result = await db.query(
+      `INSERT INTO public.matches (team_a_name, team_b_name, odds_a, odds_b, max_bet, match_date, live_time, closing_time, image_url, match_title, status)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,'upcoming') RETURNING id`,
+      [
+        team_a_name.trim(), team_b_name.trim(), oA, oB, mb,
+        match_date ? new Date(match_date).toISOString() : new Date().toISOString(),
+        live_time ? new Date(live_time).toISOString() : null,
+        closing_time ? new Date(closing_time).toISOString() : null,
+        image_url || null,
+        match_title?.trim() || null,
+      ]
+    );
+    logInfo("admin/create-match", `Admin ${adminId} created match ${result.rows[0].id}`);
+    return res.json({ success: true, match_id: result.rows[0].id });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
+});
+
+// ---- Admin: update match ----
+app.post("/api/admin/update-match", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { match_id, team_a_name, team_b_name, odds_a, odds_b, max_bet, match_date, live_time, closing_time, image_url, match_title } = req.body;
+    if (!isValidUUID(match_id)) return res.status(400).json({ error: "Invalid match_id" });
+    if (!team_a_name?.trim() || !team_b_name?.trim()) return res.status(400).json({ error: "team_a_name and team_b_name required" });
+    const oA = Number(odds_a); const oB = Number(odds_b);
+    if (!Number.isFinite(oA) || oA <= 0 || !Number.isFinite(oB) || oB <= 0) return res.status(400).json({ error: "Invalid odds" });
+    const mb = Number(max_bet || 50000);
+
+    await db.query(
+      `UPDATE public.matches SET team_a_name=$1, team_b_name=$2, odds_a=$3, odds_b=$4, max_bet=$5,
+       match_date=$6, live_time=$7, closing_time=$8, image_url=$9, match_title=$10 WHERE id=$11`,
+      [
+        team_a_name.trim(), team_b_name.trim(), oA, oB, mb,
+        match_date ? new Date(match_date).toISOString() : new Date().toISOString(),
+        live_time ? new Date(live_time).toISOString() : null,
+        closing_time ? new Date(closing_time).toISOString() : null,
+        image_url || null,
+        match_title?.trim() || null,
+        match_id,
+      ]
+    );
+    logInfo("admin/update-match", `Admin ${adminId} updated match ${match_id}`);
+    return res.json({ success: true });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
+});
+
+// ---- Admin: update match status only ----
+app.post("/api/admin/update-match-status", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { match_id, status } = req.body;
+    if (!isValidUUID(match_id)) return res.status(400).json({ error: "Invalid match_id" });
+    if (!["upcoming", "live", "closed", "cancelled"].includes(status)) return res.status(400).json({ error: "Invalid status" });
+    await db.query(`UPDATE public.matches SET status=$1 WHERE id=$2`, [status, match_id]);
+    logInfo("admin/update-match-status", `Admin ${adminId} set match ${match_id} → ${status}`);
+    return res.json({ success: true });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
+});
+
+// ---- Admin: delete match ----
+app.post("/api/admin/delete-match", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { match_id } = req.body;
+    if (!isValidUUID(match_id)) return res.status(400).json({ error: "Invalid match_id" });
+    await db.query(`DELETE FROM public.matches WHERE id=$1`, [match_id]);
+    logInfo("admin/delete-match", `Admin ${adminId} deleted match ${match_id}`);
+    return res.json({ success: true });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
+});
+
+// ---- Admin: bulk delete matches ----
+app.post("/api/admin/bulk-delete-matches", async (req, res) => {
+  try {
+    const adminId = await verifyAdmin(req, res);
+    if (!adminId) return;
+    const { match_ids } = req.body;
+    if (!Array.isArray(match_ids) || match_ids.length === 0) return res.status(400).json({ error: "match_ids array required" });
+    if (match_ids.some((id: any) => !isValidUUID(id))) return res.status(400).json({ error: "Invalid match_id in list" });
+    const placeholders = match_ids.map((_: any, i: number) => `$${i + 1}`).join(",");
+    await db.query(`DELETE FROM public.matches WHERE id IN (${placeholders})`, match_ids);
+    logInfo("admin/bulk-delete-matches", `Admin ${adminId} bulk-deleted ${match_ids.length} matches`);
+    return res.json({ success: true });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
+});
+
+// ---- Owner: reset all stats (bets + matches) ----
+app.post("/api/admin/reset-stats", async (req, res) => {
+  try {
+    const ownerId = await verifyOwner(req, res);
+    if (!ownerId) return;
+    const client = await db.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query(`DELETE FROM public.bets`);
+      await client.query(`DELETE FROM public.matches`);
+      await client.query("COMMIT");
+    } catch (e) { await client.query("ROLLBACK"); throw e; }
+    finally { client.release(); }
+    logInfo("admin/reset-stats", `Owner ${ownerId} reset all bets and matches`);
+    return res.json({ success: true });
+  } catch (err: any) { return res.status(500).json({ error: err.message }); }
 });
 
 // ---- Place bet (server-side, atomic, validates match status + odds from DB) ----

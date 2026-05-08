@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { apiUrl } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Users, Trophy, Coins, TrendingUp, Activity, Clock,
@@ -136,11 +137,19 @@ const AdminDashboard = () => {
   const handleResetStats = async () => {
     setResetting(true);
     try {
-      await (supabase as any).from("bets").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      await (supabase as any).from("matches").delete().neq("id", "00000000-0000-0000-0000-000000000000");
-      await (supabase as any).from("wallets").delete().neq("id", 0);
-      toast({ title: "✅ Stats Reset", description: "All bets and matches cleared." });
-      await load();
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token || "";
+      const res = await fetch(apiUrl("/api/admin/reset-stats"), {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        toast({ title: "Reset failed", description: data.error || "Only the owner can reset stats.", variant: "destructive" });
+      } else {
+        toast({ title: "Stats Reset", description: "All bets and matches cleared." });
+        await load();
+      }
     } catch (e: any) {
       toast({ title: "Reset failed", description: e?.message, variant: "destructive" });
     } finally {

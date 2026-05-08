@@ -164,6 +164,17 @@ const AdminMatches = () => {
     }
   };
 
+  const adminFetch = async (path: string, body: object) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token || "";
+    const res = await fetch(apiUrl(path), {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    return res;
+  };
+
   const handleCreate = async () => {
     if (!teamA || !teamB) {
       toast({ title: "Fill required fields (Team A, Team B)", variant: "destructive" });
@@ -171,30 +182,27 @@ const AdminMatches = () => {
     }
     setSaving(true);
     const uploadedUrl = await uploadImage();
-    const insertData: any = {
+    const res = await adminFetch("/api/admin/create-match", {
       team_a_name: teamA, team_b_name: teamB,
       odds_a: Number(oddsA), odds_b: Number(oddsB),
       max_bet: Number(maxBet),
       match_date: matchDate ? new Date(matchDate).toISOString() : new Date().toISOString(),
-      status: "upcoming",
-    };
-    if (liveTime) insertData.live_time = new Date(liveTime).toISOString();
-    if (closingTime) insertData.closing_time = new Date(closingTime).toISOString();
-    if (uploadedUrl) insertData.image_url = uploadedUrl;
-    if (matchTitle.trim()) insertData.match_title = matchTitle.trim();
-
-    const { error } = await (supabase as any).from("matches").insert(insertData);
-    if (error) {
-      setSaving(false);
-      if (error.message?.includes("column")) {
+      live_time: liveTime ? new Date(liveTime).toISOString() : null,
+      closing_time: closingTime ? new Date(closingTime).toISOString() : null,
+      image_url: uploadedUrl || null,
+      match_title: matchTitle.trim() || null,
+    });
+    const data = await res.json();
+    setSaving(false);
+    if (!res.ok) {
+      if (data.error?.includes("column")) {
         setShowMigrationPanel(true);
         toast({ title: "Schema update needed", description: "Please run the database migration first.", variant: "destructive" });
       } else {
-        toast({ title: "Failed to create match", description: error.message, variant: "destructive" });
+        toast({ title: "Failed to create match", description: data.error, variant: "destructive" });
       }
       return;
     }
-    setSaving(false);
     setShowForm(false);
     setTeamA(""); setTeamB(""); setOddsA("1.95"); setOddsB("1.95"); setMaxBet("50000");
     setMatchDate(""); setLiveTime(""); setClosingTime(""); setImageUrl(""); setImageFile(null); setImagePreview(null); setMatchTitle("");
@@ -245,77 +253,64 @@ const AdminMatches = () => {
 
   const handleSaveEdit = async () => {
     if (!editingId) return;
-    const update: any = { ...editData };
-    if (update.match_date) update.match_date = new Date(update.match_date).toISOString();
-    else delete update.match_date;
-    if (update.live_time) update.live_time = new Date(update.live_time).toISOString();
-    else delete update.live_time;
-    if (update.closing_time) update.closing_time = new Date(update.closing_time).toISOString();
-    else delete update.closing_time;
-    if (!update.image_url) delete update.image_url;
-    await (supabase as any).from("matches").update(update).eq("id", editingId);
+    const res = await adminFetch("/api/admin/update-match", {
+      match_id: editingId,
+      ...editData,
+      match_date: editData.match_date ? new Date(editData.match_date).toISOString() : new Date().toISOString(),
+      live_time: editData.live_time ? new Date(editData.live_time).toISOString() : null,
+      closing_time: editData.closing_time ? new Date(editData.closing_time).toISOString() : null,
+      image_url: editData.image_url || null,
+    });
+    const data = await res.json();
+    if (!res.ok) { toast({ title: "Update failed", description: data.error, variant: "destructive" }); return; }
     setEditingId(null);
     toast({ title: "Match updated!" });
     fetchMatches();
   };
 
   const handleStatusChange = async (id: string, status: string) => {
-    await (supabase as any).from("matches").update({ status }).eq("id", id);
+    const res = await adminFetch("/api/admin/update-match-status", { match_id: id, status });
+    const data = await res.json();
+    if (!res.ok) { toast({ title: "Failed", description: data.error, variant: "destructive" }); return; }
     toast({ title: `Match set to ${status}` });
     fetchMatches();
   };
 
   const handleSetWinner = async (id: string, winner: string) => {
-    await (supabase as any).from("matches").update({ winner, status: "closed" }).eq("id", id);
-    const { data: bets } = await (supabase as any).from("bets").select("*").eq("match_id", id).eq("result", "pending");
-    if (bets) {
-      for (const bet of bets as any[]) {
-        const won = bet.team_picked === winner;
-        await (supabase as any).from("bets").update({ result: won ? "won" : "lost", settled_at: new Date().toISOString() }).eq("id", bet.id);
-        if (won) {
-          const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", bet.user_id).single();
-          if (profile) {
-            await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + bet.potential_win }).eq("user_id", bet.user_id);
-          }
-        }
-      }
-    }
-    toast({ title: "Match settled!" });
+    const res = await adminFetch("/api/admin/settle-match", { match_id: id, winner });
+    const data = await res.json();
+    if (!res.ok) { toast({ title: "Settle failed", description: data.error, variant: "destructive" }); return; }
+    toast({ title: `Match settled! ${data.settled ?? 0} bets resolved.` });
     fetchMatches();
   };
 
   const handleCancel = async (id: string) => {
-    await (supabase as any).from("matches").update({ status: "cancelled", winner: null }).eq("id", id);
-    const { data: bets } = await (supabase as any).from("bets").select("*").eq("match_id", id).eq("result", "pending");
-    if (bets) {
-      for (const bet of bets as any[]) {
-        await (supabase as any).from("bets").update({ result: "cancelled", settled_at: new Date().toISOString() }).eq("id", bet.id);
-        const { data: profile } = await supabase.from("profiles").select("wallet_balance").eq("user_id", bet.user_id).single();
-        if (profile) {
-          await supabase.from("profiles").update({ wallet_balance: profile.wallet_balance + Number(bet.amount) }).eq("user_id", bet.user_id);
-        }
-      }
-    }
-    toast({ title: "Match cancelled. Bets refunded." });
+    const res = await adminFetch("/api/admin/cancel-match", { match_id: id });
+    const data = await res.json();
+    if (!res.ok) { toast({ title: "Cancel failed", description: data.error, variant: "destructive" }); return; }
+    toast({ title: `Match cancelled. ${data.refunded ?? 0} bets refunded.` });
     fetchMatches();
   };
 
   const handleDelete = async (id: string) => {
-    await (supabase as any).from("matches").delete().eq("id", id);
+    const res = await adminFetch("/api/admin/delete-match", { match_id: id });
+    const data = await res.json();
+    if (!res.ok) { toast({ title: "Delete failed", description: data.error, variant: "destructive" }); return; }
     setSelectedIds((prev) => { const n = new Set(prev); n.delete(id); return n; });
     toast({ title: "Match deleted" });
     fetchMatches();
   };
 
-
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     setBulkDeleting(true);
     const ids = Array.from(selectedIds);
-    await (supabase as any).from("matches").delete().in("id", ids);
+    const res = await adminFetch("/api/admin/bulk-delete-matches", { match_ids: ids });
+    const data = await res.json();
+    setBulkDeleting(false);
+    if (!res.ok) { toast({ title: "Bulk delete failed", description: data.error, variant: "destructive" }); return; }
     setSelectedIds(new Set());
     toast({ title: `Deleted ${ids.length} match${ids.length > 1 ? "es" : ""}` });
-    setBulkDeleting(false);
     fetchMatches();
   };
 

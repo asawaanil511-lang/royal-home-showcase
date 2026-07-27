@@ -3,7 +3,7 @@ import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
 
-const WHATSAPP_URL = "https://wa.me/917668700467?text=Hi";
+const WHATSAPP_URL = "https://wa.me/917735091610?text=Hi";
 
 const footerLinks = [
   { label: "Matches",     href: "/matches",     icon: Swords },

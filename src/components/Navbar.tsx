@@ -7,7 +7,7 @@ import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 
-const WHATSAPP_REGISTER_URL = "https://wa.me/917668700467?text=I%20need%20toss%20id";
+const WHATSAPP_REGISTER_URL = "https://wa.me/917735091610?text=I%20need%20toss%20id";
 
 const navLinks = [
   { label: "Home",    href: "/",        icon: Home },

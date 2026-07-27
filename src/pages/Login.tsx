@@ -14,7 +14,8 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const WHATSAPP_URL = "https://wa.me/917668700467?text=I%20need%20toss%20id";
+const WHATSAPP_URL = "https://wa.me/917735091610?text=I%20need%20toss%20id";
+const PROOF_URL = "https://whatsapp.com/channel/0029VbAj9idDJ6H0QP1sDK3t";
 
 const Login = () => {
   const [username, setUsername] = useState(() => localStorage.getItem("stb_remember_user") || "");
@@ -301,6 +302,23 @@ const Login = () => {
                   <HelpCircle className="h-4 w-4" />
                 </a>
               </div>
+
+              {/* Withdrawal Proof */}
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex-1 h-px bg-border" />
+                <span className="text-[10px] font-bold tracking-[0.2em] text-muted-foreground">PROOF</span>
+                <div className="flex-1 h-px bg-border" />
+              </div>
+              <a
+                href={PROOF_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold text-white transition-all active:scale-95"
+                style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)" }}
+              >
+                <WhatsAppIcon className="h-3.5 w-3.5 shrink-0" />
+                WITHDRAWAL PROOF
+              </a>
             </div>
           </div>
         </div>

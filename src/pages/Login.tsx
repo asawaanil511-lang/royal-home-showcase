@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { apiUrl } from "@/lib/api";
-import betwicLogo from "@/assets/rs-toss-logo.jpg";
+import rsLogo from "@/assets/rs-toss-logo.jpg";
 import cricketGround from "@assets/images_1774996491972.jpeg";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, HelpCircle, Zap, Shield } from "lucide-react";
@@ -142,7 +142,7 @@ const Login = () => {
               <motion.img
                 animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.04, 1] }}
                 transition={{ duration: 3, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
-                src={betwicLogo}
+                src={rsLogo}
                 alt="RS Toss Book"
                 className="relative h-12 w-12 rounded-full object-cover border-2 border-primary/50 shadow-lg"
               />

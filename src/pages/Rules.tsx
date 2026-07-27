@@ -6,7 +6,7 @@ import {
   CheckCircle, Star, Info, BadgeAlert, ShieldCheck, Banknote,
   Gavel, MessageCircle, Trophy, Zap,
 } from "lucide-react";
-import betwicLogo from "@/assets/rs-toss-logo.jpg";
+import rsLogo from "@/assets/rs-toss-logo.jpg";
 
 type Variant = "success" | "danger" | "warning" | "info" | "love";
 
@@ -243,7 +243,7 @@ const Rules = () => {
             className="relative inline-block mb-5"
           >
             <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30 animate-spin" style={{ animationDuration: "14s", inset: "-6px" }} />
-            <img src={betwicLogo} alt="RS Toss Book"
+            <img src={rsLogo} alt="RS Toss Book"
               className="h-16 w-16 rounded-full object-cover border-2 border-primary/50 relative z-10 shadow-neon" />
           </motion.div>
 

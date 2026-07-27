@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
-import betwicLogo from "@/assets/rs-toss-logo.jpg";
+import rsLogo from "@/assets/rs-toss-logo.jpg";
 
 type BetWithMatch = {
   id: string;
@@ -69,7 +69,7 @@ const WinCard = ({ bet }: { bet: BetWithMatch }) => {
       </div>
       <div className="relative">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src={betwicLogo} alt="RS Toss Book" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
+          <img src={rsLogo} alt="RS Toss Book" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
           <div className="text-left">
             <p className="text-xs font-bold text-primary tracking-widest uppercase">RS Toss Book</p>
             <p className="text-[10px] text-gray-400">Official Win Certificate</p>

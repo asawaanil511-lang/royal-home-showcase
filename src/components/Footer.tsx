@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import betwicLogo from "@/assets/rs-toss-logo.jpg";
+import rsLogo from "@/assets/rs-toss-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
 
@@ -25,7 +25,7 @@ const Footer = () => {
           <div className="flex flex-col items-center md:items-start gap-3">
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
-                src={betwicLogo}
+                src={rsLogo}
                 alt="RS Toss Book"
                 className="h-10 w-10 rounded-full object-cover border-2 border-primary/30 group-hover:border-primary/60 transition-colors shadow-sm"
               />

@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import betwicLogo from "@/assets/rs-toss-logo.jpg";
+import rsLogo from "@/assets/rs-toss-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 const WHATSAPP_REGISTER_URL = "https://wa.me/917735091610?text=I%20need%20toss%20id";
@@ -83,7 +83,7 @@ const Navbar = () => {
         <div className="flex items-center gap-5">
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <motion.img
-              src={betwicLogo}
+              src={rsLogo}
               alt="RS Toss Book"
               className="h-9 w-9 rounded-full object-cover border-2 border-primary/30 group-hover:border-primary/70 transition-colors shadow-sm"
               whileHover={{ scale: 1.08, rotate: 4 }}

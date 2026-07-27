@@ -114,17 +114,6 @@ const Login = () => {
 
           {/* ── Logo + Brand ── */}
           <div className="flex flex-col items-center mb-3">
-            {/* Live badge */}
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.05 }}
-              className="mb-2 flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[10px] font-bold tracking-widest text-primary"
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              {liveStats.matches} LIVE · {liveStats.players} PLAYERS ONLINE
-            </motion.div>
-
             {/* Logo */}
             <div className="relative mb-2">
               <motion.div

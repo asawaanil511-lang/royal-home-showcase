@@ -91,14 +91,13 @@ const Navbar = () => {
             />
             <div className="hidden sm:block leading-tight">
               <div>
-                <span className="text-sm font-extrabold tracking-tight text-foreground">RS TOSS BOOK</span>
-                <span className="text-sm font-extrabold tracking-tight text-primary ml-1.5">TOSS BOOK</span>
+                <span className="text-sm font-extrabold tracking-tight text-foreground">RS </span><span className="text-sm font-extrabold tracking-tight text-primary">TOSS BOOK</span>
               </div>
               <p className="text-[9px] text-muted-foreground tracking-widest font-medium">ESTD 2019</p>
             </div>
             <div className="flex flex-col sm:hidden leading-tight">
               <div>
-                <span className="text-base font-black tracking-tight text-foreground">BET</span><span className="text-base font-black tracking-tight text-primary">WIC</span>
+                <span className="text-base font-black tracking-tight text-foreground">RS </span><span className="text-base font-black tracking-tight text-primary">TOSS BOOK</span>
               </div>
             </div>
           </Link>

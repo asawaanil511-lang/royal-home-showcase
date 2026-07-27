@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { apiUrl } from "@/lib/api";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import cricketGround from "@assets/images_1774996491972.jpeg";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, HelpCircle, Zap, Shield } from "lucide-react";
@@ -149,7 +149,7 @@ const Login = () => {
                 animate={{ rotate: [0, 5, -5, 0], scale: [1, 1.04, 1] }}
                 transition={{ duration: 3, repeat: Infinity, repeatDelay: 4, ease: "easeInOut" }}
                 src={betwicLogo}
-                alt="Betwic Toss Book"
+                alt="RS Toss Book"
                 className="relative h-12 w-12 rounded-full object-cover border-2 border-primary/50 shadow-lg"
               />
             </div>
@@ -162,7 +162,7 @@ const Login = () => {
               className="text-center"
             >
               <h1 className="text-xl font-extrabold tracking-tight leading-none mb-0.5 text-foreground">
-                BETWIC{" "}
+                RS{" "}
                 <span className="text-primary">TOSS BOOK</span>
               </h1>
               <p className="text-[10px] tracking-[0.25em] font-semibold text-muted-foreground">
@@ -346,7 +346,7 @@ const Login = () => {
           transition={{ delay: 0.15 }}
           className="text-center text-[10px] mt-4 tracking-widest font-medium text-white/70"
         >
-          BETWIC TOSS BOOK © 2026 · PLAY RESPONSIBLY
+          RS TOSS BOOK © 2026 · PLAY RESPONSIBLY
         </motion.p>
       </motion.div>
     </div>

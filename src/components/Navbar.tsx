@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 
 const TELEGRAM_URL = "https://t.me/Bittubhaji";
@@ -84,14 +84,14 @@ const Navbar = () => {
           <Link to="/" className="flex items-center gap-2.5 group shrink-0">
             <motion.img
               src={betwicLogo}
-              alt="Betwic Toss Book"
+              alt="RS Toss Book"
               className="h-9 w-9 rounded-full object-cover border-2 border-primary/30 group-hover:border-primary/70 transition-colors shadow-sm"
               whileHover={{ scale: 1.08, rotate: 4 }}
               transition={{ type: "spring", stiffness: 400 }}
             />
             <div className="hidden sm:block leading-tight">
               <div>
-                <span className="text-sm font-extrabold tracking-tight text-foreground">BETWIC</span>
+                <span className="text-sm font-extrabold tracking-tight text-foreground">RS TOSS BOOK</span>
                 <span className="text-sm font-extrabold tracking-tight text-primary ml-1.5">TOSS BOOK</span>
               </div>
               <p className="text-[9px] text-muted-foreground tracking-widest font-medium">ESTD 2019</p>

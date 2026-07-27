@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Play, LogIn, Zap, Trophy, Shield, BookOpen, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 
 const stats = [
   { icon: Trophy,     label: "Live Matches",    value: "Daily",   color: "text-primary",      bg: "bg-primary/10" },
@@ -48,7 +48,7 @@ const HeroSection = () => {
             />
             <img
               src={betwicLogo}
-              alt="Betwic Toss Book"
+              alt="RS Toss Book"
               className="relative h-24 w-24 rounded-full object-cover border-2 border-primary/50 shadow-lg shadow-primary/20"
             />
           </div>

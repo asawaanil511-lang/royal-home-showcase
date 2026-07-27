@@ -43,7 +43,7 @@ class ErrorBoundary extends Component<
         >
           <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>⚡</div>
           <h2 style={{ fontSize: "1.2rem", fontWeight: 700, marginBottom: "0.5rem" }}>
-            Betwic Toss Book
+            RS Toss Book
           </h2>
           <p style={{ color: "#aaa", fontSize: "0.85rem", marginBottom: "1.5rem" }}>
             Something went wrong loading the app.

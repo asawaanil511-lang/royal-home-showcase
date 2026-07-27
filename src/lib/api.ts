@@ -2,7 +2,7 @@
 // In prod (Vercel): use the Render backend URL
 const base = (
   import.meta.env.VITE_API_URL ||
-  (import.meta.env.DEV ? "" : "https://api.betwictossbook.com")
+  (import.meta.env.DEV ? "" : "https://api.rstossbook.com")
 ).replace(/\/$/, "");
 
 export const apiUrl = (path: string) => `${base}${path}`;

@@ -1,6 +1,6 @@
-# Superman Toss Book
+# RS Toss Book
 
-A cricket sports betting/gaming web app — Superman Toss Book.
+A cricket sports betting/gaming web app — RS Toss Book.
 
 ## Architecture
 

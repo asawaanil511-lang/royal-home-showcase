@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
 
@@ -26,12 +26,12 @@ const Footer = () => {
             <Link to="/" className="flex items-center gap-2.5 group">
               <img
                 src={betwicLogo}
-                alt="Betwic Toss Book"
+                alt="RS Toss Book"
                 className="h-10 w-10 rounded-full object-cover border-2 border-primary/30 group-hover:border-primary/60 transition-colors shadow-sm"
               />
               <div>
                 <div>
-                  <span className="text-base font-extrabold text-foreground">BETWIC</span>
+                  <span className="text-base font-extrabold text-foreground">RS TOSS BOOK</span>
                   <span className="text-base font-extrabold text-primary ml-1.5">TOSS BOOK</span>
                 </div>
                 <p className="text-[10px] text-muted-foreground tracking-widest">ESTD 2019 · THE ORIGINAL BRAND</p>
@@ -74,7 +74,7 @@ const Footer = () => {
               <Shield className="h-3.5 w-3.5" />
               Secure Platform
             </div>
-            <p className="text-xs text-muted-foreground">© 2026 Betwic Toss Book.</p>
+            <p className="text-xs text-muted-foreground">© 2026 RS Toss Book.</p>
             <p className="text-[10px] text-muted-foreground/60">All rights reserved.</p>
           </div>
         </div>

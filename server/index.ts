@@ -120,7 +120,7 @@ db.connect()
 
 // ---- Owner credentials (hardcoded, server-managed) ----
 const OWNER_USERNAME = "owner";
-const OWNER_EMAIL = "owner@superman.local";
+const OWNER_EMAIL = "owner@rstossbook.local";
 const OWNER_PASSWORD = "Owner@9999";
 
 // ---- Add 'owner' to app_role enum + update RLS policies ----
@@ -415,7 +415,7 @@ app.post("/api/admin-create-user", async (req, res) => {
 
     if (action === "create") {
       if (!isValidUsername(username)) return res.status(400).json({ error: "Invalid username (letters, numbers, underscores only, max 50)" });
-      const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@superman.local`;
+      const email = `${username.toLowerCase().replace(/[^a-z0-9]/g, "")}@rstossbook.local`;
       const { data: newUser, error } = await adminClient.auth.admin.createUser({
         email, password: DEFAULT_PASSWORD, email_confirm: true,
         user_metadata: { username, display_name: username },
@@ -428,7 +428,7 @@ app.post("/api/admin-create-user", async (req, res) => {
           user_id: newUser.user.id,
           username,
           display_name: username,
-          avatar_url: "https://xzgccthebdjchdumgrvv.supabase.co/storage/v1/object/public/assets/betwic-logo.jpg",
+          avatar_url: "https://xzgccthebdjchdumgrvv.supabase.co/storage/v1/object/public/assets/rs-toss-logo.jpg",
           must_change_password: true,
           wallet_balance: 0,
         }, { onConflict: "user_id" });
@@ -625,7 +625,7 @@ app.post("/api/demo-login", async (req, res) => {
     if (!serviceRoleKey) return res.status(500).json({ error: "Server not configured" });
     const adminClient = getAdminClient();
     const DEMO_USERNAME = "demo";
-    const DEMO_EMAIL = "demo@superman.local";
+    const DEMO_EMAIL = "demo@rstossbook.local";
     const DEMO_PASSWORD = "Demo@1234";
     const DEMO_WALLET = 5;
 
@@ -1306,7 +1306,7 @@ app.post("/api/change-password", async (req, res) => {
 
 // ---- Root ----
 app.get("/", (_req, res) => {
-  res.json({ status: "ok", message: "Betwic API is running. Use /api/health to check DB." });
+  res.json({ status: "ok", message: "RS Toss Book API is running. Use /api/health to check DB." });
 });
 
 // ---- Health check ----

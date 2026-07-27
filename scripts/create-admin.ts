@@ -38,7 +38,7 @@ function prompt(question: string): Promise<string> {
 
 async function createAdmin() {
   const username = process.env.ADMIN_USERNAME || "admin";
-  const email = `${username}@superman.local`;
+  const email = `${username}@rstossbook.local`;
 
   const password =
     process.env.ADMIN_PASSWORD ||

@@ -6,7 +6,7 @@ import {
   CheckCircle, Star, Info, BadgeAlert, ShieldCheck, Banknote,
   Gavel, MessageCircle, Trophy, Zap,
 } from "lucide-react";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 
 type Variant = "success" | "danger" | "warning" | "info" | "love";
 
@@ -243,7 +243,7 @@ const Rules = () => {
             className="relative inline-block mb-5"
           >
             <div className="absolute inset-0 rounded-full border-2 border-dashed border-primary/30 animate-spin" style={{ animationDuration: "14s", inset: "-6px" }} />
-            <img src={betwicLogo} alt="Betwic Toss Book"
+            <img src={betwicLogo} alt="RS Toss Book"
               className="h-16 w-16 rounded-full object-cover border-2 border-primary/50 relative z-10 shadow-neon" />
           </motion.div>
 
@@ -343,7 +343,7 @@ const Rules = () => {
         >
           <Info className="h-4 w-4 text-muted-foreground shrink-0" />
           <p className="text-xs text-muted-foreground text-center">
-            Rules are subject to change. Check regularly for updates. <strong className="text-foreground">ESTD 2019 · Betwic Toss Book</strong>
+            Rules are subject to change. Check regularly for updates. <strong className="text-foreground">ESTD 2019 · RS Toss Book</strong>
           </p>
         </motion.div>
       </section>

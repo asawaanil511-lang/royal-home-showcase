@@ -1,4 +1,4 @@
-# Betwic Toss Book
+# RS Toss Book
 
 A private cricket sports betting/gaming web application.
 

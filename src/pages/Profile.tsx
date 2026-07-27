@@ -19,7 +19,7 @@ import { motion } from "framer-motion";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription
 } from "@/components/ui/dialog";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 
 const DEMO_USERNAME = "demo";
 
@@ -215,7 +215,7 @@ const Profile = () => {
         // Send a welcome notification
         setTimeout(() => {
           sendNotification(
-            "Betwic Toss Book 🏏",
+            "RS Toss Book 🏏",
             "Notifications are now active! You'll be alerted when your bets are settled."
           );
         }, 500);

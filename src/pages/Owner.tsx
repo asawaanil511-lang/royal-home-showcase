@@ -69,7 +69,7 @@ const Owner = () => {
             </div>
             <div>
               <h1 className="text-xl font-extrabold text-foreground tracking-tight">Owner Panel</h1>
-              <p className="text-xs text-muted-foreground">Betwic Toss Book — Full Access</p>
+              <p className="text-xs text-muted-foreground">RS Toss Book — Full Access</p>
             </div>
           </div>
 

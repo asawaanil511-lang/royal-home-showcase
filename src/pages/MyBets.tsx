@@ -13,7 +13,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from "html2canvas";
-import betwicLogo from "@/assets/betwic-logo.jpg";
+import betwicLogo from "@/assets/rs-toss-logo.jpg";
 
 type BetWithMatch = {
   id: string;
@@ -69,9 +69,9 @@ const WinCard = ({ bet }: { bet: BetWithMatch }) => {
       </div>
       <div className="relative">
         <div className="flex items-center justify-center gap-2 mb-4">
-          <img src={betwicLogo} alt="Betwic" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
+          <img src={betwicLogo} alt="RS Toss Book" className="h-10 w-10 rounded-full object-cover border-2 border-primary/50" />
           <div className="text-left">
-            <p className="text-xs font-bold text-primary tracking-widest uppercase">Betwic Toss Book</p>
+            <p className="text-xs font-bold text-primary tracking-widest uppercase">RS Toss Book</p>
             <p className="text-[10px] text-gray-400">Official Win Certificate</p>
           </div>
         </div>
@@ -97,7 +97,7 @@ const WinCard = ({ bet }: { bet: BetWithMatch }) => {
         <p className="text-gray-500 text-xs border-t border-white/10 pt-3 mt-2">
           at {bet.odds}x odds • {new Date(bet.created_at).toLocaleString("en-IN")}
         </p>
-        <p className="text-gray-600 text-[10px] mt-1">betwic-toss-book.com</p>
+        <p className="text-gray-600 text-[10px] mt-1">rs-toss-book.com</p>
       </div>
     </div>
   );
@@ -316,11 +316,11 @@ const MyBets = () => {
       const dataUrl = canvas.toDataURL("image/png");
       if (navigator.share) {
         const blob = await (await fetch(dataUrl)).blob();
-        const file = new File([blob], "betwic-toss-win.png", { type: "image/png" });
-        await navigator.share({ title: "I won on Betwic Toss Book! 🏆", files: [file] });
+        const file = new File([blob], "rs-toss-win.png", { type: "image/png" });
+        await navigator.share({ title: "I won on RS Toss Book! 🏆", files: [file] });
       } else {
         const link = document.createElement("a");
-        link.download = "betwic-toss-win.png";
+        link.download = "rs-toss-win.png";
         link.href = dataUrl;
         link.click();
         toast({ title: "Screenshot saved!", description: "Win card downloaded." });

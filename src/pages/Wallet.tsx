@@ -9,21 +9,10 @@ import { Wallet as WalletIcon, ArrowUpRight, Trophy, Plus, ArrowDownLeft, Info, 
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 
-const TG_USERNAME = "Bittubhaji";
 const WA_NUMBER = "917668700467";
-
-const tgLink = (text: string) =>
-  `https://t.me/${TG_USERNAME}?text=${encodeURIComponent(text)}`;
 
 const waLink = (text: string) =>
   `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
-
-
-const TelegramIcon = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-    <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-  </svg>
-);
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -174,16 +163,6 @@ const Wallet = () => {
                 <p className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase mb-2">Deposit via</p>
                 <div className="flex gap-2 mb-3">
                   <a
-                    href={tgLink("Deposit/Refill")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
-                    style={{ background: "linear-gradient(135deg, #229ED9, #1a85bb)" }}
-                  >
-                    <TelegramIcon className="h-4 w-4" />
-                    Telegram
-                  </a>
-                  <a
                     href={waLink("Deposit/Refill")}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -198,24 +177,14 @@ const Wallet = () => {
                 {/* Withdraw */}
                 <div className="flex gap-2">
                   <a
-                    href={tgLink("🏏❤️ RS TOSS BOOK ❤️ 🏏\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\nUPI ID ==\nQR CODE ==\n\nA/C HOLDER NAME ==\n\nIt is compulsory to send two things\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nTELEGRAM @bittubhaji\nWHATSAPP +917668700467\n\nWITHDRAWAL  TIME 12PM TO 8PM ANYTIME DROP FORM AFTER - WAIT 30-60 MIN\n\n8PM AFTER DROP FORM TILL WAIT 3AM NIGHT ALL CLEAR NO AGAIN MSG")}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
-                    style={{ background: "linear-gradient(135deg, #229ED9, #1a85bb)" }}
-                  >
-                    <TelegramIcon className="h-4 w-4" />
-                    Withdraw via TG
-                  </a>
-                  <a
-                    href={waLink("🏏❤️ RS TOSS BOOK ❤️ 🏏\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\nUPI ID ==\nQR CODE ==\n\nA/C HOLDER NAME ==\n\nIt is compulsory to send two things\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nTELEGRAM @bittubhaji\nWHATSAPP +917668700467\n\nWITHDRAWAL  TIME 12PM TO 8PM ANYTIME DROP FORM AFTER - WAIT 30-60 MIN\n\n8PM AFTER DROP FORM TILL WAIT 3AM NIGHT ALL CLEAR NO AGAIN MSG")}
+                    href={waLink("🏏❤️ RS TOSS BOOK ❤️ 🏏\n\n━━ WITHDRAWAL FORM ━━\nUSER ID ==\nTOTAL AMOUNT =\nWITHDRAWAL A/M =\nREMAINING A/M =\n\nPAYTM =\nPHONE PAY =\nGOOGLE PAY =\nUPI ID ==\nQR CODE ==\n\nA/C HOLDER NAME ==\n\nIt is compulsory to send two things\n\nWITHDRAWAL ANYTIME ONCE A DAY\n\nONLY DROP 1 MSG\nWHATSAPP +917668700467\n\nWITHDRAWAL  TIME 12PM TO 8PM ANYTIME DROP FORM AFTER - WAIT 30-60 MIN\n\n8PM AFTER DROP FORM TILL WAIT 3AM NIGHT ALL CLEAR NO AGAIN MSG")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
                     style={{ background: "linear-gradient(135deg, #25D366, #1da851)" }}
                   >
                     <WhatsAppIcon className="h-4 w-4" />
-                    Withdraw via WA
+                    Withdraw via WhatsApp
                   </a>
                 </div>
               </div>
@@ -233,7 +202,7 @@ const Wallet = () => {
                 <h3 className="text-base font-extrabold text-foreground">Refill Coins</h3>
               </div>
               <p className="text-xs text-muted-foreground mb-4">
-                Pick an amount — tap a button to refill via Telegram or WhatsApp.
+                Pick an amount — tap a button to refill via WhatsApp.
               </p>
 
               {/* Custom Amount */}
@@ -254,16 +223,6 @@ const Wallet = () => {
                 </div>
                 <div className="flex gap-2">
                   <a
-                    href={tgLink(`Refill ${customAmtLabel}`)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95 ${!customAmount || Number(customAmount) <= 0 ? "opacity-50 pointer-events-none" : ""}`}
-                    style={{ background: "linear-gradient(135deg, #229ED9, #1a85bb)" }}
-                  >
-                    <TelegramIcon className="h-4 w-4" />
-                    Refill via Telegram
-                  </a>
-                  <a
                     href={waLink(`Refill ${customAmtLabel}`)}
                     target="_blank"
                     rel="noopener noreferrer"
@@ -280,9 +239,7 @@ const Wallet = () => {
               <div className="mt-4 flex items-start gap-2 rounded-xl border border-border/60 bg-secondary/40 px-4 py-3">
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  After payment, contact{" "}
-                  <a href={tgLink("Hi")} target="_blank" rel="noopener noreferrer" className="text-[#229ED9] font-semibold hover:underline">@Bittubhaji</a>{" "}
-                  on Telegram or WhatsApp at{" "}
+                  After payment, contact us on WhatsApp at{" "}
                   <a href={waLink("Hi")} target="_blank" rel="noopener noreferrer" className="text-[#25D366] font-semibold hover:underline">+91 76687 00467</a>{" "}
                   to get your coins credited.
                 </p>

@@ -3,7 +3,7 @@ import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
 
-const TELEGRAM_URL = "https://t.me/Bittubhaji";
+const WHATSAPP_URL = "https://wa.me/917668700467?text=Hi";
 
 const footerLinks = [
   { label: "Matches",     href: "/matches",     icon: Swords },
@@ -41,13 +41,13 @@ const Footer = () => {
               The original and trusted virtual cricket toss gaming arena.
             </p>
             <a
-              href={TELEGRAM_URL}
+              href={WHATSAPP_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 hover:border-primary/50 transition-all"
             >
               <MessageCircle className="h-3.5 w-3.5" />
-              Contact via Telegram
+              Contact via WhatsApp
             </a>
           </div>
 

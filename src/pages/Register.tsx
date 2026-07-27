@@ -1,18 +1,18 @@
 import { useEffect } from "react";
 
-const TELEGRAM_LINK = "https://t.me/Bittubhaji";
+const WHATSAPP_LINK = "https://wa.me/917668700467?text=I%20need%20toss%20id";
 
 const Register = () => {
   useEffect(() => {
-    window.open(TELEGRAM_LINK, "_blank");
+    window.open(WHATSAPP_LINK, "_blank");
   }, []);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary/30 px-4">
       <div className="text-center space-y-4">
-        <p className="text-muted-foreground">Redirecting to Telegram...</p>
+        <p className="text-muted-foreground">Redirecting to WhatsApp...</p>
         <a
-          href={TELEGRAM_LINK}
+          href={WHATSAPP_LINK}
           target="_blank"
           rel="noopener noreferrer"
           className="text-primary font-semibold hover:underline"

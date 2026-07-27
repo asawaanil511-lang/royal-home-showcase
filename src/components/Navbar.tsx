@@ -7,7 +7,7 @@ import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import betwicLogo from "@/assets/rs-toss-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
 
-const TELEGRAM_URL = "https://t.me/Bittubhaji";
+const WHATSAPP_REGISTER_URL = "https://wa.me/917668700467?text=I%20need%20toss%20id";
 
 const navLinks = [
   { label: "Home",    href: "/",        icon: Home },
@@ -190,7 +190,7 @@ const Navbar = () => {
                 <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
               </Button>
               <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon text-xs" asChild>
-                <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer">Register</a>
+                <a href={WHATSAPP_REGISTER_URL} target="_blank" rel="noopener noreferrer">Register</a>
               </Button>
             </>
           )}
@@ -310,7 +310,7 @@ const Navbar = () => {
                     </Link>
                   </Button>
                   <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold" asChild>
-                    <a href={TELEGRAM_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
+                    <a href={WHATSAPP_REGISTER_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
                       Register
                     </a>
                   </Button>

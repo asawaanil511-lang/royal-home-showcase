@@ -1,0 +1,275 @@
+19:17:17.432 Running build in Washington, D.C., USA (East) – iad1
+19:17:17.433 Build machine configuration: 2 cores, 8 GB
+19:17:17.582 Cloning github.com/asawaanil511-lang/royal-home-showcase (Branch: main, Commit: 044deda)
+19:17:17.583 Previous build caches not available.
+19:17:18.355 Cloning completed: 772.000ms
+19:17:18.657 Running "vercel build"
+19:17:18.675 Vercel CLI 56.5.0
+19:17:19.216 Running "install" command: `bun install`...
+19:17:19.586 bun install v1.3.12 (700fc117)
+19:17:22.087 warn: ConnectionRefused downloading tarball @esbuild/linux-x64@0.25.12
+19:17:22.088 
+19:17:22.088 warn: ConnectionRefused downloading tarball lightningcss-linux-x64-gnu@1.33.0
+19:17:22.088 
+19:17:22.088 warn: ConnectionRefused downloading tarball pg-cloudflare@1.4.0
+19:17:22.088 
+19:17:22.089 warn: ConnectionRefused downloading tarball lightningcss-linux-x64-musl@1.33.0
+19:17:22.089 
+19:17:22.089 warn: ConnectionRefused downloading tarball @rolldown/binding-linux-x64-gnu@1.1.5
+19:17:22.089 
+19:17:22.089 warn: FailedToOpenSocket downloading tarball @rolldown/binding-linux-x64-musl@1.1.5
+19:17:22.089 
+19:17:22.089 warn: ConnectionRefused downloading tarball @esbuild/linux-x64@0.28.1
+19:17:22.089 
+19:17:22.089 error: ConnectionRefused downloading tarball concurrently@10.0.4
+19:17:22.089 
+19:17:22.089 error: ConnectionRefused downloading tarball vitest@4.1.10
+19:17:22.089 
+19:17:22.089 error: FailedToOpenSocket downloading tarball html2canvas@1.4.1
+19:17:22.090 
+19:17:22.090 error: ConnectionRefused downloading tarball @vitest/expect@4.1.10
+19:17:22.090 
+19:17:22.090 error: ConnectionRefused downloading tarball cors@2.8.6
+19:17:22.090 
+19:17:22.090 error: FailedToOpenSocket downloading tarball @vercel/analytics@2.0.1
+19:17:22.090 
+19:17:22.090 error: ConnectionRefused downloading tarball @vitest/utils@4.1.10
+19:17:22.090 
+19:17:22.090 error: ConnectionRefused downloading tarball @types/cors@2.8.19
+19:17:22.090 
+19:17:22.090 error: FailedToOpenSocket downloading tarball pg@8.22.0
+19:17:22.091 
+19:17:22.091 error: ConnectionRefused downloading tarball tinyrainbow@3.1.1
+19:17:22.091 
+19:17:22.091 error: ConnectionRefused downloading tarball @vitest/mocker@4.1.10
+19:17:22.091 
+19:17:22.091 error: ConnectionRefused downloading tarball esbuild@0.25.12
+19:17:22.091 
+19:17:22.091 error: ConnectionRefused downloading tarball express@5.2.1
+19:17:22.091 
+19:17:22.091 error: FailedToOpenSocket downloading tarball @vitest/pretty-format@4.1.10
+19:17:22.092 
+19:17:22.092 error: ConnectionRefused downloading tarball pg-types@2.2.0
+19:17:22.092 
+19:17:22.092 error: ConnectionRefused downloading tarball @vitest/runner@4.1.10
+19:17:22.092 
+19:17:22.092 error: ConnectionRefused downloading tarball @types/express@5.0.6
+19:17:22.092 
+19:17:22.092 error: ConnectionRefused downloading tarball @types/pg@8.20.0
+19:17:22.092 
+19:17:22.092 error: FailedToOpenSocket downloading tarball obug@2.1.4
+19:17:22.092 
+19:17:22.092 error: ConnectionRefused downloading tarball tree-kill@1.2.2
+19:17:22.092 
+19:17:22.092 error: ConnectionRefused downloading tarball tinyexec@1.2.4
+19:17:22.093 
+19:17:22.093 error: ConnectionRefused downloading tarball lightningcss@1.33.0
+19:17:22.093 
+19:17:22.093 error: ConnectionRefused downloading tarball tsx@4.23.1
+19:17:22.093 
+19:17:22.093 error: FailedToOpenSocket downloading tarball @types/body-parser@1.19.6
+19:17:22.093 
+19:17:22.096 error: ConnectionRefused downloading tarball content-disposition@1.1.0
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball @types/serve-static@2.2.0
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball @vitest/snapshot@4.1.10
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball @vitest/spy@4.1.10
+19:17:22.097 
+19:17:22.097 error: FailedToOpenSocket downloading tarball supports-color@10.2.2
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball escape-html@1.0.3
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball yargs@18.0.0
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball std-env@4.2.0
+19:17:22.097 
+19:17:22.097 error: ConnectionRefused downloading tarball es-module-lexer@2.3.1
+19:17:22.098 
+19:17:22.098 error: FailedToOpenSocket downloading tarball vary@1.1.2
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball http-errors@2.0.1
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball body-parser@2.3.0
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball @types/express-serve-static-core@5.1.2
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball pg-protocol@1.15.0
+19:17:22.098 
+19:17:22.098 error: FailedToOpenSocket downloading tarball content-type@1.0.5
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball parseurl@1.3.3
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball depd@2.0.0
+19:17:22.098 
+19:17:22.098 error: ConnectionRefused downloading tarball shell-quote@1.9.0
+19:17:22.098 
+19:17:22.099 error: ConnectionRefused downloading tarball rxjs@7.8.2
+19:17:22.099 
+19:17:22.099 error: FailedToOpenSocket downloading tarball encodeurl@2.0.0
+19:17:22.099 
+19:17:22.099 error: ConnectionRefused downloading tarball range-parser@1.3.0
+19:17:22.102 
+19:17:22.102 error: ConnectionRefused downloading tarball finalhandler@2.1.1
+19:17:22.102 
+19:17:22.102 error: ConnectionRefused downloading tarball accepts@2.0.0
+19:17:22.102 
+19:17:22.103 error: FailedToOpenSocket downloading tarball mime-types@3.0.2
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball type-is@2.1.0
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball proxy-addr@2.0.7
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball cookie-signature@1.2.2
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball cookie@0.7.2
+19:17:22.103 
+19:17:22.103 error: FailedToOpenSocket downloading tarball once@1.4.0
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball router@2.2.0
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball fresh@2.0.0
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball etag@1.8.1
+19:17:22.103 
+19:17:22.103 error: FailedToOpenSocket downloading tarball serve-static@2.2.1
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball statuses@2.0.2
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball on-finished@2.4.1
+19:17:22.103 
+19:17:22.103 error: ConnectionRefused downloading tarball merge-descriptors@2.0.0
+19:17:22.104 
+19:17:22.104 error: FailedToOpenSocket downloading tarball css-line-break@2.1.0
+19:17:22.104 
+19:17:22.104 error: ConnectionRefused downloading tarball @types/qs@6.15.1
+19:17:22.104 
+19:17:22.110 error: ConnectionRefused downloading tarball text-segmentation@1.0.3
+19:17:22.110 
+19:17:22.110 error: ConnectionRefused downloading tarball send@1.2.1
+19:17:22.110 
+19:17:22.110 error: ConnectionRefused downloading tarball qs@6.15.3
+19:17:22.110 
+19:17:22.110 error: FailedToOpenSocket downloading tarball convert-source-map@2.0.0
+19:17:22.110 
+19:17:22.110 error: ConnectionRefused downloading tarball pg-int8@1.0.1
+19:17:22.110 
+19:17:22.111 error: ConnectionRefused downloading tarball chai@6.2.2
+19:17:22.111 
+19:17:22.111 error: ConnectionRefused downloading tarball detect-libc@2.1.2
+19:17:22.111 
+19:17:22.111 error: ConnectionRefused downloading tarball pgpass@1.0.5
+19:17:22.111 
+19:17:22.111 error: FailedToOpenSocket downloading tarball rolldown@1.1.5
+19:17:22.111 
+19:17:22.111 error: ConnectionRefused downloading tarball postgres-date@1.0.7
+19:17:22.111 
+19:17:22.111 error: ConnectionRefused downloading tarball @types/range-parser@1.2.7
+19:17:22.111 
+19:17:22.111 error: ConnectionRefused downloading tarball pg-pool@3.14.0
+19:17:22.111 
+19:17:22.111 error: ConnectionRefused downloading tarball pg-connection-string@2.14.0
+19:17:22.112 
+19:17:22.112 error: FailedToOpenSocket downloading tarball @types/http-errors@2.0.5
+19:17:22.114 
+19:17:22.114 error: ConnectionRefused downloading tarball setprototypeof@1.2.0
+19:17:22.114 
+19:17:22.116 error: ConnectionRefused downloading tarball postgres-array@2.0.0
+19:17:22.116 
+19:17:22.116 error: ConnectionRefused downloading tarball @standard-schema/spec@1.1.0
+19:17:22.116 
+19:17:22.117 error: FailedToOpenSocket downloading tarball postgres-bytea@1.0.1
+19:17:22.117 
+19:17:22.117 error: ConnectionRefused downloading tarball ee-first@1.1.1
+19:17:22.117 
+19:17:22.117 error: ConnectionRefused downloading tarball y18n@5.0.8
+19:17:22.117 
+19:17:22.117 error: ConnectionRefused downloading tarball @types/send@1.2.1
+19:17:22.120 
+19:17:22.121 error: ConnectionRefused downloading tarball @types/connect@3.4.38
+19:17:22.121 
+19:17:22.121 error: FailedToOpenSocket downloading tarball bytes@3.1.2
+19:17:22.121 
+19:17:22.121 error: ConnectionRefused downloading tarball is-promise@4.0.0
+19:17:22.121 
+19:17:22.122 error: ConnectionRefused downloading tarball iconv-lite@0.7.3
+19:17:22.122 
+19:17:22.122 error: ConnectionRefused downloading tarball postgres-interval@1.2.0
+19:17:22.122 
+19:17:22.122 error: ConnectionRefused downloading tarball cliui@9.0.1
+19:17:22.122 
+19:17:22.122 error: FailedToOpenSocket downloading tarball inherits@2.0.4
+19:17:22.122 
+19:17:22.123 error: ConnectionRefused downloading tarball wrappy@1.0.2
+19:17:22.123 
+19:17:22.123 error: ConnectionRefused downloading tarball get-caller-file@2.0.5
+19:17:22.123 
+19:17:22.123 error: ConnectionRefused downloading tarball string-width@7.2.0
+19:17:22.123 
+19:17:22.123 error: FailedToOpenSocket downloading tarball mime-db@1.54.0
+19:17:22.123 
+19:17:22.123 error: ConnectionRefused downloading tarball emoji-regex@10.6.0
+19:17:22.123 
+19:17:22.123 error: ConnectionRefused downloading tarball ipaddr.js@1.9.1
+19:17:22.123 
+19:17:22.123 error: ConnectionRefused downloading tarball yargs-parser@22.0.0
+19:17:22.123 
+19:17:22.123 error: ConnectionRefused downloading tarball negotiator@1.0.0
+19:17:22.124 
+19:17:22.124 error: FailedToOpenSocket downloading tarball media-typer@1.1.1
+19:17:22.124 
+19:17:22.124 error: ConnectionRefused downloading tarball side-channel-map@1.0.1
+19:17:22.124 
+19:17:22.124 error: ConnectionRefused downloading tarball split2@4.2.0
+19:17:22.125 
+19:17:22.125 error: ConnectionRefused downloading tarball toidentifier@1.0.1
+19:17:22.125 
+19:17:22.125 error: ConnectionRefused downloading tarball raw-body@3.0.2
+19:17:22.125 
+19:17:22.125 error: ConnectionRefused downloading tarball vite@8.1.5
+19:17:22.125 
+19:17:22.126 error: ConnectionRefused downloading tarball wrap-ansi@9.0.2
+19:17:22.126 
+19:17:22.126 error: ConnectionRefused downloading tarball side-channel@1.1.1
+19:17:22.126 
+19:17:22.126 error: ConnectionRefused downloading tarball forwarded@0.2.0
+19:17:22.126 
+19:17:22.126 error: FailedToOpenSocket downloading tarball get-east-asian-width@1.6.0
+19:17:22.126 
+19:17:22.126 error: ConnectionRefused downloading tarball content-type@2.0.0
+19:17:22.127 
+19:17:22.128 error: ConnectionRefused downloading tarball side-channel-list@1.0.1
+19:17:22.129 
+19:17:22.129 error: ConnectionRefused downloading tarball utrie@1.0.2
+19:17:22.129 
+19:17:22.129 error: ConnectionRefused downloading tarball path-to-regexp@8.4.2
+19:17:22.129 
+19:17:22.129 error: FailedToOpenSocket downloading tarball base64-arraybuffer@1.0.2
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball esbuild@0.28.1
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball chalk@5.6.2
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball xtend@4.0.2
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball @oxc-project/types@0.139.0
+19:17:22.130 
+19:17:22.130 error: FailedToOpenSocket downloading tarball unpipe@1.0.0
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball side-channel-weakmap@1.0.2
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball picomatch@4.0.5
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball object-inspect@1.13.4
+19:17:22.130 
+19:17:22.130 error: FailedToOpenSocket downloading tarball call-bound@1.0.4
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball @rolldown/pluginutils@1.0.1
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball nanoid@3.3.16
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball postcss@8.5.24
+19:17:22.130 
+19:17:22.130 error: ConnectionRefused downloading tarball tinyglobby@0.2.17
+19:17:22.133 Error: Command "bun install" exited with 1

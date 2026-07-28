@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: betwic-api
+    name: rstossbook-api
     runtime: node
     buildCommand: npm install && npm run build:server
     startCommand: npm start

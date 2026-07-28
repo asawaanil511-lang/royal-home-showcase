@@ -2,7 +2,7 @@ services:
   - type: web
     name: rstossbook-api
     runtime: node
-    buildCommand: npm install && npm run build:server
+    buildCommand: npm ci --omit=dev && npm run build:server
     startCommand: npm start
     envVars:
       - key: NODE_ENV

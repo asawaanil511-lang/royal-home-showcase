@@ -25,3 +25,7 @@ dist-ssr
 
 # Local config with secrets (never commit)
 config.json
+
+# Lockfiles contain Replit-internal proxy URLs — must not be deployed
+package-lock.json
+bun.lock

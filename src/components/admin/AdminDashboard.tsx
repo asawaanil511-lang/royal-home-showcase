@@ -96,16 +96,30 @@ const AdminDashboard = () => {
     setDailyVolume(days);
 
     const profileMap = new Map(profilesArr.map((p: any) => [p.user_id, p.username || "Unknown"]));
-    const matchMap = new Map(matchesArr.map((m: any) => [m.id, `${m.team_a_name} vs ${m.team_b_name}`]));
+    const matchMap = new Map(matchesArr.map((m: any) => [
+      m.id,
+      {
+        label: `${m.team_a_name} vs ${m.team_b_name}`,
+        teamA: m.team_a_name,
+        teamB: m.team_b_name,
+      },
+    ]));
     const activities: ActivityItem[] = betsArr
       .slice().sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       .slice(0, 10)
-      .map((b: any) => ({
-        id: b.id,
-        description: `${profileMap.get(b.user_id) || "User"} → ${matchMap.get(b.match_id) || "Match"} (Team ${b.team_picked})`,
-        amount: Number(b.amount),
-        time: b.created_at,
-      }));
+      .map((b: any) => {
+        const match = matchMap.get(b.match_id);
+        const pickedTeam = match
+          ? (b.team_picked === "A" ? match.teamA : match.teamB)
+          : "Selected team";
+
+        return {
+          id: b.id,
+          description: `${profileMap.get(b.user_id) || "User"} → ${match?.label || "Match"} (${pickedTeam})`,
+          amount: Number(b.amount),
+          time: b.created_at,
+        };
+      });
     setRecentActivity(activities);
 
     const bettorMap = new Map<string, { total: number; count: number; wins: number }>();

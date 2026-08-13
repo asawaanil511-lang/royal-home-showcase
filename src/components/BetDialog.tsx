@@ -17,6 +17,7 @@ type BetDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   initialTeam?: "A" | "B";
+  lockToTeam?: "A" | "B";
   onBetPlaced?: () => void;
 };
 
@@ -83,9 +84,10 @@ const TeamCircle = ({
   );
 };
 
-const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetDialogProps) => {
+const BetDialog = ({ match, open, onOpenChange, initialTeam, lockToTeam, onBetPlaced }: BetDialogProps) => {
   const [step, setStep] = useState<2 | 3>(2);
   const [selectedTeam, setSelectedTeam] = useState<"A" | "B">("A");
+  const [lockedTeam, setLockedTeam] = useState<"A" | "B" | null>(null);
   const [amount, setAmount] = useState("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
   const [placing, setPlacing] = useState(false);
@@ -98,13 +100,15 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
 
   useEffect(() => {
     if (open) {
-      setSelectedTeam(initialTeam ?? "A");
+      const team = lockToTeam ?? initialTeam ?? "A";
+      setSelectedTeam(team);
+      setLockedTeam(lockToTeam ?? null);
       setStep(2);
       setAmount("");
       setSelectedPreset(null);
       setConfirmedBet(null);
     }
-  }, [open, initialTeam]);
+  }, [open, initialTeam, lockToTeam]);
 
   if (!match) return null;
 
@@ -123,8 +127,10 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
   };
   const handleReset = () => { setAmount(""); setSelectedPreset(null); };
   const handleBetMore = () => {
+    const teamToLock = confirmedBet?.team ?? selectedTeam;
     setStep(2);
-    setSelectedTeam(initialTeam ?? "A");
+    setSelectedTeam(teamToLock);
+    setLockedTeam(teamToLock);
     setAmount("");
     setSelectedPreset(null);
     setConfirmedBet(null);
@@ -216,18 +222,27 @@ const BetDialog = ({ match, open, onOpenChange, initialTeam, onBetPlaced }: BetD
               </div>
 
               {/* Team selector */}
-              <div className="grid grid-cols-2 gap-2">
+              {lockedTeam && (
+                <p className="text-[10px] font-semibold text-primary/80 rounded-lg border border-primary/20 bg-primary/8 px-3 py-2">
+                  Bet More is locked to {lockedTeam === "A" ? match.teamA.name : match.teamB.name}. Cancel your existing bet to switch teams.
+                </p>
+              )}
+              <div className={`grid gap-2 ${lockedTeam ? "grid-cols-1" : "grid-cols-2"}`}>
                 {([
                   { team: "A" as const, name: match.teamA.name, logo: match.teamA.logo, odds: match.oddsA },
                   { team: "B" as const, name: match.teamB.name, logo: match.teamB.logo, odds: match.oddsB },
-                ]).map((t) => {
+                ]).filter((t) => !lockedTeam || t.team === lockedTeam).map((t) => {
                   const [g1] = GRADIENT_PAIRS[hashName(t.name)];
                   const active = selectedTeam === t.team;
                   return (
                     <motion.button
                       key={t.team}
                       whileTap={{ scale: 0.96 }}
-                      onClick={() => { setSelectedTeam(t.team); setSelectedPreset(null); }}
+                      onClick={() => {
+                        if (lockedTeam) return;
+                        setSelectedTeam(t.team);
+                        setSelectedPreset(null);
+                      }}
                       className={`relative flex items-center gap-2 rounded-xl px-3 py-2.5 transition-all border ${
                         active
                           ? "border-border bg-secondary"

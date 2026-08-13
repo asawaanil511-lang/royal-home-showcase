@@ -19,7 +19,7 @@ export type UserBet = {
 
 type MatchCardProps = {
   match: Match;
-  onBet: (match: Match, team?: "A" | "B") => void;
+  onBet: (match: Match, team?: "A" | "B", lockToTeam?: boolean) => void;
   userBet?: UserBet | null;
   onCancelBet?: (matchId: string) => void;
   cancellingBetId?: string | null;
@@ -619,7 +619,7 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
                   border: "none",
                   boxShadow: "0 4px 20px rgba(157,76,204,0.35)",
                 }}
-                onClick={() => onBet(match, userBet!.team_picked)}
+                onClick={() => onBet(match, userBet!.team_picked, true)}
               >
                 <Plus className="h-4 w-4" /> BET MORE
               </Button>

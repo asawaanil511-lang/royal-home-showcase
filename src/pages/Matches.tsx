@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 const Matches = () => {
   const [betMatch, setBetMatch] = useState<Match | null>(null);
   const [betTeam, setBetTeam] = useState<"A" | "B" | undefined>(undefined);
+  const [betMoreTeam, setBetMoreTeam] = useState<"A" | "B" | undefined>(undefined);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
@@ -124,9 +125,10 @@ const Matches = () => {
     return () => { (supabase as any).removeChannel(ch); };
   }, [user, fetchUserBets]);
 
-  const handleBet = (match: Match, team?: "A" | "B") => {
+  const handleBet = (match: Match, team?: "A" | "B", lockToTeam = false) => {
     setBetMatch(match);
     setBetTeam(team);
+    setBetMoreTeam(lockToTeam ? team : undefined);
     setDialogOpen(true);
   };
 
@@ -361,6 +363,7 @@ const Matches = () => {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         initialTeam={betTeam}
+        lockToTeam={betMoreTeam}
         onBetPlaced={fetchUserBets}
       />
       <Footer />

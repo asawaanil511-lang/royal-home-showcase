@@ -1124,7 +1124,8 @@ app.post("/api/place-bet", async (req, res) => {
 
       // 1. Lock & fetch match — verify it's open and get real odds from DB (never trust client)
       const matchResult = await client.query(
-        `SELECT id, status, odds_a, odds_b, max_bet FROM public.matches WHERE id = $1 FOR UPDATE`,
+        `SELECT id, status, odds_a, odds_b, max_bet, team_a_name, team_b_name
+         FROM public.matches WHERE id = $1 FOR UPDATE`,
         [match_id]
       );
       if (matchResult.rowCount === 0) {
@@ -1144,11 +1145,30 @@ app.post("/api/place-bet", async (req, res) => {
         return res.status(400).json({ error: `Maximum bet for this match is ₹${maxBet.toLocaleString("en-IN")}` });
       }
 
-      // 3. Get odds from DB — client-supplied odds are ignored entirely
+      // 3. Keep all pending bets for a match on the same team. Users must
+      // cancel their existing bet before switching sides.
+      const existingBetResult = await client.query(
+        `SELECT team_picked
+         FROM public.bets
+         WHERE user_id = $1 AND match_id = $2 AND result = 'pending'
+         LIMIT 1
+         FOR UPDATE`,
+        [userId, match_id]
+      );
+      const existingTeam = existingBetResult.rows[0]?.team_picked;
+      if (existingTeam && existingTeam !== team_picked) {
+        const existingTeamName = existingTeam === "A" ? match.team_a_name : match.team_b_name;
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: `You already have a pending bet on ${existingTeamName}. Cancel it before betting on the other team.`,
+        });
+      }
+
+      // 4. Get odds from DB — client-supplied odds are ignored entirely
       const odds = team_picked === "A" ? Number(match.odds_a) : Number(match.odds_b);
       const potentialWin = Math.round(betAmount * odds * 100) / 100;
 
-      // 4. Atomic wallet deduction — fails cleanly if balance is insufficient
+      // 5. Atomic wallet deduction — fails cleanly if balance is insufficient
       const walletResult = await client.query(
         `UPDATE public.profiles
          SET wallet_balance = wallet_balance - $1
@@ -1161,7 +1181,7 @@ app.post("/api/place-bet", async (req, res) => {
         return res.status(400).json({ error: "Insufficient wallet balance" });
       }
 
-      // 5. Insert the bet
+      // 6. Insert the bet
       const betResult = await client.query(
         `INSERT INTO public.bets (user_id, match_id, team_picked, amount, odds, potential_win, result)
          VALUES ($1, $2, $3, $4, $5, $6, 'pending')

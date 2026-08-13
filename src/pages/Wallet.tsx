@@ -174,7 +174,7 @@ const Wallet = () => {
                 {/* Withdraw */}
                 <div className="flex gap-2">
                   <a
-                    href={waLink("━━━━━━━━━━━━━━━━━━━━━━━━━━\n🦚🔥❤️ RSTOSSBOOK ID TOSS BOOK ❤️🔥🦚\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n💸⚡ WITHDRAWAL FORM ⚡💸\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n👤 USER ID ➤ \n💰 TOTAL BALANCE ➤ ₹\n💸 WITHDRAWAL AMOUNT ➤ ₹\n📊 REMAINING BALANCE ➤ ₹\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n💳 PAYTM ➤\n📱 PHONEPE ➤\n📲 GOOGLE PAY ➤\n🏦 UPI ID ➤\n📷 QR CODE ➤\n👤 A/C HOLDER NAME ➤\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️🚨 IMPORTANT INSTRUCTIONS 🚨⚠️\n✅ BOTH DETAILS ARE COMPULSORY\n🔁 WITHDRAWAL AVAILABLE ANYTIME (ONCE PER DAY ONLY)\n🚫 DO NOT SPAM / ONLY 1 MESSAGE ALLOWED\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 WHATSAPP ➤ +91 7735091610\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n⏰💼 WITHDRAWAL TIMING 💼⏰\n🕛 12 PM TO 8 PM\n📌 DROP FORM ANYTIME & WAIT ⏳ 30–60 MIN\n━━━━━━━━━━━━━━━━━━━━━━━━━━")}
+                    href={waLink("━━━━━━━━━━━━━━━━━━━━━━━━━━\n🦚🔥❤️ RSTOSSBOOK ID TOSS BOOK ❤️🔥🦚\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n💸⚡ WITHDRAWAL FORM ⚡💸\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n👤 USER ID ➤ \n💰 TOTAL BALANCE ➤ ₹\n💸 WITHDRAWAL AMOUNT ➤ ₹\n📊 REMAINING BALANCE ➤ ₹\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n💳 PAYTM ➤\n📱 PHONEPE ➤\n📲 GOOGLE PAY ➤\n🏦 UPI ID ➤\n📷 QR CODE ➤\n👤 A/C HOLDER NAME ➤\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n⚠️🚨 IMPORTANT INSTRUCTIONS 🚨⚠️\n✅ BOTH DETAILS ARE COMPULSORY\n🔁 WITHDRAWAL AVAILABLE ANYTIME (ONCE PER DAY ONLY)\n🚫 DO NOT SPAM / ONLY 1 MESSAGE ALLOWED\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n📞 WHATSAPP ➤ +91 8369602674\n━━━━━━━━━━━━━━━━━━━━━━━━━━\n⏰💼 WITHDRAWAL TIMING 💼⏰\n🕛 12 PM TO 8 PM\n📌 DROP FORM ANYTIME & WAIT ⏳ 30–60 MIN\n━━━━━━━━━━━━━━━━━━━━━━━━━━")}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold text-white transition-all active:scale-95"
@@ -237,7 +237,7 @@ const Wallet = () => {
                 <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
                   After payment, contact us on WhatsApp at{" "}
-                  <a href={waLink("Hi")} target="_blank" rel="noopener noreferrer" className="text-[#25D366] font-semibold hover:underline">+91 77350 91610</a>{" "}
+                  <a href={waLink("Hi")} target="_blank" rel="noopener noreferrer" className="text-[#25D366] font-semibold hover:underline">+91 83696 02674</a>{" "}
                   to get your coins credited.
                 </p>
               </div>

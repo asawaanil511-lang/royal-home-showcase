@@ -1,4 +1,4 @@
-const WA_NUMBER = "917735091610";
+const WA_NUMBER = "918369602674";
 
 const getFallbackUsername = () => {
   if (typeof window === "undefined") return "Guest";

@@ -16,6 +16,9 @@ import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 type DBMatch = {
   id: string;
@@ -37,6 +40,18 @@ type MatchBetStats = {
   total: number; volume: number; teamA: number; teamB: number;
   volumeA: number; volumeB: number; payoutA: number; payoutB: number;
   pendingCount: number;
+};
+
+type MatchBetDetail = {
+  id: string;
+  user_id: string;
+  team_picked: string;
+  amount: number;
+  odds: number;
+  potential_win: number;
+  result: string;
+  created_at: string;
+  username: string | null;
 };
 
 const MIGRATION_SQL = `ALTER TABLE matches
@@ -85,6 +100,9 @@ const AdminMatches = () => {
   const [saving, setSaving] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [betDetailsMatch, setBetDetailsMatch] = useState<DBMatch | null>(null);
+  const [matchBetDetails, setMatchBetDetails] = useState<MatchBetDetail[]>([]);
+  const [betDetailsLoading, setBetDetailsLoading] = useState(false);
 
   const fetchMatches = async () => {
     const [{ data: matchesData }, { data: betsData }] = await Promise.all([
@@ -103,6 +121,34 @@ const AdminMatches = () => {
       statsMap.set(b.match_id, e);
     });
     setBetStats(statsMap);
+  };
+
+  const handleViewBets = async (match: DBMatch) => {
+    setBetDetailsMatch(match);
+    setMatchBetDetails([]);
+    setBetDetailsLoading(true);
+
+    const [{ data: betsData, error: betsError }, { data: profilesData }] = await Promise.all([
+      (supabase as any)
+        .from("bets")
+        .select("id, user_id, team_picked, amount, odds, potential_win, result, created_at")
+        .eq("match_id", match.id)
+        .order("created_at", { ascending: false }),
+      supabase.from("profiles").select("user_id, username"),
+    ]);
+
+    if (betsError) {
+      toast({ title: "Could not load match bets", description: betsError.message, variant: "destructive" });
+      setBetDetailsLoading(false);
+      return;
+    }
+
+    const profileMap = new Map((profilesData || []).map((profile) => [profile.user_id, profile.username]));
+    setMatchBetDetails((betsData || []).map((bet: any) => ({
+      ...bet,
+      username: profileMap.get(bet.user_id) || null,
+    })));
+    setBetDetailsLoading(false);
   };
 
   useEffect(() => {
@@ -177,7 +223,7 @@ const AdminMatches = () => {
 
   const handleCreate = async () => {
     if (!teamA || !teamB) {
-      toast({ title: "Fill required fields (Team A, Team B)", variant: "destructive" });
+      toast({ title: "Fill in both team names", variant: "destructive" });
       return;
     }
     setSaving(true);
@@ -498,19 +544,19 @@ const AdminMatches = () => {
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Team A *</label>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">First team *</label>
                     <Input placeholder="e.g. Mumbai Indians" value={teamA} onChange={(e) => setTeamA(e.target.value)} className="bg-secondary border-border" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Team B *</label>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Second team *</label>
                     <Input placeholder="e.g. CSK" value={teamB} onChange={(e) => setTeamB(e.target.value)} className="bg-secondary border-border" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Odds A</label>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Odds — {teamA || "first team"}</label>
                     <Input type="number" step="0.05" value={oddsA} onChange={(e) => setOddsA(e.target.value)} className="bg-secondary border-border" />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Odds B</label>
+                    <label className="text-xs font-semibold text-muted-foreground mb-1.5 block uppercase tracking-wide">Odds — {teamB || "second team"}</label>
                     <Input type="number" step="0.05" value={oddsB} onChange={(e) => setOddsB(e.target.value)} className="bg-secondary border-border" />
                   </div>
                   <div>
@@ -629,10 +675,10 @@ const AdminMatches = () => {
                     <button onClick={() => setEditingId(null)} className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div><label className="text-xs text-muted-foreground mb-1 block">Team A</label><Input value={editData.team_a_name || ""} onChange={(e) => setEditData({ ...editData, team_a_name: e.target.value })} className="bg-secondary border-border" /></div>
-                    <div><label className="text-xs text-muted-foreground mb-1 block">Team B</label><Input value={editData.team_b_name || ""} onChange={(e) => setEditData({ ...editData, team_b_name: e.target.value })} className="bg-secondary border-border" /></div>
-                    <div><label className="text-xs text-muted-foreground mb-1 block">Odds A</label><Input type="number" step="0.05" value={editData.odds_a || ""} onChange={(e) => setEditData({ ...editData, odds_a: Number(e.target.value) })} className="bg-secondary border-border" /></div>
-                    <div><label className="text-xs text-muted-foreground mb-1 block">Odds B</label><Input type="number" step="0.05" value={editData.odds_b || ""} onChange={(e) => setEditData({ ...editData, odds_b: Number(e.target.value) })} className="bg-secondary border-border" /></div>
+                     <div><label className="text-xs text-muted-foreground mb-1 block">{editData.team_a_name || "First team"}</label><Input value={editData.team_a_name || ""} onChange={(e) => setEditData({ ...editData, team_a_name: e.target.value })} className="bg-secondary border-border" /></div>
+                     <div><label className="text-xs text-muted-foreground mb-1 block">{editData.team_b_name || "Second team"}</label><Input value={editData.team_b_name || ""} onChange={(e) => setEditData({ ...editData, team_b_name: e.target.value })} className="bg-secondary border-border" /></div>
+                     <div><label className="text-xs text-muted-foreground mb-1 block">Odds — {editData.team_a_name || "first team"}</label><Input type="number" step="0.05" value={editData.odds_a || ""} onChange={(e) => setEditData({ ...editData, odds_a: Number(e.target.value) })} className="bg-secondary border-border" /></div>
+                     <div><label className="text-xs text-muted-foreground mb-1 block">Odds — {editData.team_b_name || "second team"}</label><Input type="number" step="0.05" value={editData.odds_b || ""} onChange={(e) => setEditData({ ...editData, odds_b: Number(e.target.value) })} className="bg-secondary border-border" /></div>
                     <div><label className="text-xs text-muted-foreground mb-1 block">Max Bet</label><Input type="number" value={editData.max_bet || ""} onChange={(e) => setEditData({ ...editData, max_bet: Number(e.target.value) })} className="bg-secondary border-border" /></div>
                     {m.status !== "live" && (
                       <>
@@ -683,7 +729,7 @@ const AdminMatches = () => {
                           </span>
                           {m.winner && (
                             <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-400 bg-amber-500/10 border border-amber-500/30 px-2 py-0.5 rounded-full">
-                              <Trophy className="h-2.5 w-2.5" /> Team {m.winner} Won
+                               <Trophy className="h-2.5 w-2.5" /> {m.winner === "A" ? m.team_a_name : m.team_b_name} Won
                             </span>
                           )}
                         </div>
@@ -696,6 +742,13 @@ const AdminMatches = () => {
                         P&L
                         {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
                       </button>
+                       <button
+                         onClick={() => handleViewBets(m)}
+                         className="flex items-center gap-1 text-xs font-semibold px-2.5 py-1.5 rounded-xl border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition-all shrink-0"
+                       >
+                         <Eye className="h-3.5 w-3.5" />
+                         View Bets ({bs.total})
+                       </button>
                     </div>
 
                     {/* Meta row */}
@@ -717,7 +770,11 @@ const AdminMatches = () => {
                     <div className="mb-3">
                       <div className="flex items-center justify-between text-[10px] mb-1">
                         <span className="flex items-center gap-1 text-muted-foreground"><UsersIcon className="h-3 w-3" /> {bs.total} bets · <span className="text-primary font-bold">₹{bs.volume.toLocaleString()}</span></span>
-                        {bs.total > 0 && <span className="text-muted-foreground">A: {bs.teamA} · B: {bs.teamB}</span>}
+                         {bs.total > 0 && (
+                           <span className="text-muted-foreground">
+                             {m.team_a_name}: {bs.teamA} · {m.team_b_name}: {bs.teamB}
+                           </span>
+                         )}
                       </div>
                       {bs.total > 0 && (
                         <div className="h-1.5 rounded-full bg-secondary overflow-hidden flex">
@@ -801,7 +858,7 @@ const AdminMatches = () => {
 
                                 <div className="grid grid-cols-2 gap-2 mb-3">
                                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-3">
-                                    <p className="text-[10px] text-muted-foreground mb-1">If {m.team_a_name} Wins</p>
+                           <p className="text-[10px] text-muted-foreground mb-1">If {m.team_a_name} Wins</p>
                                     <p className={`text-base font-extrabold ${bs.volume - bs.payoutA >= 0 ? "text-emerald-400" : "text-red-400"}`}>
                                       {bs.volume - bs.payoutA >= 0 ? "+" : ""}₹{Math.abs(Math.round(bs.volume - bs.payoutA)).toLocaleString()}
                                     </p>
@@ -818,8 +875,8 @@ const AdminMatches = () => {
 
                                 <div className="flex flex-wrap gap-1.5 text-[10px]">
                                   <span className="rounded-full bg-secondary/60 border border-border/40 px-2.5 py-1">Total: <span className="text-primary font-bold">₹{bs.volume.toLocaleString()}</span></span>
-                                  <span className="rounded-full bg-secondary/60 border border-border/40 px-2.5 py-1">Payout A: <span className="font-bold">₹{Math.round(bs.payoutA).toLocaleString()}</span></span>
-                                  <span className="rounded-full bg-secondary/60 border border-border/40 px-2.5 py-1">Payout B: <span className="font-bold">₹{Math.round(bs.payoutB).toLocaleString()}</span></span>
+                                  <span className="rounded-full bg-secondary/60 border border-border/40 px-2.5 py-1">Payout {m.team_a_name}: <span className="font-bold">₹{Math.round(bs.payoutA).toLocaleString()}</span></span>
+                                  <span className="rounded-full bg-secondary/60 border border-border/40 px-2.5 py-1">Payout {m.team_b_name}: <span className="font-bold">₹{Math.round(bs.payoutB).toLocaleString()}</span></span>
                                   <span className="rounded-full bg-secondary/60 border border-border/40 px-2.5 py-1 font-mono text-muted-foreground">ID: {m.id.slice(0, 12)}…</span>
                                 </div>
                               </>
@@ -841,6 +898,107 @@ const AdminMatches = () => {
           </div>
         )}
       </div>
+
+      {/* Match bets dialog */}
+      <Dialog
+        open={!!betDetailsMatch}
+        onOpenChange={(open) => {
+          if (!open) setBetDetailsMatch(null);
+        }}
+      >
+        <DialogContent className="max-w-4xl bg-card border-border max-h-[90vh] overflow-hidden">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">
+              {betDetailsMatch?.team_a_name} vs {betDetailsMatch?.team_b_name}
+            </DialogTitle>
+            <DialogDescription>
+              All bets placed on this match, newest first.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="overflow-y-auto space-y-3 pr-1">
+            {betDetailsLoading ? (
+              <div className="flex items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
+                <Loader2 className="h-4 w-4 animate-spin" /> Loading bets…
+              </div>
+            ) : matchBetDetails.length === 0 ? (
+              <div className="py-12 text-center text-sm text-muted-foreground">
+                No bets placed on this match yet.
+              </div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total bets</p>
+                    <p className="text-lg font-extrabold text-foreground">{matchBetDetails.length}</p>
+                  </div>
+                  <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">Total staked</p>
+                    <p className="text-lg font-extrabold text-primary">
+                      ₹{matchBetDetails.reduce((sum, bet) => sum + Number(bet.amount || 0), 0).toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{betDetailsMatch?.team_a_name}</p>
+                    <p className="text-lg font-extrabold text-foreground">
+                      {matchBetDetails.filter((bet) => bet.team_picked === "A").length}
+                    </p>
+                  </div>
+                  <div className="rounded-xl border border-border/40 bg-secondary/30 p-3">
+                    <p className="text-[10px] uppercase tracking-wide text-muted-foreground">{betDetailsMatch?.team_b_name}</p>
+                    <p className="text-lg font-extrabold text-foreground">
+                      {matchBetDetails.filter((bet) => bet.team_picked === "B").length}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/40 overflow-x-auto">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-secondary/40">
+                      <tr className="border-b border-border/40">
+                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Username</th>
+                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Selected team</th>
+                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Amount</th>
+                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Potential win</th>
+                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Result</th>
+                        <th className="px-3 py-2 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Placed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {matchBetDetails.map((bet) => (
+                        <tr key={bet.id} className="border-b border-border/20 last:border-0">
+                          <td className="px-3 py-2.5 font-semibold text-foreground whitespace-nowrap">
+                            {bet.username || bet.user_id.slice(0, 8)}
+                          </td>
+                          <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
+                            {bet.team_picked === "A" ? betDetailsMatch?.team_a_name : betDetailsMatch?.team_b_name}
+                          </td>
+                          <td className="px-3 py-2.5 font-bold text-amber-400 whitespace-nowrap">
+                            ₹{Number(bet.amount || 0).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2.5 font-semibold text-primary whitespace-nowrap">
+                            ₹{Number(bet.potential_win || 0).toLocaleString()}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            <span className="rounded-full border border-border/40 bg-secondary/50 px-2 py-1 text-[10px] font-bold uppercase text-muted-foreground">
+                              {bet.result}
+                            </span>
+                          </td>
+                          <td className="px-3 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                            {new Date(bet.created_at).toLocaleString("en-IN", {
+                              day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit",
+                            })}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Confirmation Dialog */}
       <AlertDialog open={!!confirmAction} onOpenChange={() => setConfirmAction(null)}>

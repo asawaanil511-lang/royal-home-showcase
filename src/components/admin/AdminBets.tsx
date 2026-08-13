@@ -16,6 +16,11 @@ type BetRow = {
 
 type MatchOption = { id: string; label: string };
 
+const getTeamName = (bet: Pick<BetRow, "team_picked" | "match">) => {
+  if (!bet.match) return "Unknown team";
+  return bet.team_picked === "A" ? bet.match.team_a_name : bet.match.team_b_name;
+};
+
 const AdminBets = () => {
   const [bets, setBets] = useState<BetRow[]>([]);
   const [filter, setFilter] = useState<"all" | "pending" | "won" | "lost" | "cancelled">("all");
@@ -74,7 +79,7 @@ const AdminBets = () => {
     const rows = filtered.map(b => [
       b.profile?.username || b.user_id.slice(0, 8),
       b.match ? `${b.match.team_a_name} vs ${b.match.team_b_name}` : b.match_id.slice(0, 8),
-      `Team ${b.team_picked}`,
+       getTeamName(b),
       b.amount,
       b.odds,
       b.potential_win,
@@ -196,7 +201,7 @@ const AdminBets = () => {
                 </TableCell>
                 <TableCell>
                   <span className="text-xs font-bold bg-secondary/50 border border-border/40 rounded-full px-2.5 py-0.5">
-                    Team {b.team_picked}
+                     {getTeamName(b)}
                   </span>
                 </TableCell>
                 <TableCell className="text-amber-400 font-bold text-sm">₹{Number(b.amount).toLocaleString()}</TableCell>

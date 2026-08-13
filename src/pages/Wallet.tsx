@@ -8,11 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Wallet as WalletIcon, ArrowUpRight, Trophy, Plus, ArrowDownLeft, Info, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-
-const WA_NUMBER = "917735091610";
-
-const waLink = (text: string) =>
-  `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -99,6 +95,7 @@ const Wallet = () => {
 
   const customAmtNum = customAmount && Number(customAmount) > 0 ? Number(customAmount) : 0;
   const customAmtLabel = customAmtNum > 0 ? `Rs.${customAmtNum}` : "custom amount";
+  const waLink = (text: string) => buildWhatsAppLink(text, profile?.username);
 
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">

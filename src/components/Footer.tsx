@@ -2,8 +2,8 @@ import { Link } from "react-router-dom";
 import rsLogo from "@/assets/rs-toss-logo.jpg";
 import { motion } from "framer-motion";
 import { MessageCircle, Shield, Swords, Trophy, ListChecks, BookOpen, Wallet } from "lucide-react";
-
-const WHATSAPP_URL = "https://wa.me/917735091610?text=Hi";
+import { useAuth } from "@/contexts/AuthContext";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 const footerLinks = [
   { label: "Matches",     href: "/matches",     icon: Swords },
@@ -14,6 +14,9 @@ const footerLinks = [
 ];
 
 const Footer = () => {
+  const { profile } = useAuth();
+  const whatsappUrl = buildWhatsAppLink("Hi", profile?.username);
+
   return (
     <footer className="border-t border-border bg-card/80 backdrop-blur-sm">
       <div className="h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent" />
@@ -41,7 +44,7 @@ const Footer = () => {
               The original and trusted virtual cricket toss gaming arena.
             </p>
             <a
-              href={WHATSAPP_URL}
+              href={whatsappUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/8 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/15 hover:border-primary/50 transition-all"

@@ -7,6 +7,7 @@ import cricketGround from "@assets/images_1774996491972.jpeg";
 import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, HelpCircle, Zap, Shield } from "lucide-react";
 import { motion } from "framer-motion";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -14,7 +15,6 @@ const WhatsAppIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const WHATSAPP_URL = "https://wa.me/917735091610?text=I%20need%20toss%20id";
 const PROOF_URL = "https://whatsapp.com/channel/0029VbAj9idDJ6H0QP1sDK3t";
 
 const Login = () => {
@@ -30,6 +30,7 @@ const Login = () => {
   });
   const { toast } = useToast();
   const navigate = useNavigate();
+  const whatsappUrl = buildWhatsAppLink("I need toss id", username);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,7 +191,7 @@ const Login = () => {
                   PASSWORD
                 </label>
                 <a
-                  href={WHATSAPP_URL}
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-[10px] font-bold tracking-[0.1em] text-amber-600 hover:text-amber-700 transition-colors"
@@ -274,7 +275,7 @@ const Login = () => {
             <div className="flex flex-col gap-2 w-full">
               <div className="flex gap-2 w-full">
                 <a
-                  href={WHATSAPP_URL}
+                  href={whatsappUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex flex-1 items-center justify-center gap-2 rounded-xl py-2 text-xs font-bold text-white transition-all active:scale-95"

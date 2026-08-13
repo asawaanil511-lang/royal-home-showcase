@@ -6,8 +6,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import rsLogo from "@/assets/rs-toss-logo.jpg";
 import AnnouncementBanner from "@/components/AnnouncementBanner";
-
-const WHATSAPP_REGISTER_URL = "https://wa.me/917735091610?text=I%20need%20toss%20id";
+import { buildWhatsAppLink } from "@/lib/whatsapp";
 
 const navLinks = [
   { label: "Home",    href: "/",        icon: Home },
@@ -72,6 +71,7 @@ const Navbar = () => {
   }, [location.pathname]);
 
   const balance = profile?.wallet_balance ?? 0;
+  const whatsappRegisterUrl = buildWhatsAppLink("I need toss id", profile?.username);
 
   return (
     <>
@@ -189,7 +189,7 @@ const Navbar = () => {
                 <Link to="/login"><LogIn className="h-4 w-4" /> Login</Link>
               </Button>
               <Button size="sm" className="hidden sm:inline-flex gradient-neon-primary text-primary-foreground font-semibold shadow-neon text-xs" asChild>
-                <a href={WHATSAPP_REGISTER_URL} target="_blank" rel="noopener noreferrer">Register</a>
+                <a href={whatsappRegisterUrl} target="_blank" rel="noopener noreferrer">Register</a>
               </Button>
             </>
           )}
@@ -309,7 +309,7 @@ const Navbar = () => {
                     </Link>
                   </Button>
                   <Button size="sm" className="flex-1 gradient-neon-primary text-primary-foreground font-semibold" asChild>
-                    <a href={WHATSAPP_REGISTER_URL} target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
+                    <a href={whatsappRegisterUrl} target="_blank" rel="noopener noreferrer" onClick={() => setMobileOpen(false)}>
                       Register
                     </a>
                   </Button>

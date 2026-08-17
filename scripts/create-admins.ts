@@ -26,7 +26,7 @@ if (!serviceRoleKey) {
   process.exit(1);
 }
 
-const adminUsernames = ["RS0-4829-ZX", "RS0-7361-QR", "RS0-5194-MT"];
+const adminUsernames = ["waqas2004", "rajat2004", "rajesh2004"];
 const admins: AdminInput[] = adminUsernames.map((username, index) => ({
   username,
   password: process.env[`ADMIN_${index + 1}_PASSWORD`],

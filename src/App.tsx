@@ -12,6 +12,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { Analytics } from "@vercel/analytics/react";
 import WalletAnimation from "./components/WalletAnimation";
 import ChangePasswordDialog from "./components/ChangePasswordDialog";
+import WelcomePoster from "./components/WelcomePoster";
 
 // Eagerly load only the entry screen — everything else is lazy
 import Login from "./pages/Login";
@@ -66,6 +67,7 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <AuthProvider>
+            <WelcomePoster />
             <WalletAnimation />
             <PasswordGate />
             <NotificationGate />

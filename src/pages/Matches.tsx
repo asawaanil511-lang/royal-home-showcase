@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { RefreshCw, Swords, Plus, Minus } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -125,14 +125,14 @@ const Matches = () => {
     return () => { (supabase as any).removeChannel(ch); };
   }, [user, fetchUserBets]);
 
-  const handleBet = (match: Match, team?: "A" | "B", lockToTeam = false) => {
+  const handleBet = useCallback((match: Match, team?: "A" | "B", lockToTeam = false) => {
     setBetMatch(match);
     setBetTeam(team);
     setBetMoreTeam(lockToTeam ? team : undefined);
     setDialogOpen(true);
-  };
+  }, []);
 
-  const handleCancelBet = async (matchId: string) => {
+  const handleCancelBet = useCallback(async (matchId: string) => {
     if (!user) return;
     const betEntry = userBets.get(matchId);
     if (!betEntry) return;
@@ -183,11 +183,11 @@ const Matches = () => {
     } finally {
       setCancellingBetId(null);
     }
-  };
+  }, [refreshProfile, toast, user, userBets]);
 
   // ── Time-based visibility filter ─────────────────────────────────────────
   // A match appears once live_time is reached, and disappears once closing_time passes.
-  const filtered = matches
+  const filtered = useMemo(() => matches
     .filter((m) => {
       // If live_time is set and hasn't been reached yet → hide
       if (m.liveTime && new Date(m.liveTime) > now) return false;
@@ -202,7 +202,7 @@ const Matches = () => {
       if (aTime !== bTime) return aTime - bTime;
       const statusOrder: Record<string, number> = { live: 0, upcoming: 1 };
       return (statusOrder[a.status] ?? 2) - (statusOrder[b.status] ?? 2);
-    });
+    }), [matches, now]);
 
   const liveCount = filtered.filter((m) => m.status === "live").length;
 

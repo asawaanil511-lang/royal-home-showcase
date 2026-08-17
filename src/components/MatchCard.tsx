@@ -5,7 +5,7 @@ import {
   Plus, XCircle, Loader2, IndianRupee, CheckCircle2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect, useRef } from "react";
+import { memo, useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 export type UserBet = {
@@ -660,4 +660,4 @@ const MatchCard = ({ match, onBet, userBet, onCancelBet, cancellingBetId }: Matc
   );
 };
 
-export default MatchCard;
+export default memo(MatchCard);

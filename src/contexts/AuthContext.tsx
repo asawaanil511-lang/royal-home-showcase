@@ -57,6 +57,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [isOwner, setIsOwner] = useState(false);
   const prevBalanceRef = useRef<number | null>(null);
+  const hydratedUserIdRef = useRef<string | null>(null);
 
   const fetchRoles = async (userId: string) => {
     const { data } = await (supabase as any)
@@ -125,6 +126,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch { }
   };
 
+  const hydrateUser = (userId: string) => {
+    if (hydratedUserIdRef.current === userId) return;
+    hydratedUserIdRef.current = userId;
+    void Promise.all([fetchProfile(userId), fetchRoles(userId)]);
+  };
+
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
@@ -132,13 +139,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(session?.user ?? null);
         if (session?.user) {
           setTimeout(() => {
-            fetchProfile(session.user.id);
-            fetchRoles(session.user.id);
+            hydrateUser(session.user.id);
           }, 0);
           if (session.access_token && event !== "SIGNED_OUT") {
             recordSession(session.access_token);
           }
         } else {
+          hydratedUserIdRef.current = null;
           setProfile(null);
           prevBalanceRef.current = null;
           setMustChangePassword(false);
@@ -153,8 +160,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchProfile(session.user.id);
-        fetchRoles(session.user.id);
+        hydrateUser(session.user.id);
+      } else {
+        hydratedUserIdRef.current = null;
       }
       setLoading(false);
     });

@@ -263,7 +263,7 @@ const Results = () => {
                     {/* Match image */}
                     {m.image_url && (
                       <div className="relative h-28 overflow-hidden">
-                        <img src={m.image_url} alt="Match" className="w-full h-full object-cover" />
+                        <img src={m.image_url} alt="Match" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                         <div className="absolute inset-0 bg-gradient-to-b from-black/10 via-transparent to-card/80" />
                         {m.match_title && (
                           <div className="absolute bottom-2 left-3">

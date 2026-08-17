@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Lock, Eye, EyeOff, HelpCircle, Zap, Shield } from "lucide-react";
 import { motion } from "framer-motion";
 import { buildWhatsAppLink } from "@/lib/whatsapp";
+import { markWelcomePosterPending } from "@/lib/welcomePoster";
 
 const WhatsAppIcon = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 24 24" className={className} fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -58,6 +59,7 @@ const Login = () => {
         return;
       }
       localStorage.setItem("stb_remember_user", username);
+      markWelcomePosterPending();
       toast({ title: "Login successful", description: "You have been logged in successfully." });
       navigate("/matches", { replace: true });
     } catch (err: any) {
@@ -82,6 +84,7 @@ const Login = () => {
         setDemoLoading(false);
         return;
       }
+      markWelcomePosterPending();
       toast({ title: "Demo mode active ⚡", description: "You have ₹5 coins to explore!" });
       navigate("/matches", { replace: true });
     } catch {
